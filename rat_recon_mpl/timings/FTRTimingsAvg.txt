@@ -1,0 +1,309 @@
+============================================================
+  Symmetric Toeplitz MRFI benchmark (fault-tolerant)
+  Univariate RR : HFTRFR (degrees + bad set) + DFTRFR
+  Prime p = 2147483647
+  Range   n = 4 .. 9
+  Fault injection FAULT_ON = false , error budget FAULT_E = 0
+============================================================
+
+  n = 4
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 76  (NDSA = 12, MRFI = 64)
+  BB calls in NDSA                 : 12
+  BB calls in MRFI                 : 64
+  Total NDSA time for BB calls (s) : 0.000200000
+  Total MRFI time for BB calls (s) : 0.000900000
+  Total BB calls time (NDSA+MRFI)  : 0.001100000
+  Total time (s)                   : 0.006300000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.000000000
+  Time -> HFTRFR (s)           : 0.000000000
+  Time -> FTREval Interp+RR+EV : 0.000200000
+  Time -> BMEA (s)             : 0.000800000
+  Time -> Vandermonde (s)      : 0.000100000
+  Time -> Roots (s)            : 0.000200000
+  Time -> Gen. Monomials (s)   : 0.000500000
+  Time -> Final Poly. (s)      : 0.000000000
+  Time -> Get point AFL (s)    : 0.000200000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.004100000
+  Time -> NDSA Proc. (s)       : 0.000200000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 1.086
+  Deg_num (per equation)   : [1, 1, 1, 1]
+  Deg_den (per equation)   : [2, 2, 2, 2]
+  Terms_num (per equation) : [2, 4, 4, 2]
+  Terms_den (per equation) : [7, [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+
+  FFGE status              : OK
+  FFGE total time (s)      : 0.006900000
+  FFGE f[i] terms          : [2, 4, 4, 2]
+  FFGE g[i] terms          : [7, 7, 7, 7]
+  FFGE y[i] terms (Pre GCD): [13, 16, 16, 13]
+  FFGE det(A) terms        : 12
+  FFGE Max Elim. step swell: 19  (numterms(num) before exact div)
+  FFGE max Back sub swell  : 47  (numterms(N[i]) before exact div)
+  Term count comparison (MRFI vs FFGE)
+  Numerator terms MRFI     : [2, 4, 4, 2]
+  Numerator terms FFGE     : [2, 4, 4, 2]
+  Denominator terms MRFI   : [7, [], [], []]
+  Denominator terms FFGE   : [7, 7, 7, 7]
+
+  n = 5
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 204  (NDSA = 12, MRFI = 192)
+  BB calls in NDSA                 : 12
+  BB calls in MRFI                 : 192
+  Total NDSA time for BB calls (s) : 0.000300000
+  Total MRFI time for BB calls (s) : 0.002700000
+  Total BB calls time (NDSA+MRFI)  : 0.003000000
+  Total time (s)                   : 0.015700000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.000300000
+  Time -> HFTRFR (s)           : 0.000400000
+  Time -> FTREval Interp+RR+EV : 0.001000000
+  Time -> BMEA (s)             : 0.000500000
+  Time -> Vandermonde (s)      : 0.000000000
+  Time -> Roots (s)            : 0.001300000
+  Time -> Gen. Monomials (s)   : 0.000900000
+  Time -> Final Poly. (s)      : 0.000100000
+  Time -> Get point AFL (s)    : 0.000800000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.010300000
+  Time -> NDSA Proc. (s)       : 0.000100000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 2.208
+  Deg_num (per equation)   : [2, 2, 2, 2, 2]
+  Deg_den (per equation)   : [3, 3, 3, 3, 3]
+  Terms_num (per equation) : [7, 8, 11, 8, 7]
+  Terms_den (per equation) : [12, [], [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  FFGE status              : OK
+  FFGE total time (s)      : 0.009200000
+  FFGE f[i] terms          : [7, 8, 11, 8, 7]
+  FFGE g[i] terms          : [12, 12, 12, 12, 12]
+  FFGE y[i] terms (Pre GCD): [41, 41, 44, 41, 41]
+  FFGE det(A) terms        : 35
+  FFGE Max Elim. step swell: 89  (numterms(num) before exact div)
+  FFGE max Back sub swell  : 259  (numterms(N[i]) before exact div)
+  Term count comparison (MRFI vs FFGE)
+  Numerator terms MRFI     : [7, 8, 11, 8, 7]
+  Numerator terms FFGE     : [7, 8, 11, 8, 7]
+  Denominator terms MRFI   : [12, [], [], [], []]
+  Denominator terms FFGE   : [12, 12, 12, 12, 12]
+
+  n = 6
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 780  (NDSA = 12, MRFI = 768)
+  BB calls in NDSA                 : 12
+  BB calls in MRFI                 : 768
+  Total NDSA time for BB calls (s) : 0.000200000
+  Total MRFI time for BB calls (s) : 0.011900000
+  Total BB calls time (NDSA+MRFI)  : 0.012100000
+  Total time (s)                   : 0.040100000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.000400000
+  Time -> HFTRFR (s)           : 0.000500000
+  Time -> FTREval Interp+RR+EV : 0.001900000
+  Time -> BMEA (s)             : 0.000400000
+  Time -> Vandermonde (s)      : 0.000300000
+  Time -> Roots (s)            : 0.003000000
+  Time -> Gen. Monomials (s)   : 0.001000000
+  Time -> Final Poly. (s)      : 0.000600000
+  Time -> Get point AFL (s)    : 0.003400000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000100000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.028500000
+  Time -> NDSA Proc. (s)       : 0.000000000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 6.325
+  Deg_num (per equation)   : [2, 2, 2, 2, 2, 2]
+  Deg_den (per equation)   : [3, 3, 3, 3, 3, 3]
+  Terms_num (per equation) : [7, 14, 15, 15, 14, 7]
+  Terms_den (per equation) : [32, [], [], [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  FFGE status              : OK
+  FFGE total time (s)      : 0.034300000
+  FFGE f[i] terms          : [7, 14, 15, 15, 14, 7]
+  FFGE g[i] terms          : [32, 32, 32, 32, 32, 32]
+  FFGE y[i] terms (Pre GCD): [141, 162, 171, 171, 162, 141]
+  FFGE det(A) terms        : 120
+  FFGE Max Elim. step swell: 575  (numterms(num) before exact div)
+  FFGE max Back sub swell  : 1512  (numterms(N[i]) before exact div)
+  Term count comparison (MRFI vs FFGE)
+  Numerator terms MRFI     : [7, 14, 15, 15, 14, 7]
+  Numerator terms FFGE     : [7, 14, 15, 15, 14, 7]
+  Denominator terms MRFI   : [32, [], [], [], [], []]
+  Denominator terms FFGE   : [32, 32, 32, 32, 32, 32]
+
+  n = 7
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 1052  (NDSA = 28, MRFI = 1024)
+  BB calls in NDSA                 : 28
+  BB calls in MRFI                 : 1024
+  Total NDSA time for BB calls (s) : 0.000800000
+  Total MRFI time for BB calls (s) : 0.014800000
+  Total BB calls time (NDSA+MRFI)  : 0.015600000
+  Total time (s)                   : 0.078300000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.000800000
+  Time -> HFTRFR (s)           : 0.000700000
+  Time -> FTREval Interp+RR+EV : 0.005200000
+  Time -> BMEA (s)             : 0.001200000
+  Time -> Vandermonde (s)      : 0.000900000
+  Time -> Roots (s)            : 0.017800000
+  Time -> Gen. Monomials (s)   : 0.004300000
+  Time -> Final Poly. (s)      : 0.000700000
+  Time -> Get point AFL (s)    : 0.005100000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000500000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.040600000
+  Time -> NDSA Proc. (s)       : 0.000500000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 11.056
+  Deg_num (per equation)   : [3, 3, 3, 3, 3, 3, 3]
+  Deg_den (per equation)   : [4, 4, 4, 4, 4, 4, 4]
+  Terms_num (per equation) : [32, 43, 49, 52, 49, 43, 32]
+  Terms_den (per equation) : [56, [], [], [], [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  FFGE status              : OK
+  FFGE total time (s)      : 0.094200000
+  FFGE f[i] terms          : [32, 43, 49, 52, 49, 43, 32]
+  FFGE g[i] terms          : [56, 56, 56, 56, 56, 56, 56]
+  FFGE y[i] terms (Pre GCD): [477, 534, 574, 560, 574, 534, 477]
+  FFGE det(A) terms        : 427
+  FFGE Max Elim. step swell: 3277  (numterms(num) before exact div)
+  FFGE max Back sub swell  : 9206  (numterms(N[i]) before exact div)
+  Term count comparison (MRFI vs FFGE)
+  Numerator terms MRFI     : [32, 43, 49, 52, 49, 43, 32]
+  Numerator terms FFGE     : [32, 43, 49, 52, 49, 43, 32]
+  Denominator terms MRFI   : [56, [], [], [], [], [], []]
+  Denominator terms FFGE   : [56, 56, 56, 56, 56, 56, 56]
+
+  n = 8
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 4124  (NDSA = 28, MRFI = 4096)
+  BB calls in NDSA                 : 28
+  BB calls in MRFI                 : 4096
+  Total NDSA time for BB calls (s) : 0.000300000
+  Total MRFI time for BB calls (s) : 0.094000000
+  Total BB calls time (NDSA+MRFI)  : 0.094300000
+  Total time (s)                   : 0.235400000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.000900000
+  Time -> HFTRFR (s)           : 0.001300000
+  Time -> FTREval Interp+RR+EV : 0.014700000
+  Time -> BMEA (s)             : 0.003800000
+  Time -> Vandermonde (s)      : 0.002500000
+  Time -> Roots (s)            : 0.028300000
+  Time -> Gen. Monomials (s)   : 0.011600000
+  Time -> Final Poly. (s)      : 0.002100000
+  Time -> Get point AFL (s)    : 0.018100000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000700000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.151100000
+  Time -> NDSA Proc. (s)       : 0.000300000
+  GC -> collections            : 1
+  GC -> Mbytes allocated       : 36.461
+  Deg_num (per equation)   : [3, 3, 3, 3, 3, 3, 3, 3]
+  Deg_den (per equation)   : [4, 4, 4, 4, 4, 4, 4, 4]
+  Terms_num (per equation) : [30, 65, 77, 78, 78, 77, 65, 30]
+  Terms_den (per equation) : [167, [], [], [], [], [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  FFGE status              : OK
+  FFGE total time (s)      : 0.730300000
+  FFGE f[i] terms          : [30, 65, 77, 78, 78, 77, 65, 30]
+  FFGE g[i] terms          : [167, 167, 167, 167, 167, 167, 167, 167]
+  FFGE y[i] terms (Pre GCD): [1731, 2076, 2208, 2275, 2275, 2208, 2076, 1731]
+  FFGE det(A) terms        : 1628
+  FFGE Max Elim. step swell: 21016  (numterms(num) before exact div)
+  FFGE max Back sub swell  : 56007  (numterms(N[i]) before exact div)
+  Term count comparison (MRFI vs FFGE)
+  Numerator terms MRFI     : [30, 65, 77, 78, 78, 77, 65, 30]
+  Numerator terms FFGE     : [30, 65, 77, 78, 78, 77, 65, 30]
+  Denominator terms MRFI   : [167, [], [], [], [], [], [], []]
+  Denominator terms FFGE   : [167, 167, 167, 167, 167, 167, 167, 167]
+
+  n = 9
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 10268  (NDSA = 28, MRFI = 10240)
+  BB calls in NDSA                 : 28
+  BB calls in MRFI                 : 10240
+  Total NDSA time for BB calls (s) : 0.000900000
+  Total MRFI time for BB calls (s) : 0.222800000
+  Total BB calls time (NDSA+MRFI)  : 0.223700000
+  Total time (s)                   : 0.710500000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.001100000
+  Time -> HFTRFR (s)           : 0.001300000
+  Time -> FTREval Interp+RR+EV : 0.051800000
+  Time -> BMEA (s)             : 0.019700000
+  Time -> Vandermonde (s)      : 0.017200000
+  Time -> Roots (s)            : 0.145000000
+  Time -> Gen. Monomials (s)   : 0.036400000
+  Time -> Final Poly. (s)      : 0.005600000
+  Time -> Get point AFL (s)    : 0.050100000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.002000000
+  Time -> MapRR (s)            : 0.001000000
+  Time -> Overhead & Other (s) : 0.379200000
+  Time -> NDSA Proc. (s)       : 0.000100000
+  GC -> collections            : 3
+  GC -> Mbytes allocated       : 102.119
+  Deg_num (per equation)   : [4, 4, 4, 4, 4, 4, 4, 4, 4]
+  Deg_den (per equation)   : [5, 5, 5, 5, 5, 5, 5, 5, 5]
+  Terms_num (per equation) : [167, 208, 243, 267, 274, 267, 243, 208, 167]
+  Terms_den (per equation) : [294, [], [], [], [], [], [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  FFGE status              : OK
+  FFGE total time (s)      : 3.781000000
+  FFGE f[i] terms          : [167, 208, 243, 267, 274, 267, 243, 208, 167]
+  FFGE g[i] terms          : [294, 294, 294, 294, 294, 294, 294, 294, 294]
+  FFGE y[i] terms (Pre GCD): [6409, 7262, 7758, 7988, 7930, 7988, 7758, 7262, 6409]
+  FFGE det(A) terms        : 6090
+  FFGE Max Elim. step swell: 128530  (numterms(num) before exact div)
+  FFGE max Back sub swell  : 345088  (numterms(N[i]) before exact div)
+  Term count comparison (MRFI vs FFGE)
+  Numerator terms MRFI     : [167, 208, 243, 267, 274, 267, 243, 208, 167]
+  Numerator terms FFGE     : [167, 208, 243, 267, 274, 267, 243, 208, 167]
+  Denominator terms MRFI   : [294, [], [], [], [], [], [], [], []]
+  Denominator terms FFGE   : [294, 294, 294, 294, 294, 294, 294, 294, 294]
+

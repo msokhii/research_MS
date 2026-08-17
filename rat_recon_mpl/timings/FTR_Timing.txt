@@ -1,0 +1,47 @@
+============================================================
+  Symmetric Toeplitz MRFI benchmark (fault-tolerant)
+  Univariate RR : HFTRFR (degrees + bad set) + DFTRFR
+  Prime p = 2147483647
+  Range   n = 15 .. 15
+  Fault injection FAULT_ON = false , error budget FAULT_E = 0
+============================================================
+
+  n = 15
+  MRFI Status                      : MRFI returned FAIL
+  Total BB calls                   : 4194364  (NDSA = 60, MRFI = 4194304)
+  BB calls in NDSA                 : 60
+  BB calls in MRFI                 : 4194304
+  Total NDSA time for BB calls (s) : 0.002000000
+  Total MRFI time for BB calls (s) : 127.146000000
+  Total BB calls time (NDSA+MRFI)  : 127.148000000
+  Total time (s)                   : 2798.491000000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.002000000
+  Time -> HFTRFR (s)           : 0.004000000
+  Time -> FTREval Interp+RR+EV : 22.842000000
+  Time -> BMEA (s)             : 596.772000000
+  Time -> Vandermonde (s)      : 151.039000000
+  Time -> Roots (s)            : 1808.780000000
+  Time -> Gen. Monomials (s)   : 4.141000000
+  Time -> Final Poly. (s)      : 0.000000000
+  Time -> Get point AFL (s)    : 23.147000000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 191.762000000
+  Time -> NDSA Proc. (s)       : 0.002000000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 0.000
+  Deg_num (per equation)   : []
+  Deg_den (per equation)   : []
+  Terms_num (per equation) : []
+  Terms_den (per equation) : []
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+
+  FFGE status              : SKIPPED
+
