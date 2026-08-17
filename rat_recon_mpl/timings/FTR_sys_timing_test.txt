@@ -1,0 +1,372 @@
+============================================================
+  MRFI benchmark (fault-tolerant) -- system A1 : Symmetric Toeplitz (hand-built TP path)
+  Univariate RR : HFTRFR (degrees + bad set) + DFTRFR
+  Monomial recovery : discrete-log Ben-Or/Tiwari (SelectBOTPrime, per-n prime; see entries)
+  Range   n = 4 .. 10
+  Fault injection FAULT_ON = false , error budget FAULT_E = 0
+============================================================
+
+  n = 4
+  System ID                        : A1
+  Prime p                          : 2311  (BB datatype integer[8])
+  Degree cap / q sizing            : 2
+  Prime reselections (cap doubled) : 0
+  Pre-flight BB calls (not in MRFI): 12
+  Parameter count                  : 4
+  Expected parameter count         : 4
+  Parameter validation             : PASS
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 89  (NDSA = 12, MRFI = 65)
+  BB calls in NDSA                 : 12
+  BB calls in MRFI                 : 65
+  Total NDSA time for BB calls (s) : 0.000000000
+  Total MRFI time for BB calls (s) : 0.001000000
+  Total BB calls time (NDSA+MRFI)  : 0.001000000
+  Total time (s)                   : 0.020000000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.000000000
+  Time -> HFTRFR (s)           : 0.001000000
+  Time -> FTREval Interp+RR+EV : 0.000000000
+  Time -> BMEA (s)             : 0.000000000
+  Time -> Vandermonde (s)      : 0.000000000
+  Time -> Roots (s)            : 0.001000000
+  Time -> Gen. Monomials (s)   : 0.000000000
+  Time -> Final Poly. (s)      : 0.001000000
+  Time -> Get point AFL (s)    : 0.000000000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.017000000
+  Time -> NDSA Proc. (s)       : 0.000000000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 1.028
+  Deg_num (per equation)   : [1, 1, 1, 1]
+  Deg_den (per equation)   : [2, 2, 2, 2]
+  Terms_num (per equation) : [2, 4, 4, 2]
+  Terms_den (per equation) : [7, [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  Recovered solution
+    x1 = (-y3+y1)/(y1^2+y1*y2+y1*y4-y2^2-2*y2*y3+y2*y4-y3^2)
+    x2 = (-y3-y2+y1+y4)/(y1^2+y1*y2+y1*y4-y2^2-2*y2*y3+y2*y4-y3^2)
+    x3 = (-y3-y2+y1+y4)/(y1^2+y1*y2+y1*y4-y2^2-2*y2*y3+y2*y4-y3^2)
+    x4 = (-y3+y1)/(y1^2+y1*y2+y1*y4-y2^2-2*y2*y3+y2*y4-y3^2)
+
+  FFGE status              : SKIPPED
+
+  n = 5
+  System ID                        : A1
+  Prime p                          : 680681  (BB datatype integer[8])
+  Degree cap / q sizing            : 3
+  Prime reselections (cap doubled) : 0
+  Pre-flight BB calls (not in MRFI): 12
+  Parameter count                  : 5
+  Expected parameter count         : 5
+  Parameter validation             : PASS
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 217  (NDSA = 12, MRFI = 193)
+  BB calls in NDSA                 : 12
+  BB calls in MRFI                 : 193
+  Total NDSA time for BB calls (s) : 0.000000000
+  Total MRFI time for BB calls (s) : 0.001000000
+  Total BB calls time (NDSA+MRFI)  : 0.001000000
+  Total time (s)                   : 0.014000000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.000000000
+  Time -> HFTRFR (s)           : 0.000000000
+  Time -> FTREval Interp+RR+EV : 0.000000000
+  Time -> BMEA (s)             : 0.000000000
+  Time -> Vandermonde (s)      : 0.000000000
+  Time -> Roots (s)            : 0.001000000
+  Time -> Gen. Monomials (s)   : 0.001000000
+  Time -> Final Poly. (s)      : 0.000000000
+  Time -> Get point AFL (s)    : 0.005000000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.007000000
+  Time -> NDSA Proc. (s)       : 0.000000000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 3.032
+  Deg_num (per equation)   : [2, 2, 2, 2, 2]
+  Deg_den (per equation)   : [3, 3, 3, 3, 3]
+  Terms_num (per equation) : [7, 8, 11, 8, 7]
+  Terms_den (per equation) : [12, [], [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  Recovered solution
+    x1 = (y1^2-y1*y2-y1*y4-y2^2+2*y2*y3+y2*y4-y3^2)/(y1^3+y1^2*y3+y1^2*y5-3*y1*y2^2-2*y1*y2*y4-2*y1*y3^2+y1*y3*y5-y1*y4^2+4*y2^2*y3-2*y2^2*y5+4*y2*y3*y4-2*y3^3)
+    x2 = (y1^2-2*y1*y2-y1*y4+y1*y5+3*y2*y3-y2*y5-2*y3^2+y3*y4)/(y1^3+y1^2*y3+y1^2*y5-3*y1*y2^2-2*y1*y2*y4-2*y1*y3^2+y1*y3*y5-y1*y4^2+4*y2^2*y3-2*y2^2*y5+4*y2*y3*y4-2*y3^3)
+    x3 = (y1^2-2*y1*y2-y1*y3+y1*y5+y2^2+2*y2*y3-2*y2*y5-2*y3^2+2*y3*y4+y3*y5-y4^2)/(y1^3+y1^2*y3+y1^2*y5-3*y1*y2^2-2*y1*y2*y4-2*y1*y3^2+y1*y3*y5-y1*y4^2+4*y2^2*y3-2*y2^2*y5+4*y2*y3*y4-2*y3^3)
+    x4 = (y1^2-2*y1*y2-y1*y4+y1*y5+3*y2*y3-y2*y5-2*y3^2+y3*y4)/(y1^3+y1^2*y3+y1^2*y5-3*y1*y2^2-2*y1*y2*y4-2*y1*y3^2+y1*y3*y5-y1*y4^2+4*y2^2*y3-2*y2^2*y5+4*y2*y3*y4-2*y3^3)
+    x5 = (y1^2-y1*y2-y1*y4-y2^2+2*y2*y3+y2*y4-y3^2)/(y1^3+y1^2*y3+y1^2*y5-3*y1*y2^2-2*y1*y2*y4-2*y1*y3^2+y1*y3*y5-y1*y4^2+4*y2^2*y3-2*y2^2*y5+4*y2*y3*y4-2*y3^3)
+
+  FFGE status              : SKIPPED
+
+  n = 6
+  System ID                        : A1
+  Prime p                          : 3233231  (BB datatype integer[8])
+  Degree cap / q sizing            : 3
+  Prime reselections (cap doubled) : 0
+  Pre-flight BB calls (not in MRFI): 12
+  Parameter count                  : 6
+  Expected parameter count         : 6
+  Parameter validation             : PASS
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 793  (NDSA = 12, MRFI = 769)
+  BB calls in NDSA                 : 12
+  BB calls in MRFI                 : 769
+  Total NDSA time for BB calls (s) : 0.000000000
+  Total MRFI time for BB calls (s) : 0.011000000
+  Total BB calls time (NDSA+MRFI)  : 0.011000000
+  Total time (s)                   : 0.037000000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.001000000
+  Time -> HFTRFR (s)           : 0.000000000
+  Time -> FTREval Interp+RR+EV : 0.001000000
+  Time -> BMEA (s)             : 0.001000000
+  Time -> Vandermonde (s)      : 0.000000000
+  Time -> Roots (s)            : 0.003000000
+  Time -> Gen. Monomials (s)   : 0.000000000
+  Time -> Final Poly. (s)      : 0.000000000
+  Time -> Get point AFL (s)    : 0.003000000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.001000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.027000000
+  Time -> NDSA Proc. (s)       : 0.000000000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 8.121
+  Deg_num (per equation)   : [2, 2, 2, 2, 2, 2]
+  Deg_den (per equation)   : [3, 3, 3, 3, 3, 3]
+  Terms_num (per equation) : [7, 14, 15, 15, 14, 7]
+  Terms_den (per equation) : [32, [], [], [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  Recovered solution
+    x1 = (y1^2-y1*y3-y1*y5-y2^2+2*y2*y4+y3*y5-y4^2)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+    x2 = (y1^2-y1*y2-y1*y3-y1*y5+y1*y6-y2^2+2*y2*y3+2*y2*y4-y2*y5-y3*y4+y3*y5-y3*y6-y4^2+y4*y5)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+    x3 = (y1^2-y1*y2-2*y1*y3+y1*y6+2*y2*y3+y2*y4-y2*y5-y2*y6-y3*y4+2*y3*y5-y3*y6-y4^2+y4*y5+y4*y6-y5^2)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+    x4 = (y1^2-y1*y2-2*y1*y3+y1*y6+2*y2*y3+y2*y4-y2*y5-y2*y6-y3*y4+2*y3*y5-y3*y6-y4^2+y4*y5+y4*y6-y5^2)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+    x5 = (y1^2-y1*y2-y1*y3-y1*y5+y1*y6-y2^2+2*y2*y3+2*y2*y4-y2*y5-y3*y4+y3*y5-y3*y6-y4^2+y4*y5)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+    x6 = (y1^2-y1*y3-y1*y5-y2^2+2*y2*y4+y3*y5-y4^2)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+
+  FFGE status              : SKIPPED
+
+  n = 7
+  System ID                        : A1
+  Prime p                          : 818007191  (BB datatype integer[8])
+  Degree cap / q sizing            : 4
+  Prime reselections (cap doubled) : 0
+  Pre-flight BB calls (not in MRFI): 28
+  Parameter count                  : 7
+  Expected parameter count         : 7
+  Parameter validation             : PASS
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 1081  (NDSA = 28, MRFI = 1025)
+  BB calls in NDSA                 : 28
+  BB calls in MRFI                 : 1025
+  Total NDSA time for BB calls (s) : 0.000000000
+  Total MRFI time for BB calls (s) : 0.015000000
+  Total BB calls time (NDSA+MRFI)  : 0.015000000
+  Total time (s)                   : 0.070000000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.002000000
+  Time -> HFTRFR (s)           : 0.001000000
+  Time -> FTREval Interp+RR+EV : 0.008000000
+  Time -> BMEA (s)             : 0.003000000
+  Time -> Vandermonde (s)      : 0.001000000
+  Time -> Roots (s)            : 0.010000000
+  Time -> Gen. Monomials (s)   : 0.002000000
+  Time -> Final Poly. (s)      : 0.000000000
+  Time -> Get point AFL (s)    : 0.004000000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.001000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.038000000
+  Time -> NDSA Proc. (s)       : 0.000000000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 14.399
+  Deg_num (per equation)   : [3, 3, 3, 3, 3, 3, 3]
+  Deg_den (per equation)   : [4, 4, 4, 4, 4, 4, 4]
+  Terms_num (per equation) : [32, 43, 49, 52, 49, 43, 32]
+  Terms_den (per equation) : [56, [], [], [], [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  Recovered solution
+    x1 = (y1^3-y1^2*y2-y1^2*y4-y1^2*y6-2*y1*y2^2+2*y1*y2*y3+y1*y2*y4+2*y1*y2*y5+y1*y2*y6-2*y1*y3^2+2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2+y2^3+2*y2^2*y3-2*y2^2*y4-2*y2^2*y5+y2^2*y6-2*y2*y3^2+2*y2*y3*y4-2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5-y2*y4*y6+y2*y5^2+y3^2*y4+2*y3^2*y5+y3^2*y6-2*y3*y4^2-2*y3*y4*y5+y4^3)/(y1^4+y1^3*y3+y1^3*y5+y1^3*y7-4*y1^2*y2^2-2*y1^2*y2*y4-2*y1^2*y2*y6-3*y1^2*y3^2-y1^2*y3*y5+y1^2*y3*y7-3*y1^2*y4^2-y1^2*y5^2+y1^2*y5*y7-y1^2*y6^2+5*y1*y2^2*y3-3*y1*y2^2*y7+14*y1*y2*y3*y4+6*y1*y2*y4*y5-2*y1*y2*y4*y7+2*y1*y2*y5*y6-2*y1*y3^3-y1*y3^2*y5-2*y1*y3^2*y7-2*y1*y3*y4^2+6*y1*y3*y4*y6-2*y1*y3*y5^2+y1*y3*y5*y7-y1*y3*y6^2-2*y1*y4^2*y5-y1*y4^2*y7+2*y1*y4*y5*y6-y1*y5^3+2*y2^4-4*y2^3*y4+4*y2^3*y6-4*y2^2*y3^2-4*y2^2*y3*y5+4*y2^2*y3*y7-2*y2^2*y4^2-4*y2^2*y4*y6-2*y2^2*y5*y7+2*y2^2*y6^2-4*y2*y3^2*y6+4*y2*y3*y4*y7-4*y2*y3*y5*y6+4*y2*y4^3-4*y2*y4^2*y6+4*y2*y4*y5^2+2*y3^4+4*y3^3*y5-2*y3^3*y7-4*y3^2*y4^2+4*y3^2*y4*y6+2*y3^2*y5^2-6*y3*y4^2*y5+2*y4^4)
+    x2 = (y1^3-2*y1^2*y2-y1^2*y4-y1^2*y6+y1^2*y7-y1*y2^2+3*y1*y2*y3+2*y1*y2*y4+2*y1*y2*y5-y1*y2*y7-2*y1*y3^2+3*y1*y3*y4-2*y1*y3*y5-2*y1*y4^2+y1*y4*y5+y1*y4*y6-y1*y4*y7-y1*y5^2+y1*y5*y6+2*y2^3-y2^2*y3-4*y2^2*y4-y2^2*y5+2*y2^2*y6-y2^2*y7-2*y2*y3^2+4*y2*y3*y4-2*y2*y3*y5-y2*y3*y6+2*y2*y3*y7+3*y2*y4*y5-2*y2*y4*y6+y2*y4*y7-y2*y5*y6+y3^3+2*y3^2*y5-y3^2*y7-3*y3*y4^2-2*y3*y4*y5+y3*y4*y6+y3*y5^2+2*y4^3-y4^2*y5)/(y1^4+y1^3*y3+y1^3*y5+y1^3*y7-4*y1^2*y2^2-2*y1^2*y2*y4-2*y1^2*y2*y6-3*y1^2*y3^2-y1^2*y3*y5+y1^2*y3*y7-3*y1^2*y4^2-y1^2*y5^2+y1^2*y5*y7-y1^2*y6^2+5*y1*y2^2*y3-3*y1*y2^2*y7+14*y1*y2*y3*y4+6*y1*y2*y4*y5-2*y1*y2*y4*y7+2*y1*y2*y5*y6-2*y1*y3^3-y1*y3^2*y5-2*y1*y3^2*y7-2*y1*y3*y4^2+6*y1*y3*y4*y6-2*y1*y3*y5^2+y1*y3*y5*y7-y1*y3*y6^2-2*y1*y4^2*y5-y1*y4^2*y7+2*y1*y4*y5*y6-y1*y5^3+2*y2^4-4*y2^3*y4+4*y2^3*y6-4*y2^2*y3^2-4*y2^2*y3*y5+4*y2^2*y3*y7-2*y2^2*y4^2-4*y2^2*y4*y6-2*y2^2*y5*y7+2*y2^2*y6^2-4*y2*y3^2*y6+4*y2*y3*y4*y7-4*y2*y3*y5*y6+4*y2*y4^3-4*y2*y4^2*y6+4*y2*y4*y5^2+2*y3^4+4*y3^3*y5-2*y3^3*y7-4*y3^2*y4^2+4*y3^2*y4*y6+2*y3^2*y5^2-6*y3*y4^2*y5+2*y4^4)
+    x3 = (y1^3-2*y1^2*y2-y1^2*y3-y1^2*y4+y1^2*y7+4*y1*y2*y3+3*y1*y2*y4-y1*y2*y6-2*y1*y2*y7-2*y1*y3^2+2*y1*y3*y4-y1*y3*y5+y1*y3*y6-2*y1*y4^2+y1*y4*y5+y1*y4*y6-y1*y4*y7-y1*y5^2+y1*y5*y6+y1*y5*y7-y1*y6^2+y2^3-2*y2^2*y3-3*y2^2*y4+2*y2^2*y6-y2*y3^2+2*y2*y3*y4-y2*y3*y5-2*y2*y3*y6+3*y2*y3*y7+y2*y4^2+2*y2*y4*y5-3*y2*y4*y6-y2*y5*y7+y2*y6^2+2*y3^3-2*y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3^2*y7-2*y3*y4^2-y3*y4*y5+4*y3*y4*y6+y3*y4*y7-y3*y5*y6+2*y4^3-2*y4^2*y5-y4^2*y6+y4*y5^2)/(y1^4+y1^3*y3+y1^3*y5+y1^3*y7-4*y1^2*y2^2-2*y1^2*y2*y4-2*y1^2*y2*y6-3*y1^2*y3^2-y1^2*y3*y5+y1^2*y3*y7-3*y1^2*y4^2-y1^2*y5^2+y1^2*y5*y7-y1^2*y6^2+5*y1*y2^2*y3-3*y1*y2^2*y7+14*y1*y2*y3*y4+6*y1*y2*y4*y5-2*y1*y2*y4*y7+2*y1*y2*y5*y6-2*y1*y3^3-y1*y3^2*y5-2*y1*y3^2*y7-2*y1*y3*y4^2+6*y1*y3*y4*y6-2*y1*y3*y5^2+y1*y3*y5*y7-y1*y3*y6^2-2*y1*y4^2*y5-y1*y4^2*y7+2*y1*y4*y5*y6-y1*y5^3+2*y2^4-4*y2^3*y4+4*y2^3*y6-4*y2^2*y3^2-4*y2^2*y3*y5+4*y2^2*y3*y7-2*y2^2*y4^2-4*y2^2*y4*y6-2*y2^2*y5*y7+2*y2^2*y6^2-4*y2*y3^2*y6+4*y2*y3*y4*y7-4*y2*y3*y5*y6+4*y2*y4^3-4*y2*y4^2*y6+4*y2*y4*y5^2+2*y3^4+4*y3^3*y5-2*y3^3*y7-4*y3^2*y4^2+4*y3^2*y4*y6+2*y3^2*y5^2-6*y3*y4^2*y5+2*y4^4)
+    x4 = (y1^3-2*y1^2*y2-y1^2*y3-2*y1^2*y4+y1^2*y5+y1^2*y7+6*y1*y2*y3+2*y1*y2*y4-2*y1*y2*y6-2*y1*y2*y7-3*y1*y3^2+2*y1*y3*y4-y1*y3*y5+2*y1*y3*y6-y1*y3*y7-y1*y4^2+2*y1*y4*y6-y1*y5^2+y1*y5*y7-y1*y6^2-y2^2*y3-2*y2^2*y4+2*y2^2*y6+y2^2*y7-2*y2*y3^2+2*y2*y3*y4-2*y2*y3*y5-2*y2*y3*y6+2*y2*y3*y7+2*y2*y4^2-4*y2*y4*y6+2*y2*y5^2-2*y2*y5*y7+2*y2*y6^2+2*y3^3-2*y3^2*y4+3*y3^2*y5-2*y3^2*y7-2*y3*y4^2-2*y3*y4*y5+4*y3*y4*y6+2*y3*y4*y7-2*y3*y5*y6+y3*y5*y7-y3*y6^2+2*y4^3-2*y4^2*y5-2*y4^2*y6-y4^2*y7+2*y4*y5^2+2*y4*y5*y6-y5^3)/(y1^4+y1^3*y3+y1^3*y5+y1^3*y7-4*y1^2*y2^2-2*y1^2*y2*y4-2*y1^2*y2*y6-3*y1^2*y3^2-y1^2*y3*y5+y1^2*y3*y7-3*y1^2*y4^2-y1^2*y5^2+y1^2*y5*y7-y1^2*y6^2+5*y1*y2^2*y3-3*y1*y2^2*y7+14*y1*y2*y3*y4+6*y1*y2*y4*y5-2*y1*y2*y4*y7+2*y1*y2*y5*y6-2*y1*y3^3-y1*y3^2*y5-2*y1*y3^2*y7-2*y1*y3*y4^2+6*y1*y3*y4*y6-2*y1*y3*y5^2+y1*y3*y5*y7-y1*y3*y6^2-2*y1*y4^2*y5-y1*y4^2*y7+2*y1*y4*y5*y6-y1*y5^3+2*y2^4-4*y2^3*y4+4*y2^3*y6-4*y2^2*y3^2-4*y2^2*y3*y5+4*y2^2*y3*y7-2*y2^2*y4^2-4*y2^2*y4*y6-2*y2^2*y5*y7+2*y2^2*y6^2-4*y2*y3^2*y6+4*y2*y3*y4*y7-4*y2*y3*y5*y6+4*y2*y4^3-4*y2*y4^2*y6+4*y2*y4*y5^2+2*y3^4+4*y3^3*y5-2*y3^3*y7-4*y3^2*y4^2+4*y3^2*y4*y6+2*y3^2*y5^2-6*y3*y4^2*y5+2*y4^4)
+    x5 = (y1^3-2*y1^2*y2-y1^2*y3-y1^2*y4+y1^2*y7+4*y1*y2*y3+3*y1*y2*y4-y1*y2*y6-2*y1*y2*y7-2*y1*y3^2+2*y1*y3*y4-y1*y3*y5+y1*y3*y6-2*y1*y4^2+y1*y4*y5+y1*y4*y6-y1*y4*y7-y1*y5^2+y1*y5*y6+y1*y5*y7-y1*y6^2+y2^3-2*y2^2*y3-3*y2^2*y4+2*y2^2*y6-y2*y3^2+2*y2*y3*y4-y2*y3*y5-2*y2*y3*y6+3*y2*y3*y7+y2*y4^2+2*y2*y4*y5-3*y2*y4*y6-y2*y5*y7+y2*y6^2+2*y3^3-2*y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3^2*y7-2*y3*y4^2-y3*y4*y5+4*y3*y4*y6+y3*y4*y7-y3*y5*y6+2*y4^3-2*y4^2*y5-y4^2*y6+y4*y5^2)/(y1^4+y1^3*y3+y1^3*y5+y1^3*y7-4*y1^2*y2^2-2*y1^2*y2*y4-2*y1^2*y2*y6-3*y1^2*y3^2-y1^2*y3*y5+y1^2*y3*y7-3*y1^2*y4^2-y1^2*y5^2+y1^2*y5*y7-y1^2*y6^2+5*y1*y2^2*y3-3*y1*y2^2*y7+14*y1*y2*y3*y4+6*y1*y2*y4*y5-2*y1*y2*y4*y7+2*y1*y2*y5*y6-2*y1*y3^3-y1*y3^2*y5-2*y1*y3^2*y7-2*y1*y3*y4^2+6*y1*y3*y4*y6-2*y1*y3*y5^2+y1*y3*y5*y7-y1*y3*y6^2-2*y1*y4^2*y5-y1*y4^2*y7+2*y1*y4*y5*y6-y1*y5^3+2*y2^4-4*y2^3*y4+4*y2^3*y6-4*y2^2*y3^2-4*y2^2*y3*y5+4*y2^2*y3*y7-2*y2^2*y4^2-4*y2^2*y4*y6-2*y2^2*y5*y7+2*y2^2*y6^2-4*y2*y3^2*y6+4*y2*y3*y4*y7-4*y2*y3*y5*y6+4*y2*y4^3-4*y2*y4^2*y6+4*y2*y4*y5^2+2*y3^4+4*y3^3*y5-2*y3^3*y7-4*y3^2*y4^2+4*y3^2*y4*y6+2*y3^2*y5^2-6*y3*y4^2*y5+2*y4^4)
+    x6 = (y1^3-2*y1^2*y2-y1^2*y4-y1^2*y6+y1^2*y7-y1*y2^2+3*y1*y2*y3+2*y1*y2*y4+2*y1*y2*y5-y1*y2*y7-2*y1*y3^2+3*y1*y3*y4-2*y1*y3*y5-2*y1*y4^2+y1*y4*y5+y1*y4*y6-y1*y4*y7-y1*y5^2+y1*y5*y6+2*y2^3-y2^2*y3-4*y2^2*y4-y2^2*y5+2*y2^2*y6-y2^2*y7-2*y2*y3^2+4*y2*y3*y4-2*y2*y3*y5-y2*y3*y6+2*y2*y3*y7+3*y2*y4*y5-2*y2*y4*y6+y2*y4*y7-y2*y5*y6+y3^3+2*y3^2*y5-y3^2*y7-3*y3*y4^2-2*y3*y4*y5+y3*y4*y6+y3*y5^2+2*y4^3-y4^2*y5)/(y1^4+y1^3*y3+y1^3*y5+y1^3*y7-4*y1^2*y2^2-2*y1^2*y2*y4-2*y1^2*y2*y6-3*y1^2*y3^2-y1^2*y3*y5+y1^2*y3*y7-3*y1^2*y4^2-y1^2*y5^2+y1^2*y5*y7-y1^2*y6^2+5*y1*y2^2*y3-3*y1*y2^2*y7+14*y1*y2*y3*y4+6*y1*y2*y4*y5-2*y1*y2*y4*y7+2*y1*y2*y5*y6-2*y1*y3^3-y1*y3^2*y5-2*y1*y3^2*y7-2*y1*y3*y4^2+6*y1*y3*y4*y6-2*y1*y3*y5^2+y1*y3*y5*y7-y1*y3*y6^2-2*y1*y4^2*y5-y1*y4^2*y7+2*y1*y4*y5*y6-y1*y5^3+2*y2^4-4*y2^3*y4+4*y2^3*y6-4*y2^2*y3^2-4*y2^2*y3*y5+4*y2^2*y3*y7-2*y2^2*y4^2-4*y2^2*y4*y6-2*y2^2*y5*y7+2*y2^2*y6^2-4*y2*y3^2*y6+4*y2*y3*y4*y7-4*y2*y3*y5*y6+4*y2*y4^3-4*y2*y4^2*y6+4*y2*y4*y5^2+2*y3^4+4*y3^3*y5-2*y3^3*y7-4*y3^2*y4^2+4*y3^2*y4*y6+2*y3^2*y5^2-6*y3*y4^2*y5+2*y4^4)
+    x7 = (y1^3-y1^2*y2-y1^2*y4-y1^2*y6-2*y1*y2^2+2*y1*y2*y3+y1*y2*y4+2*y1*y2*y5+y1*y2*y6-2*y1*y3^2+2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2+y2^3+2*y2^2*y3-2*y2^2*y4-2*y2^2*y5+y2^2*y6-2*y2*y3^2+2*y2*y3*y4-2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5-y2*y4*y6+y2*y5^2+y3^2*y4+2*y3^2*y5+y3^2*y6-2*y3*y4^2-2*y3*y4*y5+y4^3)/(y1^4+y1^3*y3+y1^3*y5+y1^3*y7-4*y1^2*y2^2-2*y1^2*y2*y4-2*y1^2*y2*y6-3*y1^2*y3^2-y1^2*y3*y5+y1^2*y3*y7-3*y1^2*y4^2-y1^2*y5^2+y1^2*y5*y7-y1^2*y6^2+5*y1*y2^2*y3-3*y1*y2^2*y7+14*y1*y2*y3*y4+6*y1*y2*y4*y5-2*y1*y2*y4*y7+2*y1*y2*y5*y6-2*y1*y3^3-y1*y3^2*y5-2*y1*y3^2*y7-2*y1*y3*y4^2+6*y1*y3*y4*y6-2*y1*y3*y5^2+y1*y3*y5*y7-y1*y3*y6^2-2*y1*y4^2*y5-y1*y4^2*y7+2*y1*y4*y5*y6-y1*y5^3+2*y2^4-4*y2^3*y4+4*y2^3*y6-4*y2^2*y3^2-4*y2^2*y3*y5+4*y2^2*y3*y7-2*y2^2*y4^2-4*y2^2*y4*y6-2*y2^2*y5*y7+2*y2^2*y6^2-4*y2*y3^2*y6+4*y2*y3*y4*y7-4*y2*y3*y5*y6+4*y2*y4^3-4*y2*y4^2*y6+4*y2*y4*y5^2+2*y3^4+4*y3^3*y5-2*y3^3*y7-4*y3^2*y4^2+4*y3^2*y4*y6+2*y3^2*y5^2-6*y3*y4^2*y5+2*y4^4)
+
+  FFGE status              : SKIPPED
+
+  n = 8
+  System ID                        : A1
+  Prime p                          : 2156564411  (BB datatype integer[8])
+  Degree cap / q sizing            : 4
+  Prime reselections (cap doubled) : 0
+  Pre-flight BB calls (not in MRFI): 28
+  Parameter count                  : 8
+  Expected parameter count         : 8
+  Parameter validation             : PASS
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 4153  (NDSA = 28, MRFI = 4097)
+  BB calls in NDSA                 : 28
+  BB calls in MRFI                 : 4097
+  Total NDSA time for BB calls (s) : 0.000000000
+  Total MRFI time for BB calls (s) : 0.062000000
+  Total BB calls time (NDSA+MRFI)  : 0.062000000
+  Total time (s)                   : 0.201000000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.000000000
+  Time -> HFTRFR (s)           : 0.001000000
+  Time -> FTREval Interp+RR+EV : 0.019000000
+  Time -> BMEA (s)             : 0.005000000
+  Time -> Vandermonde (s)      : 0.003000000
+  Time -> Roots (s)            : 0.023000000
+  Time -> Gen. Monomials (s)   : 0.004000000
+  Time -> Final Poly. (s)      : 0.003000000
+  Time -> Get point AFL (s)    : 0.015000000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.128000000
+  Time -> NDSA Proc. (s)       : 0.000000000
+  GC -> collections            : 1
+  GC -> Mbytes allocated       : 35.511
+  Deg_num (per equation)   : [3, 3, 3, 3, 3, 3, 3, 3]
+  Deg_den (per equation)   : [4, 4, 4, 4, 4, 4, 4, 4]
+  Terms_num (per equation) : [30, 65, 77, 78, 78, 77, 65, 30]
+  Terms_den (per equation) : [167, [], [], [], [], [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  Recovered solution
+    x1 = (y1^3-y1^2*y3-y1^2*y5-y1^2*y7-2*y1*y2^2+2*y1*y2*y4+2*y1*y2*y6-y1*y3^2+3*y1*y3*y5+y1*y3*y7-y1*y4^2-y1*y5^2+y1*y5*y7-y1*y6^2+3*y2^2*y3-2*y2^2*y5+y2^2*y7-2*y2*y3*y4-4*y2*y3*y6+2*y2*y4*y5-2*y2*y4*y7+2*y2*y5*y6+y3^2*y5+2*y3*y4*y6-2*y3*y5^2-y3*y5*y7+y3*y6^2+y4^2*y7-2*y4*y5*y6+y5^3)/(y1^4+y1^3*y2+y1^3*y4+y1^3*y6+y1^3*y8-3*y1^2*y2^2-2*y1^2*y2*y3+y1^2*y2*y4-2*y1^2*y2*y5+y1^2*y2*y6-2*y1^2*y2*y7+y1^2*y2*y8-3*y1^2*y3^2-2*y1^2*y3*y4-2*y1^2*y3*y6-2*y1^2*y4^2-2*y1^2*y4*y5+y1^2*y4*y6+y1^2*y4*y8-2*y1^2*y5^2-y1^2*y6^2+y1^2*y6*y8-y1^2*y7^2-2*y1*y2^3+4*y1*y2^2*y3+y1*y2^2*y4-2*y1*y2^2*y5+y1*y2^2*y6-2*y1*y2^2*y7-2*y1*y2^2*y8+y1*y2*y3^2+6*y1*y2*y3*y4+8*y1*y2*y3*y5-4*y1*y2*y3*y6+2*y1*y2*y3*y7-2*y1*y2*y3*y8+2*y1*y2*y4^2+4*y1*y2*y4*y5+3*y1*y2*y4*y6-2*y1*y2*y4*y7+y1*y2*y4*y8-y1*y2*y5^2+4*y1*y2*y5*y6-2*y1*y2*y5*y8-y1*y2*y6^2+2*y1*y2*y6*y7+y1*y2*y6*y8-y1*y2*y7^2+y1*y3^2*y4+4*y1*y3^2*y5-2*y1*y3^2*y6-2*y1*y3^2*y8-2*y1*y3*y4^2+2*y1*y3*y4*y5+2*y1*y3*y4*y6+2*y1*y3*y4*y7-2*y1*y3*y4*y8+2*y1*y3*y5*y6+4*y1*y3*y5*y7-2*y1*y3*y6^2-2*y1*y4^3-2*y1*y4^2*y5-y1*y4^2*y6+2*y1*y4^2*y7-y1*y4^2*y8-y1*y4*y5^2-2*y1*y4*y5*y6+2*y1*y4*y5*y7+y1*y4*y6*y8-y1*y4*y7^2-y1*y5^2*y6-y1*y5^2*y8+2*y1*y5*y6*y7-y1*y6^3+y2^4+4*y2^3*y3-3*y2^3*y4-2*y2^3*y5+2*y2^3*y6+2*y2^3*y7-y2^3*y8-y2^2*y3^2-4*y2^2*y3*y4-2*y2^2*y3*y6+6*y2^2*y3*y7+2*y2^2*y3*y8+y2^2*y4^2-2*y2^2*y4*y6-4*y2^2*y4*y7+2*y2^2*y4*y8-y2^2*y5^2+2*y2^2*y5*y6-2*y2^2*y5*y7-2*y2^2*y5*y8+2*y2^2*y6*y7-y2^2*y6*y8+y2^2*y7^2-2*y2*y3^3-4*y2*y3^2*y4-2*y2*y3^2*y5-3*y2*y3^2*y6+2*y2*y3^2*y8-2*y2*y3*y4*y5-2*y2*y3*y4*y6-4*y2*y3*y4*y7+2*y2*y3*y4*y8-2*y2*y3*y5^2+2*y2*y3*y5*y8-2*y2*y3*y6^2-2*y2*y3*y6*y7-2*y2*y3*y6*y8+2*y2*y3*y7^2+2*y2*y4^3+4*y2*y4^2*y5-2*y2*y4^2*y6+4*y2*y4*y5^2-2*y2*y4*y5*y6-2*y2*y4*y5*y7+2*y2*y4*y5*y8+2*y2*y4*y6^2-2*y2*y4*y6*y7+y2*y4*y6*y8-y2*y4*y7^2+2*y2*y5^3-2*y2*y5^2*y7-y2*y5^2*y8+2*y2*y5*y6^2+2*y2*y5*y6*y7-y2*y6^3+y3^4+2*y3^3*y4+2*y3^3*y6-2*y3^3*y7+y3^2*y4^2-2*y3^2*y4*y5+6*y3^2*y4*y6-2*y3^2*y4*y7-y3^2*y4*y8-2*y3^2*y5^2+2*y3^2*y5*y6+2*y3^2*y5*y8+y3^2*y6^2-2*y3^2*y6*y7-y3^2*y6*y8+y3^2*y7^2-2*y3*y4^2*y5+2*y3*y4^2*y6+2*y3*y4^2*y7-2*y3*y4^2*y8-2*y3*y4*y5^2-2*y3*y4*y5*y6+2*y3*y4*y5*y8+4*y3*y4*y6^2-2*y3*y4*y6*y7-2*y3*y5^2*y6-2*y3*y5^2*y7+2*y3*y5*y6^2-y4^3*y6+2*y4^3*y7-y4^3*y8+y4^2*y5^2-4*y4^2*y5*y6+2*y4^2*y5*y7+y4^2*y6^2+2*y4*y5^3-3*y4*y5^2*y6+y5^4)
+    x2 = (y1^3-y1^2*y2-y1^2*y3-y1^2*y5-y1^2*y7+y1^2*y8-2*y1*y2^2+2*y1*y2*y3+2*y1*y2*y4+y1*y2*y5+2*y1*y2*y6-y1*y2*y7-y1*y3^2+y1*y3*y4+3*y1*y3*y5-2*y1*y3*y6+y1*y3*y7-y1*y3*y8-y1*y4^2-y1*y4*y5-y1*y5^2+y1*y5*y6+y1*y5*y7-y1*y5*y8-y1*y6^2+y1*y6*y7+y2^3+3*y2^2*y3-3*y2^2*y4-2*y2^2*y5+y2^2*y6+y2^2*y7-y2^2*y8-2*y2*y3^2-2*y2*y3*y4-4*y2*y3*y6+2*y2*y3*y7+2*y2*y4^2+2*y2*y4*y5-2*y2*y4*y7+2*y2*y4*y8+2*y2*y5*y6-y2*y5*y7-y2*y6^2+y3^2*y4+y3^2*y5+y3^2*y6-2*y3*y4*y5+2*y3*y4*y6-y3*y4*y7-2*y3*y5^2+y3*y5*y6-y3*y5*y7+y3*y5*y8+y3*y6^2-y3*y6*y7-y4^2*y6+y4^2*y7-y4^2*y8+y4*y5^2-2*y4*y5*y6+y4*y5*y7+y4*y6^2+y5^3-y5^2*y6)/(y1^4+y1^3*y2+y1^3*y4+y1^3*y6+y1^3*y8-3*y1^2*y2^2-2*y1^2*y2*y3+y1^2*y2*y4-2*y1^2*y2*y5+y1^2*y2*y6-2*y1^2*y2*y7+y1^2*y2*y8-3*y1^2*y3^2-2*y1^2*y3*y4-2*y1^2*y3*y6-2*y1^2*y4^2-2*y1^2*y4*y5+y1^2*y4*y6+y1^2*y4*y8-2*y1^2*y5^2-y1^2*y6^2+y1^2*y6*y8-y1^2*y7^2-2*y1*y2^3+4*y1*y2^2*y3+y1*y2^2*y4-2*y1*y2^2*y5+y1*y2^2*y6-2*y1*y2^2*y7-2*y1*y2^2*y8+y1*y2*y3^2+6*y1*y2*y3*y4+8*y1*y2*y3*y5-4*y1*y2*y3*y6+2*y1*y2*y3*y7-2*y1*y2*y3*y8+2*y1*y2*y4^2+4*y1*y2*y4*y5+3*y1*y2*y4*y6-2*y1*y2*y4*y7+y1*y2*y4*y8-y1*y2*y5^2+4*y1*y2*y5*y6-2*y1*y2*y5*y8-y1*y2*y6^2+2*y1*y2*y6*y7+y1*y2*y6*y8-y1*y2*y7^2+y1*y3^2*y4+4*y1*y3^2*y5-2*y1*y3^2*y6-2*y1*y3^2*y8-2*y1*y3*y4^2+2*y1*y3*y4*y5+2*y1*y3*y4*y6+2*y1*y3*y4*y7-2*y1*y3*y4*y8+2*y1*y3*y5*y6+4*y1*y3*y5*y7-2*y1*y3*y6^2-2*y1*y4^3-2*y1*y4^2*y5-y1*y4^2*y6+2*y1*y4^2*y7-y1*y4^2*y8-y1*y4*y5^2-2*y1*y4*y5*y6+2*y1*y4*y5*y7+y1*y4*y6*y8-y1*y4*y7^2-y1*y5^2*y6-y1*y5^2*y8+2*y1*y5*y6*y7-y1*y6^3+y2^4+4*y2^3*y3-3*y2^3*y4-2*y2^3*y5+2*y2^3*y6+2*y2^3*y7-y2^3*y8-y2^2*y3^2-4*y2^2*y3*y4-2*y2^2*y3*y6+6*y2^2*y3*y7+2*y2^2*y3*y8+y2^2*y4^2-2*y2^2*y4*y6-4*y2^2*y4*y7+2*y2^2*y4*y8-y2^2*y5^2+2*y2^2*y5*y6-2*y2^2*y5*y7-2*y2^2*y5*y8+2*y2^2*y6*y7-y2^2*y6*y8+y2^2*y7^2-2*y2*y3^3-4*y2*y3^2*y4-2*y2*y3^2*y5-3*y2*y3^2*y6+2*y2*y3^2*y8-2*y2*y3*y4*y5-2*y2*y3*y4*y6-4*y2*y3*y4*y7+2*y2*y3*y4*y8-2*y2*y3*y5^2+2*y2*y3*y5*y8-2*y2*y3*y6^2-2*y2*y3*y6*y7-2*y2*y3*y6*y8+2*y2*y3*y7^2+2*y2*y4^3+4*y2*y4^2*y5-2*y2*y4^2*y6+4*y2*y4*y5^2-2*y2*y4*y5*y6-2*y2*y4*y5*y7+2*y2*y4*y5*y8+2*y2*y4*y6^2-2*y2*y4*y6*y7+y2*y4*y6*y8-y2*y4*y7^2+2*y2*y5^3-2*y2*y5^2*y7-y2*y5^2*y8+2*y2*y5*y6^2+2*y2*y5*y6*y7-y2*y6^3+y3^4+2*y3^3*y4+2*y3^3*y6-2*y3^3*y7+y3^2*y4^2-2*y3^2*y4*y5+6*y3^2*y4*y6-2*y3^2*y4*y7-y3^2*y4*y8-2*y3^2*y5^2+2*y3^2*y5*y6+2*y3^2*y5*y8+y3^2*y6^2-2*y3^2*y6*y7-y3^2*y6*y8+y3^2*y7^2-2*y3*y4^2*y5+2*y3*y4^2*y6+2*y3*y4^2*y7-2*y3*y4^2*y8-2*y3*y4*y5^2-2*y3*y4*y5*y6+2*y3*y4*y5*y8+4*y3*y4*y6^2-2*y3*y4*y6*y7-2*y3*y5^2*y6-2*y3*y5^2*y7+2*y3*y5*y6^2-y4^3*y6+2*y4^3*y7-y4^3*y8+y4^2*y5^2-4*y4^2*y5*y6+2*y4^2*y5*y7+y4^2*y6^2+2*y4*y5^3-3*y4*y5^2*y6+y5^4)
+    x3 = (y1^3-y1^2*y2-2*y1^2*y3-y1^2*y5+y1^2*y8-y1*y2^2+2*y1*y2*y3+3*y1*y2*y4+y1*y2*y5-y1*y2*y7-y1*y2*y8+y1*y3*y4+3*y1*y3*y5-2*y1*y3*y6+y1*y3*y7-y1*y3*y8-2*y1*y4^2-y1*y4*y5+y1*y4*y6-y1*y5^2+y1*y5*y6+y1*y5*y7-y1*y5*y8-y1*y6^2+y1*y6*y7+y1*y6*y8-y1*y7^2+y2^3+y2^2*y3-3*y2^2*y4-y2^2*y5+y2^2*y6+y2^2*y7-y2^2*y8-2*y2*y3^2-2*y2*y3*y4-2*y2*y3*y6+2*y2*y3*y7+2*y2*y3*y8+2*y2*y4^2+2*y2*y4*y5-3*y2*y4*y7+2*y2*y4*y8+y2*y5*y6-y2*y5*y7-y2*y5*y8-y2*y6^2+y2*y6*y7+y3^3+y3^2*y4-y3^2*y5+y3^2*y6-2*y3^2*y7-2*y3*y4*y5+3*y3*y4*y6-y3*y4*y7-y3*y4*y8-y3*y5^2+y3*y5*y6+y3*y5*y7+y3*y5*y8-y3*y6*y7-y3*y6*y8+y3*y7^2-y4^2*y6+2*y4^2*y7-y4^2*y8+y4*y5^2-3*y4*y5*y6+y4*y5*y7+y4*y5*y8+y4*y6^2-y4*y6*y7+y5^3-y5^2*y6-y5^2*y7+y5*y6^2)/(y1^4+y1^3*y2+y1^3*y4+y1^3*y6+y1^3*y8-3*y1^2*y2^2-2*y1^2*y2*y3+y1^2*y2*y4-2*y1^2*y2*y5+y1^2*y2*y6-2*y1^2*y2*y7+y1^2*y2*y8-3*y1^2*y3^2-2*y1^2*y3*y4-2*y1^2*y3*y6-2*y1^2*y4^2-2*y1^2*y4*y5+y1^2*y4*y6+y1^2*y4*y8-2*y1^2*y5^2-y1^2*y6^2+y1^2*y6*y8-y1^2*y7^2-2*y1*y2^3+4*y1*y2^2*y3+y1*y2^2*y4-2*y1*y2^2*y5+y1*y2^2*y6-2*y1*y2^2*y7-2*y1*y2^2*y8+y1*y2*y3^2+6*y1*y2*y3*y4+8*y1*y2*y3*y5-4*y1*y2*y3*y6+2*y1*y2*y3*y7-2*y1*y2*y3*y8+2*y1*y2*y4^2+4*y1*y2*y4*y5+3*y1*y2*y4*y6-2*y1*y2*y4*y7+y1*y2*y4*y8-y1*y2*y5^2+4*y1*y2*y5*y6-2*y1*y2*y5*y8-y1*y2*y6^2+2*y1*y2*y6*y7+y1*y2*y6*y8-y1*y2*y7^2+y1*y3^2*y4+4*y1*y3^2*y5-2*y1*y3^2*y6-2*y1*y3^2*y8-2*y1*y3*y4^2+2*y1*y3*y4*y5+2*y1*y3*y4*y6+2*y1*y3*y4*y7-2*y1*y3*y4*y8+2*y1*y3*y5*y6+4*y1*y3*y5*y7-2*y1*y3*y6^2-2*y1*y4^3-2*y1*y4^2*y5-y1*y4^2*y6+2*y1*y4^2*y7-y1*y4^2*y8-y1*y4*y5^2-2*y1*y4*y5*y6+2*y1*y4*y5*y7+y1*y4*y6*y8-y1*y4*y7^2-y1*y5^2*y6-y1*y5^2*y8+2*y1*y5*y6*y7-y1*y6^3+y2^4+4*y2^3*y3-3*y2^3*y4-2*y2^3*y5+2*y2^3*y6+2*y2^3*y7-y2^3*y8-y2^2*y3^2-4*y2^2*y3*y4-2*y2^2*y3*y6+6*y2^2*y3*y7+2*y2^2*y3*y8+y2^2*y4^2-2*y2^2*y4*y6-4*y2^2*y4*y7+2*y2^2*y4*y8-y2^2*y5^2+2*y2^2*y5*y6-2*y2^2*y5*y7-2*y2^2*y5*y8+2*y2^2*y6*y7-y2^2*y6*y8+y2^2*y7^2-2*y2*y3^3-4*y2*y3^2*y4-2*y2*y3^2*y5-3*y2*y3^2*y6+2*y2*y3^2*y8-2*y2*y3*y4*y5-2*y2*y3*y4*y6-4*y2*y3*y4*y7+2*y2*y3*y4*y8-2*y2*y3*y5^2+2*y2*y3*y5*y8-2*y2*y3*y6^2-2*y2*y3*y6*y7-2*y2*y3*y6*y8+2*y2*y3*y7^2+2*y2*y4^3+4*y2*y4^2*y5-2*y2*y4^2*y6+4*y2*y4*y5^2-2*y2*y4*y5*y6-2*y2*y4*y5*y7+2*y2*y4*y5*y8+2*y2*y4*y6^2-2*y2*y4*y6*y7+y2*y4*y6*y8-y2*y4*y7^2+2*y2*y5^3-2*y2*y5^2*y7-y2*y5^2*y8+2*y2*y5*y6^2+2*y2*y5*y6*y7-y2*y6^3+y3^4+2*y3^3*y4+2*y3^3*y6-2*y3^3*y7+y3^2*y4^2-2*y3^2*y4*y5+6*y3^2*y4*y6-2*y3^2*y4*y7-y3^2*y4*y8-2*y3^2*y5^2+2*y3^2*y5*y6+2*y3^2*y5*y8+y3^2*y6^2-2*y3^2*y6*y7-y3^2*y6*y8+y3^2*y7^2-2*y3*y4^2*y5+2*y3*y4^2*y6+2*y3*y4^2*y7-2*y3*y4^2*y8-2*y3*y4*y5^2-2*y3*y4*y5*y6+2*y3*y4*y5*y8+4*y3*y4*y6^2-2*y3*y4*y6*y7-2*y3*y5^2*y6-2*y3*y5^2*y7+2*y3*y5*y6^2-y4^3*y6+2*y4^3*y7-y4^3*y8+y4^2*y5^2-4*y4^2*y5*y6+2*y4^2*y5*y7+y4^2*y6^2+2*y4*y5^3-3*y4*y5^2*y6+y5^4)
+    x4 = (y1^3-y1^2*y2-2*y1^2*y3-y1^2*y4-y1^2*y5+y1^2*y6+y1^2*y8-y1*y2^2+4*y1*y2*y3+3*y1*y2*y4-2*y1*y2*y7-y1*y2*y8+3*y1*y3*y5-2*y1*y3*y6+y1*y3*y7-2*y1*y3*y8-2*y1*y4^2+y1*y4*y6+2*y1*y4*y7-y1*y5^2+y1*y5*y7-y1*y6^2+y1*y6*y8-y1*y7^2+y2^2*y3-y2^2*y4-y2^2*y5+y2^2*y6+y2^2*y7-3*y2*y3^2-2*y2*y3*y4-2*y2*y3*y6+2*y2*y3*y7+2*y2*y3*y8+2*y2*y4^2+2*y2*y4*y5-3*y2*y4*y6-3*y2*y4*y7+y2*y4*y8+y2*y5^2+y2*y5*y6-2*y2*y5*y7-y2*y5*y8+y2*y6^2+y2*y6*y7-y2*y6*y8+y2*y7^2+y3^3+y3^2*y4-y3^2*y5+2*y3^2*y6-2*y3^2*y7-2*y3*y4*y5+3*y3*y4*y6-y3*y4*y8-y3*y5^2+y3*y5*y7+2*y3*y5*y8-2*y3*y6*y7-y3*y6*y8+y3*y7^2-y4^2*y6+2*y4^2*y7-y4^2*y8+y4*y5^2-3*y4*y5*y6+y4*y5*y8+2*y4*y6^2-y4*y6*y7+y4*y6*y8-y4*y7^2+y5^3-y5^2*y6-y5^2*y7-y5^2*y8+y5*y6^2+2*y5*y6*y7-y6^3)/(y1^4+y1^3*y2+y1^3*y4+y1^3*y6+y1^3*y8-3*y1^2*y2^2-2*y1^2*y2*y3+y1^2*y2*y4-2*y1^2*y2*y5+y1^2*y2*y6-2*y1^2*y2*y7+y1^2*y2*y8-3*y1^2*y3^2-2*y1^2*y3*y4-2*y1^2*y3*y6-2*y1^2*y4^2-2*y1^2*y4*y5+y1^2*y4*y6+y1^2*y4*y8-2*y1^2*y5^2-y1^2*y6^2+y1^2*y6*y8-y1^2*y7^2-2*y1*y2^3+4*y1*y2^2*y3+y1*y2^2*y4-2*y1*y2^2*y5+y1*y2^2*y6-2*y1*y2^2*y7-2*y1*y2^2*y8+y1*y2*y3^2+6*y1*y2*y3*y4+8*y1*y2*y3*y5-4*y1*y2*y3*y6+2*y1*y2*y3*y7-2*y1*y2*y3*y8+2*y1*y2*y4^2+4*y1*y2*y4*y5+3*y1*y2*y4*y6-2*y1*y2*y4*y7+y1*y2*y4*y8-y1*y2*y5^2+4*y1*y2*y5*y6-2*y1*y2*y5*y8-y1*y2*y6^2+2*y1*y2*y6*y7+y1*y2*y6*y8-y1*y2*y7^2+y1*y3^2*y4+4*y1*y3^2*y5-2*y1*y3^2*y6-2*y1*y3^2*y8-2*y1*y3*y4^2+2*y1*y3*y4*y5+2*y1*y3*y4*y6+2*y1*y3*y4*y7-2*y1*y3*y4*y8+2*y1*y3*y5*y6+4*y1*y3*y5*y7-2*y1*y3*y6^2-2*y1*y4^3-2*y1*y4^2*y5-y1*y4^2*y6+2*y1*y4^2*y7-y1*y4^2*y8-y1*y4*y5^2-2*y1*y4*y5*y6+2*y1*y4*y5*y7+y1*y4*y6*y8-y1*y4*y7^2-y1*y5^2*y6-y1*y5^2*y8+2*y1*y5*y6*y7-y1*y6^3+y2^4+4*y2^3*y3-3*y2^3*y4-2*y2^3*y5+2*y2^3*y6+2*y2^3*y7-y2^3*y8-y2^2*y3^2-4*y2^2*y3*y4-2*y2^2*y3*y6+6*y2^2*y3*y7+2*y2^2*y3*y8+y2^2*y4^2-2*y2^2*y4*y6-4*y2^2*y4*y7+2*y2^2*y4*y8-y2^2*y5^2+2*y2^2*y5*y6-2*y2^2*y5*y7-2*y2^2*y5*y8+2*y2^2*y6*y7-y2^2*y6*y8+y2^2*y7^2-2*y2*y3^3-4*y2*y3^2*y4-2*y2*y3^2*y5-3*y2*y3^2*y6+2*y2*y3^2*y8-2*y2*y3*y4*y5-2*y2*y3*y4*y6-4*y2*y3*y4*y7+2*y2*y3*y4*y8-2*y2*y3*y5^2+2*y2*y3*y5*y8-2*y2*y3*y6^2-2*y2*y3*y6*y7-2*y2*y3*y6*y8+2*y2*y3*y7^2+2*y2*y4^3+4*y2*y4^2*y5-2*y2*y4^2*y6+4*y2*y4*y5^2-2*y2*y4*y5*y6-2*y2*y4*y5*y7+2*y2*y4*y5*y8+2*y2*y4*y6^2-2*y2*y4*y6*y7+y2*y4*y6*y8-y2*y4*y7^2+2*y2*y5^3-2*y2*y5^2*y7-y2*y5^2*y8+2*y2*y5*y6^2+2*y2*y5*y6*y7-y2*y6^3+y3^4+2*y3^3*y4+2*y3^3*y6-2*y3^3*y7+y3^2*y4^2-2*y3^2*y4*y5+6*y3^2*y4*y6-2*y3^2*y4*y7-y3^2*y4*y8-2*y3^2*y5^2+2*y3^2*y5*y6+2*y3^2*y5*y8+y3^2*y6^2-2*y3^2*y6*y7-y3^2*y6*y8+y3^2*y7^2-2*y3*y4^2*y5+2*y3*y4^2*y6+2*y3*y4^2*y7-2*y3*y4^2*y8-2*y3*y4*y5^2-2*y3*y4*y5*y6+2*y3*y4*y5*y8+4*y3*y4*y6^2-2*y3*y4*y6*y7-2*y3*y5^2*y6-2*y3*y5^2*y7+2*y3*y5*y6^2-y4^3*y6+2*y4^3*y7-y4^3*y8+y4^2*y5^2-4*y4^2*y5*y6+2*y4^2*y5*y7+y4^2*y6^2+2*y4*y5^3-3*y4*y5^2*y6+y5^4)
+    x5 = (y1^3-y1^2*y2-2*y1^2*y3-y1^2*y4-y1^2*y5+y1^2*y6+y1^2*y8-y1*y2^2+4*y1*y2*y3+3*y1*y2*y4-2*y1*y2*y7-y1*y2*y8+3*y1*y3*y5-2*y1*y3*y6+y1*y3*y7-2*y1*y3*y8-2*y1*y4^2+y1*y4*y6+2*y1*y4*y7-y1*y5^2+y1*y5*y7-y1*y6^2+y1*y6*y8-y1*y7^2+y2^2*y3-y2^2*y4-y2^2*y5+y2^2*y6+y2^2*y7-3*y2*y3^2-2*y2*y3*y4-2*y2*y3*y6+2*y2*y3*y7+2*y2*y3*y8+2*y2*y4^2+2*y2*y4*y5-3*y2*y4*y6-3*y2*y4*y7+y2*y4*y8+y2*y5^2+y2*y5*y6-2*y2*y5*y7-y2*y5*y8+y2*y6^2+y2*y6*y7-y2*y6*y8+y2*y7^2+y3^3+y3^2*y4-y3^2*y5+2*y3^2*y6-2*y3^2*y7-2*y3*y4*y5+3*y3*y4*y6-y3*y4*y8-y3*y5^2+y3*y5*y7+2*y3*y5*y8-2*y3*y6*y7-y3*y6*y8+y3*y7^2-y4^2*y6+2*y4^2*y7-y4^2*y8+y4*y5^2-3*y4*y5*y6+y4*y5*y8+2*y4*y6^2-y4*y6*y7+y4*y6*y8-y4*y7^2+y5^3-y5^2*y6-y5^2*y7-y5^2*y8+y5*y6^2+2*y5*y6*y7-y6^3)/(y1^4+y1^3*y2+y1^3*y4+y1^3*y6+y1^3*y8-3*y1^2*y2^2-2*y1^2*y2*y3+y1^2*y2*y4-2*y1^2*y2*y5+y1^2*y2*y6-2*y1^2*y2*y7+y1^2*y2*y8-3*y1^2*y3^2-2*y1^2*y3*y4-2*y1^2*y3*y6-2*y1^2*y4^2-2*y1^2*y4*y5+y1^2*y4*y6+y1^2*y4*y8-2*y1^2*y5^2-y1^2*y6^2+y1^2*y6*y8-y1^2*y7^2-2*y1*y2^3+4*y1*y2^2*y3+y1*y2^2*y4-2*y1*y2^2*y5+y1*y2^2*y6-2*y1*y2^2*y7-2*y1*y2^2*y8+y1*y2*y3^2+6*y1*y2*y3*y4+8*y1*y2*y3*y5-4*y1*y2*y3*y6+2*y1*y2*y3*y7-2*y1*y2*y3*y8+2*y1*y2*y4^2+4*y1*y2*y4*y5+3*y1*y2*y4*y6-2*y1*y2*y4*y7+y1*y2*y4*y8-y1*y2*y5^2+4*y1*y2*y5*y6-2*y1*y2*y5*y8-y1*y2*y6^2+2*y1*y2*y6*y7+y1*y2*y6*y8-y1*y2*y7^2+y1*y3^2*y4+4*y1*y3^2*y5-2*y1*y3^2*y6-2*y1*y3^2*y8-2*y1*y3*y4^2+2*y1*y3*y4*y5+2*y1*y3*y4*y6+2*y1*y3*y4*y7-2*y1*y3*y4*y8+2*y1*y3*y5*y6+4*y1*y3*y5*y7-2*y1*y3*y6^2-2*y1*y4^3-2*y1*y4^2*y5-y1*y4^2*y6+2*y1*y4^2*y7-y1*y4^2*y8-y1*y4*y5^2-2*y1*y4*y5*y6+2*y1*y4*y5*y7+y1*y4*y6*y8-y1*y4*y7^2-y1*y5^2*y6-y1*y5^2*y8+2*y1*y5*y6*y7-y1*y6^3+y2^4+4*y2^3*y3-3*y2^3*y4-2*y2^3*y5+2*y2^3*y6+2*y2^3*y7-y2^3*y8-y2^2*y3^2-4*y2^2*y3*y4-2*y2^2*y3*y6+6*y2^2*y3*y7+2*y2^2*y3*y8+y2^2*y4^2-2*y2^2*y4*y6-4*y2^2*y4*y7+2*y2^2*y4*y8-y2^2*y5^2+2*y2^2*y5*y6-2*y2^2*y5*y7-2*y2^2*y5*y8+2*y2^2*y6*y7-y2^2*y6*y8+y2^2*y7^2-2*y2*y3^3-4*y2*y3^2*y4-2*y2*y3^2*y5-3*y2*y3^2*y6+2*y2*y3^2*y8-2*y2*y3*y4*y5-2*y2*y3*y4*y6-4*y2*y3*y4*y7+2*y2*y3*y4*y8-2*y2*y3*y5^2+2*y2*y3*y5*y8-2*y2*y3*y6^2-2*y2*y3*y6*y7-2*y2*y3*y6*y8+2*y2*y3*y7^2+2*y2*y4^3+4*y2*y4^2*y5-2*y2*y4^2*y6+4*y2*y4*y5^2-2*y2*y4*y5*y6-2*y2*y4*y5*y7+2*y2*y4*y5*y8+2*y2*y4*y6^2-2*y2*y4*y6*y7+y2*y4*y6*y8-y2*y4*y7^2+2*y2*y5^3-2*y2*y5^2*y7-y2*y5^2*y8+2*y2*y5*y6^2+2*y2*y5*y6*y7-y2*y6^3+y3^4+2*y3^3*y4+2*y3^3*y6-2*y3^3*y7+y3^2*y4^2-2*y3^2*y4*y5+6*y3^2*y4*y6-2*y3^2*y4*y7-y3^2*y4*y8-2*y3^2*y5^2+2*y3^2*y5*y6+2*y3^2*y5*y8+y3^2*y6^2-2*y3^2*y6*y7-y3^2*y6*y8+y3^2*y7^2-2*y3*y4^2*y5+2*y3*y4^2*y6+2*y3*y4^2*y7-2*y3*y4^2*y8-2*y3*y4*y5^2-2*y3*y4*y5*y6+2*y3*y4*y5*y8+4*y3*y4*y6^2-2*y3*y4*y6*y7-2*y3*y5^2*y6-2*y3*y5^2*y7+2*y3*y5*y6^2-y4^3*y6+2*y4^3*y7-y4^3*y8+y4^2*y5^2-4*y4^2*y5*y6+2*y4^2*y5*y7+y4^2*y6^2+2*y4*y5^3-3*y4*y5^2*y6+y5^4)
+    x6 = (y1^3-y1^2*y2-2*y1^2*y3-y1^2*y5+y1^2*y8-y1*y2^2+2*y1*y2*y3+3*y1*y2*y4+y1*y2*y5-y1*y2*y7-y1*y2*y8+y1*y3*y4+3*y1*y3*y5-2*y1*y3*y6+y1*y3*y7-y1*y3*y8-2*y1*y4^2-y1*y4*y5+y1*y4*y6-y1*y5^2+y1*y5*y6+y1*y5*y7-y1*y5*y8-y1*y6^2+y1*y6*y7+y1*y6*y8-y1*y7^2+y2^3+y2^2*y3-3*y2^2*y4-y2^2*y5+y2^2*y6+y2^2*y7-y2^2*y8-2*y2*y3^2-2*y2*y3*y4-2*y2*y3*y6+2*y2*y3*y7+2*y2*y3*y8+2*y2*y4^2+2*y2*y4*y5-3*y2*y4*y7+2*y2*y4*y8+y2*y5*y6-y2*y5*y7-y2*y5*y8-y2*y6^2+y2*y6*y7+y3^3+y3^2*y4-y3^2*y5+y3^2*y6-2*y3^2*y7-2*y3*y4*y5+3*y3*y4*y6-y3*y4*y7-y3*y4*y8-y3*y5^2+y3*y5*y6+y3*y5*y7+y3*y5*y8-y3*y6*y7-y3*y6*y8+y3*y7^2-y4^2*y6+2*y4^2*y7-y4^2*y8+y4*y5^2-3*y4*y5*y6+y4*y5*y7+y4*y5*y8+y4*y6^2-y4*y6*y7+y5^3-y5^2*y6-y5^2*y7+y5*y6^2)/(y1^4+y1^3*y2+y1^3*y4+y1^3*y6+y1^3*y8-3*y1^2*y2^2-2*y1^2*y2*y3+y1^2*y2*y4-2*y1^2*y2*y5+y1^2*y2*y6-2*y1^2*y2*y7+y1^2*y2*y8-3*y1^2*y3^2-2*y1^2*y3*y4-2*y1^2*y3*y6-2*y1^2*y4^2-2*y1^2*y4*y5+y1^2*y4*y6+y1^2*y4*y8-2*y1^2*y5^2-y1^2*y6^2+y1^2*y6*y8-y1^2*y7^2-2*y1*y2^3+4*y1*y2^2*y3+y1*y2^2*y4-2*y1*y2^2*y5+y1*y2^2*y6-2*y1*y2^2*y7-2*y1*y2^2*y8+y1*y2*y3^2+6*y1*y2*y3*y4+8*y1*y2*y3*y5-4*y1*y2*y3*y6+2*y1*y2*y3*y7-2*y1*y2*y3*y8+2*y1*y2*y4^2+4*y1*y2*y4*y5+3*y1*y2*y4*y6-2*y1*y2*y4*y7+y1*y2*y4*y8-y1*y2*y5^2+4*y1*y2*y5*y6-2*y1*y2*y5*y8-y1*y2*y6^2+2*y1*y2*y6*y7+y1*y2*y6*y8-y1*y2*y7^2+y1*y3^2*y4+4*y1*y3^2*y5-2*y1*y3^2*y6-2*y1*y3^2*y8-2*y1*y3*y4^2+2*y1*y3*y4*y5+2*y1*y3*y4*y6+2*y1*y3*y4*y7-2*y1*y3*y4*y8+2*y1*y3*y5*y6+4*y1*y3*y5*y7-2*y1*y3*y6^2-2*y1*y4^3-2*y1*y4^2*y5-y1*y4^2*y6+2*y1*y4^2*y7-y1*y4^2*y8-y1*y4*y5^2-2*y1*y4*y5*y6+2*y1*y4*y5*y7+y1*y4*y6*y8-y1*y4*y7^2-y1*y5^2*y6-y1*y5^2*y8+2*y1*y5*y6*y7-y1*y6^3+y2^4+4*y2^3*y3-3*y2^3*y4-2*y2^3*y5+2*y2^3*y6+2*y2^3*y7-y2^3*y8-y2^2*y3^2-4*y2^2*y3*y4-2*y2^2*y3*y6+6*y2^2*y3*y7+2*y2^2*y3*y8+y2^2*y4^2-2*y2^2*y4*y6-4*y2^2*y4*y7+2*y2^2*y4*y8-y2^2*y5^2+2*y2^2*y5*y6-2*y2^2*y5*y7-2*y2^2*y5*y8+2*y2^2*y6*y7-y2^2*y6*y8+y2^2*y7^2-2*y2*y3^3-4*y2*y3^2*y4-2*y2*y3^2*y5-3*y2*y3^2*y6+2*y2*y3^2*y8-2*y2*y3*y4*y5-2*y2*y3*y4*y6-4*y2*y3*y4*y7+2*y2*y3*y4*y8-2*y2*y3*y5^2+2*y2*y3*y5*y8-2*y2*y3*y6^2-2*y2*y3*y6*y7-2*y2*y3*y6*y8+2*y2*y3*y7^2+2*y2*y4^3+4*y2*y4^2*y5-2*y2*y4^2*y6+4*y2*y4*y5^2-2*y2*y4*y5*y6-2*y2*y4*y5*y7+2*y2*y4*y5*y8+2*y2*y4*y6^2-2*y2*y4*y6*y7+y2*y4*y6*y8-y2*y4*y7^2+2*y2*y5^3-2*y2*y5^2*y7-y2*y5^2*y8+2*y2*y5*y6^2+2*y2*y5*y6*y7-y2*y6^3+y3^4+2*y3^3*y4+2*y3^3*y6-2*y3^3*y7+y3^2*y4^2-2*y3^2*y4*y5+6*y3^2*y4*y6-2*y3^2*y4*y7-y3^2*y4*y8-2*y3^2*y5^2+2*y3^2*y5*y6+2*y3^2*y5*y8+y3^2*y6^2-2*y3^2*y6*y7-y3^2*y6*y8+y3^2*y7^2-2*y3*y4^2*y5+2*y3*y4^2*y6+2*y3*y4^2*y7-2*y3*y4^2*y8-2*y3*y4*y5^2-2*y3*y4*y5*y6+2*y3*y4*y5*y8+4*y3*y4*y6^2-2*y3*y4*y6*y7-2*y3*y5^2*y6-2*y3*y5^2*y7+2*y3*y5*y6^2-y4^3*y6+2*y4^3*y7-y4^3*y8+y4^2*y5^2-4*y4^2*y5*y6+2*y4^2*y5*y7+y4^2*y6^2+2*y4*y5^3-3*y4*y5^2*y6+y5^4)
+    x7 = (y1^3-y1^2*y2-y1^2*y3-y1^2*y5-y1^2*y7+y1^2*y8-2*y1*y2^2+2*y1*y2*y3+2*y1*y2*y4+y1*y2*y5+2*y1*y2*y6-y1*y2*y7-y1*y3^2+y1*y3*y4+3*y1*y3*y5-2*y1*y3*y6+y1*y3*y7-y1*y3*y8-y1*y4^2-y1*y4*y5-y1*y5^2+y1*y5*y6+y1*y5*y7-y1*y5*y8-y1*y6^2+y1*y6*y7+y2^3+3*y2^2*y3-3*y2^2*y4-2*y2^2*y5+y2^2*y6+y2^2*y7-y2^2*y8-2*y2*y3^2-2*y2*y3*y4-4*y2*y3*y6+2*y2*y3*y7+2*y2*y4^2+2*y2*y4*y5-2*y2*y4*y7+2*y2*y4*y8+2*y2*y5*y6-y2*y5*y7-y2*y6^2+y3^2*y4+y3^2*y5+y3^2*y6-2*y3*y4*y5+2*y3*y4*y6-y3*y4*y7-2*y3*y5^2+y3*y5*y6-y3*y5*y7+y3*y5*y8+y3*y6^2-y3*y6*y7-y4^2*y6+y4^2*y7-y4^2*y8+y4*y5^2-2*y4*y5*y6+y4*y5*y7+y4*y6^2+y5^3-y5^2*y6)/(y1^4+y1^3*y2+y1^3*y4+y1^3*y6+y1^3*y8-3*y1^2*y2^2-2*y1^2*y2*y3+y1^2*y2*y4-2*y1^2*y2*y5+y1^2*y2*y6-2*y1^2*y2*y7+y1^2*y2*y8-3*y1^2*y3^2-2*y1^2*y3*y4-2*y1^2*y3*y6-2*y1^2*y4^2-2*y1^2*y4*y5+y1^2*y4*y6+y1^2*y4*y8-2*y1^2*y5^2-y1^2*y6^2+y1^2*y6*y8-y1^2*y7^2-2*y1*y2^3+4*y1*y2^2*y3+y1*y2^2*y4-2*y1*y2^2*y5+y1*y2^2*y6-2*y1*y2^2*y7-2*y1*y2^2*y8+y1*y2*y3^2+6*y1*y2*y3*y4+8*y1*y2*y3*y5-4*y1*y2*y3*y6+2*y1*y2*y3*y7-2*y1*y2*y3*y8+2*y1*y2*y4^2+4*y1*y2*y4*y5+3*y1*y2*y4*y6-2*y1*y2*y4*y7+y1*y2*y4*y8-y1*y2*y5^2+4*y1*y2*y5*y6-2*y1*y2*y5*y8-y1*y2*y6^2+2*y1*y2*y6*y7+y1*y2*y6*y8-y1*y2*y7^2+y1*y3^2*y4+4*y1*y3^2*y5-2*y1*y3^2*y6-2*y1*y3^2*y8-2*y1*y3*y4^2+2*y1*y3*y4*y5+2*y1*y3*y4*y6+2*y1*y3*y4*y7-2*y1*y3*y4*y8+2*y1*y3*y5*y6+4*y1*y3*y5*y7-2*y1*y3*y6^2-2*y1*y4^3-2*y1*y4^2*y5-y1*y4^2*y6+2*y1*y4^2*y7-y1*y4^2*y8-y1*y4*y5^2-2*y1*y4*y5*y6+2*y1*y4*y5*y7+y1*y4*y6*y8-y1*y4*y7^2-y1*y5^2*y6-y1*y5^2*y8+2*y1*y5*y6*y7-y1*y6^3+y2^4+4*y2^3*y3-3*y2^3*y4-2*y2^3*y5+2*y2^3*y6+2*y2^3*y7-y2^3*y8-y2^2*y3^2-4*y2^2*y3*y4-2*y2^2*y3*y6+6*y2^2*y3*y7+2*y2^2*y3*y8+y2^2*y4^2-2*y2^2*y4*y6-4*y2^2*y4*y7+2*y2^2*y4*y8-y2^2*y5^2+2*y2^2*y5*y6-2*y2^2*y5*y7-2*y2^2*y5*y8+2*y2^2*y6*y7-y2^2*y6*y8+y2^2*y7^2-2*y2*y3^3-4*y2*y3^2*y4-2*y2*y3^2*y5-3*y2*y3^2*y6+2*y2*y3^2*y8-2*y2*y3*y4*y5-2*y2*y3*y4*y6-4*y2*y3*y4*y7+2*y2*y3*y4*y8-2*y2*y3*y5^2+2*y2*y3*y5*y8-2*y2*y3*y6^2-2*y2*y3*y6*y7-2*y2*y3*y6*y8+2*y2*y3*y7^2+2*y2*y4^3+4*y2*y4^2*y5-2*y2*y4^2*y6+4*y2*y4*y5^2-2*y2*y4*y5*y6-2*y2*y4*y5*y7+2*y2*y4*y5*y8+2*y2*y4*y6^2-2*y2*y4*y6*y7+y2*y4*y6*y8-y2*y4*y7^2+2*y2*y5^3-2*y2*y5^2*y7-y2*y5^2*y8+2*y2*y5*y6^2+2*y2*y5*y6*y7-y2*y6^3+y3^4+2*y3^3*y4+2*y3^3*y6-2*y3^3*y7+y3^2*y4^2-2*y3^2*y4*y5+6*y3^2*y4*y6-2*y3^2*y4*y7-y3^2*y4*y8-2*y3^2*y5^2+2*y3^2*y5*y6+2*y3^2*y5*y8+y3^2*y6^2-2*y3^2*y6*y7-y3^2*y6*y8+y3^2*y7^2-2*y3*y4^2*y5+2*y3*y4^2*y6+2*y3*y4^2*y7-2*y3*y4^2*y8-2*y3*y4*y5^2-2*y3*y4*y5*y6+2*y3*y4*y5*y8+4*y3*y4*y6^2-2*y3*y4*y6*y7-2*y3*y5^2*y6-2*y3*y5^2*y7+2*y3*y5*y6^2-y4^3*y6+2*y4^3*y7-y4^3*y8+y4^2*y5^2-4*y4^2*y5*y6+2*y4^2*y5*y7+y4^2*y6^2+2*y4*y5^3-3*y4*y5^2*y6+y5^4)
+    x8 = (y1^3-y1^2*y3-y1^2*y5-y1^2*y7-2*y1*y2^2+2*y1*y2*y4+2*y1*y2*y6-y1*y3^2+3*y1*y3*y5+y1*y3*y7-y1*y4^2-y1*y5^2+y1*y5*y7-y1*y6^2+3*y2^2*y3-2*y2^2*y5+y2^2*y7-2*y2*y3*y4-4*y2*y3*y6+2*y2*y4*y5-2*y2*y4*y7+2*y2*y5*y6+y3^2*y5+2*y3*y4*y6-2*y3*y5^2-y3*y5*y7+y3*y6^2+y4^2*y7-2*y4*y5*y6+y5^3)/(y1^4+y1^3*y2+y1^3*y4+y1^3*y6+y1^3*y8-3*y1^2*y2^2-2*y1^2*y2*y3+y1^2*y2*y4-2*y1^2*y2*y5+y1^2*y2*y6-2*y1^2*y2*y7+y1^2*y2*y8-3*y1^2*y3^2-2*y1^2*y3*y4-2*y1^2*y3*y6-2*y1^2*y4^2-2*y1^2*y4*y5+y1^2*y4*y6+y1^2*y4*y8-2*y1^2*y5^2-y1^2*y6^2+y1^2*y6*y8-y1^2*y7^2-2*y1*y2^3+4*y1*y2^2*y3+y1*y2^2*y4-2*y1*y2^2*y5+y1*y2^2*y6-2*y1*y2^2*y7-2*y1*y2^2*y8+y1*y2*y3^2+6*y1*y2*y3*y4+8*y1*y2*y3*y5-4*y1*y2*y3*y6+2*y1*y2*y3*y7-2*y1*y2*y3*y8+2*y1*y2*y4^2+4*y1*y2*y4*y5+3*y1*y2*y4*y6-2*y1*y2*y4*y7+y1*y2*y4*y8-y1*y2*y5^2+4*y1*y2*y5*y6-2*y1*y2*y5*y8-y1*y2*y6^2+2*y1*y2*y6*y7+y1*y2*y6*y8-y1*y2*y7^2+y1*y3^2*y4+4*y1*y3^2*y5-2*y1*y3^2*y6-2*y1*y3^2*y8-2*y1*y3*y4^2+2*y1*y3*y4*y5+2*y1*y3*y4*y6+2*y1*y3*y4*y7-2*y1*y3*y4*y8+2*y1*y3*y5*y6+4*y1*y3*y5*y7-2*y1*y3*y6^2-2*y1*y4^3-2*y1*y4^2*y5-y1*y4^2*y6+2*y1*y4^2*y7-y1*y4^2*y8-y1*y4*y5^2-2*y1*y4*y5*y6+2*y1*y4*y5*y7+y1*y4*y6*y8-y1*y4*y7^2-y1*y5^2*y6-y1*y5^2*y8+2*y1*y5*y6*y7-y1*y6^3+y2^4+4*y2^3*y3-3*y2^3*y4-2*y2^3*y5+2*y2^3*y6+2*y2^3*y7-y2^3*y8-y2^2*y3^2-4*y2^2*y3*y4-2*y2^2*y3*y6+6*y2^2*y3*y7+2*y2^2*y3*y8+y2^2*y4^2-2*y2^2*y4*y6-4*y2^2*y4*y7+2*y2^2*y4*y8-y2^2*y5^2+2*y2^2*y5*y6-2*y2^2*y5*y7-2*y2^2*y5*y8+2*y2^2*y6*y7-y2^2*y6*y8+y2^2*y7^2-2*y2*y3^3-4*y2*y3^2*y4-2*y2*y3^2*y5-3*y2*y3^2*y6+2*y2*y3^2*y8-2*y2*y3*y4*y5-2*y2*y3*y4*y6-4*y2*y3*y4*y7+2*y2*y3*y4*y8-2*y2*y3*y5^2+2*y2*y3*y5*y8-2*y2*y3*y6^2-2*y2*y3*y6*y7-2*y2*y3*y6*y8+2*y2*y3*y7^2+2*y2*y4^3+4*y2*y4^2*y5-2*y2*y4^2*y6+4*y2*y4*y5^2-2*y2*y4*y5*y6-2*y2*y4*y5*y7+2*y2*y4*y5*y8+2*y2*y4*y6^2-2*y2*y4*y6*y7+y2*y4*y6*y8-y2*y4*y7^2+2*y2*y5^3-2*y2*y5^2*y7-y2*y5^2*y8+2*y2*y5*y6^2+2*y2*y5*y6*y7-y2*y6^3+y3^4+2*y3^3*y4+2*y3^3*y6-2*y3^3*y7+y3^2*y4^2-2*y3^2*y4*y5+6*y3^2*y4*y6-2*y3^2*y4*y7-y3^2*y4*y8-2*y3^2*y5^2+2*y3^2*y5*y6+2*y3^2*y5*y8+y3^2*y6^2-2*y3^2*y6*y7-y3^2*y6*y8+y3^2*y7^2-2*y3*y4^2*y5+2*y3*y4^2*y6+2*y3*y4^2*y7-2*y3*y4^2*y8-2*y3*y4*y5^2-2*y3*y4*y5*y6+2*y3*y4*y5*y8+4*y3*y4*y6^2-2*y3*y4*y6*y7-2*y3*y5^2*y6-2*y3*y5^2*y7+2*y3*y5*y6^2-y4^3*y6+2*y4^3*y7-y4^3*y8+y4^2*y5^2-4*y4^2*y5*y6+2*y4^2*y5*y7+y4^2*y6^2+2*y4*y5^3-3*y4*y5^2*y6+y5^4)
+
+  FFGE status              : SKIPPED
+
+  n = 9
+  System ID                        : A1
+  Prime p                          : 3957727005233  (BB datatype integer[])
+  Degree cap / q sizing            : 5
+  Prime reselections (cap doubled) : 0
+  Pre-flight BB calls (not in MRFI): 28
+  Parameter count                  : 9
+  Expected parameter count         : 9
+  Parameter validation             : PASS
+  MRFI Status                      : ERROR: modulus is too large for 'integer[8]' datatype, must be < 4294967296
+  Total BB calls                   : 29  (NDSA = 1, MRFI = 0)
+  BB calls in NDSA                 : 1
+  BB calls in MRFI                 : 0
+  Total NDSA time for BB calls (s) : 0.000000000
+  Total MRFI time for BB calls (s) : 0.000000000
+  Total BB calls time (NDSA+MRFI)  : 0.000000000
+  Total time (s)                   : 0.005000000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.000000000
+  Time -> HFTRFR (s)           : 0.000000000
+  Time -> FTREval Interp+RR+EV : 0.000000000
+  Time -> BMEA (s)             : 0.000000000
+  Time -> Vandermonde (s)      : 0.000000000
+  Time -> Roots (s)            : 0.000000000
+  Time -> Gen. Monomials (s)   : 0.000000000
+  Time -> Final Poly. (s)      : 0.000000000
+  Time -> Get point AFL (s)    : 0.000000000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.005000000
+  Time -> NDSA Proc. (s)       : 0.000000000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 0.000
+  Deg_num (per equation)   : []
+  Deg_den (per equation)   : []
+  Terms_num (per equation) : []
+  Terms_den (per equation) : []
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+
+  FFGE status              : SKIPPED
+
+  n = 10
+  System ID                        : A1
+  Prime p                          : 141983456312699  (BB datatype integer[])
+  Degree cap / q sizing            : 5
+  Prime reselections (cap doubled) : 0
+  Pre-flight BB calls (not in MRFI): 28
+  Parameter count                  : 10
+  Expected parameter count         : 10
+  Parameter validation             : PASS
+  MRFI Status                      : ERROR: modulus is too large for 'integer[8]' datatype, must be < 4294967296
+  Total BB calls                   : 29  (NDSA = 1, MRFI = 0)
+  BB calls in NDSA                 : 1
+  BB calls in MRFI                 : 0
+  Total NDSA time for BB calls (s) : 0.000000000
+  Total MRFI time for BB calls (s) : 0.000000000
+  Total BB calls time (NDSA+MRFI)  : 0.000000000
+  Total time (s)                   : 0.005000000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.000000000
+  Time -> HFTRFR (s)           : 0.000000000
+  Time -> FTREval Interp+RR+EV : 0.000000000
+  Time -> BMEA (s)             : 0.000000000
+  Time -> Vandermonde (s)      : 0.000000000
+  Time -> Roots (s)            : 0.000000000
+  Time -> Gen. Monomials (s)   : 0.000000000
+  Time -> Final Poly. (s)      : 0.000000000
+  Time -> Get point AFL (s)    : 0.000000000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.005000000
+  Time -> NDSA Proc. (s)       : 0.000000000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 0.000
+  Deg_num (per equation)   : []
+  Deg_den (per equation)   : []
+  Terms_num (per equation) : []
+  Terms_den (per equation) : []
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+
+  FFGE status              : SKIPPED
+
