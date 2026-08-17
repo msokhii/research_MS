@@ -20,8 +20,6 @@ using ULNG128=__uint128_t;
 ULNG seed=1;
 ULNG mult=6364136223846793003LL;
 
-// 0<=x<p.
-
 /* 
 INTEGER MATH ROUTINES: 
 1. RAND64S
@@ -32,6 +30,8 @@ INTEGER MATH ROUTINES:
 6. MUL64ASM2 
 7. POWMOD64S
 8. INVMOD64S
+
+We are not using MUL64ASM1 and ASM2 routines. 
 */
 
 LONG rand64s(LONG p){
@@ -68,8 +68,9 @@ inline LONG neg64s(LONG a,LONG p){
     return (a==0)?0:p-a; 
 };
 
-// Assuming 0<=a,b<p for the following routines. 
+// We are assuming 0<=a,b<p for the following routines. 
 
+/*
 inline LONG mul64bASM(LONG a,LONG b,LONG p){
     LONG q, r;
     __asm__ __volatile__(           \
@@ -93,16 +94,17 @@ inline LONG mul64bASM2(LONG a,LONG b,LONG p){
     );
     return r;
 }
+*/
 
 inline LONG powmod64s(LONG a,LONG n,LONG p){   
     LONG r,s;
-    a+=(a>>63)&p; // No bad input.
+    a+=(a>>63)&p;
     if(n==0){return 1;}
     if(n==1){return a;}
     for(r=1,s=a;n>0;n/=2){ 
         if(n&1){
-            r=mul64bASM(r,s,p); 
-            s=mul64bASM(s,s,p); 
+            r=mul64b(r,s,p); 
+            s=mul64b(s,s,p); 
         }
     }
     return r;
@@ -128,7 +130,7 @@ inline LONG modinv64b(LONG c,LONG p){
 };
 
 /*
-POLYNOMIAL ROUTINES: 
+POLYNOMIAL ARITHMETHIC ROUTINES: 
 */
 
 struct RatReconFastWS{
@@ -150,9 +152,6 @@ struct RatReconFastWS{
     }
 };
 
-/*
-This struct is for pGCDEXTFULL.
-*/
 struct GCDEX{
 	vector<LONG> r;
 	vector<LONG> s;
@@ -162,9 +161,6 @@ struct GCDEX{
 	int degT;
 };
 
-/*
-This struct is for rational function reconstruction.
-*/
 struct pairRFR{
 	vector<LONG> r;
 	vector<LONG> t;
@@ -173,9 +169,6 @@ struct pairRFR{
 	int flag;
 };
 
-/*
-This struct returns all values of r,s,t at each iteration.
-*/
 struct GCDEXHIST{
 	GCDEX g;
 	vector<vector<LONG>> rTrace;
@@ -186,9 +179,7 @@ struct GCDEXHIST{
 	vector<int> degTT;
 };
 
-/******************************************************************************************/
-/* Fast CPU routines                                                                      */
-/******************************************************************************************/
+// Fast CPU routines 
 
 #define ZMUL(z,a,b) do { \
     __asm__( \
@@ -1898,7 +1889,7 @@ return 0;
 NEWTON INTERPOLATION ROUTINES:
 */
 
-/*
+
 int newtonInterpMulRec(LONG* x,
     LONG* y,
     const int n,
@@ -1938,7 +1929,6 @@ int newtonInterpMulRec(LONG* x,
     }
     return d;
 }
-*/
 
 int newtonInterpMulNormal(LONG* x,
     LONG* y,
@@ -1979,7 +1969,6 @@ int newtonInterpMulNormal(LONG* x,
     return d;
 }
 
-/*
 int mkM(vector<LONG>&m,const vector<LONG> &xs,const LONG p){    
     int degM=0;
     std::vector<LONG>linF(2,0);
@@ -1990,7 +1979,7 @@ int mkM(vector<LONG>&m,const vector<LONG> &xs,const LONG p){
     };
     return degM;
 }
-*/
+
 
 /*
 NEWTON INTERPOLATION WRAPPER FOR MAPLE.
@@ -2187,7 +2176,7 @@ std::vector<LONG> tTmp(wsSize, 0);
 int degROut = -1;
 int degTOut = -1;
 RatReconFastWS W(wsSize);
-// recint P = recip1(p);
+recint P = recip1(p);
 
 int rc = ratReconNormal(m,
             u,
