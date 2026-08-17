@@ -1,0 +1,9 @@
+PRIME -> 4294967291
+CALLS -> 1000
+ITER      degN      degD      avgTimeNewton(mulRec)       avgTimeNewton(mul64)        avgTimeRR(No CPU+mulRec)    avgTimeRR(CPU+mul64)        avgTimeRR(CPU+mulRec)       mulsNewton(mulRec)    mulsNewton(mulSub)    mulsRR            
+1         5         5         0.815917                    0.898296                    1.12322                     0.850908                    0.847588                    0                     0                     0                 
+2         10        10        3.05866                     3.50217                     2.64168                     1.97498                     1.97503                     0                     0                     0                 
+3         20        20        10.5432                     12.8615                     7.24875                     5.11853                     5.11283                     0                     0                     0                 
+4         40        40        36.7055                     46.499                      22.9014                     15.0532                     15.061                      0                     0                     0                 
+5         80        80        134.752                     172.155                     80.0621                     49.5411                     49.7867                     0                     0                     0                 
+6         160       160       515.584                     654.465                     297.808                     173.445                     173.489                     0                     0                     0                 
