@@ -24,3 +24,14 @@ that the above does not include the fault-tolerant versions.
 
 For a more detailed overview you can check out our paper at 
 [https://www.cecm.sfu.ca/~mmonagan/papers/ICMS26.pdf]
+
+## Requirements:
+
+At a minimum you require the following.
+
+- Linux on x86-64.
+- A C++ compiler (Example: ``gnu``).
+- Maple 2021 or later.
+
+There are no external C++ library dependencies.
+
