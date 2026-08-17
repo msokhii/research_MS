@@ -10,29 +10,30 @@
 #include<fstream>
 #include<sstream>
 #include<string>
-#include"int128g.c"
-#include"main_inuse.cpp"
+#include"pol_math.cpp"
 
 using namespace std;
 using LONG=int64_t;
 using ULNG=uint_fast64_t;
 using ULNG128=__uint128_t;
 
-int main() {
+int main(){
     LONG p = 2147483647; //This is 2^31-1.
     recint P = recip1(p);
 
     int degN = 5;
     int degD = 5;
 
-
     /*
     Increase this for a more accurate timing. 
     */
     const int CALLS = 10;
     const int ITER  = 2;
-
-    ofstream logFile("/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FFI_overhead.txt");
+    /*
+    home_file_pwd = "/home/msokhi/Desktop/res_MS/rat_recon_mpl/timings/FFI_overhead.txt"
+    maple_file_pwd = "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FFI_overhead.txt"
+    */
+    ofstream logFile("/home/msokhi/Desktop/res_MS/rat_recon_mpl/timings/FFI_overhead.txt");
     if (!logFile) {
         cerr << "Could not find directory.\n";
         return 1;
@@ -41,14 +42,14 @@ int main() {
     logFile << "PRIME -> " << p << "\n";
     logFile << "CALLS -> " << CALLS << "\n";
     logFile << left
-            << setw(8)  << "ITER"
+            << setw(8)  << "Step"
             << setw(8)  << "degN"
             << setw(8)  << "degD"
             << setw(24) << "NewtonMULREC"
             << setw(24) << "NewtonMUL64"
             << setw(24) << "NewtonFFIcpp"
-            << setw(24) << "RRMUL64"
-            << setw(24) << "RRFFIcpp"
+            << setw(24) << "rrMUL64"
+            << setw(24) << "rrFFIcpp"
             << "\n";
 
     for (int step = 1; step < ITER; ++step) {
@@ -240,14 +241,14 @@ int main() {
         double rrWrapCPP_us =
         chrono::duration<double, std::micro>(rrWrapStop - rrWrapStart).count() / CALLS;
         logFile << left
-                << setw(8)  << Step
+                << setw(8)  << step
                 << setw(8)  << degN
                 << setw(8)  << degD
-                << setw(24) << newtonMulRec
-                << setw(24) << newtonMul64
-                << setw(24) << newtonFFIcpp
-                << setw(24) << rr
-                << setw(24) << rrFFIcpp_us
+                << setw(24) << newtonKernel64_us
+                << setw(24) << newtonKernelRec_us
+                << setw(24) << newtonWrapCPP_us
+                << setw(24) << rrKernelFastWS_us
+                << setw(24) << rrWrapCPP_us
                 << "\n";
 
         degN *= 2;

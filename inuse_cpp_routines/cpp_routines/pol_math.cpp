@@ -70,7 +70,6 @@ inline LONG neg64s(LONG a,LONG p){
 
 // We are assuming 0<=a,b<p for the following routines. 
 
-/*
 inline LONG mul64bASM(LONG a,LONG b,LONG p){
     LONG q, r;
     __asm__ __volatile__(           \
@@ -94,7 +93,6 @@ inline LONG mul64bASM2(LONG a,LONG b,LONG p){
     );
     return r;
 }
-*/
 
 inline LONG powmod64s(LONG a,LONG n,LONG p){   
     LONG r,s;
@@ -2665,8 +2663,3 @@ int main() {
     return 0;
 }
 */
-
-
-int main(){
-	return 0;
-};
