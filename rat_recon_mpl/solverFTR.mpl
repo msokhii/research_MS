@@ -921,8 +921,8 @@ get_data := proc(test_case)
 end proc:
 
 test_prime := 2^31-1:  
-n_min := 15:
-n_max := 15:
+n_min := 4:
+n_max := 6:
 do_verify := false:
 do_ffge := false:
 summary := []:
@@ -1238,7 +1238,7 @@ if do_ffge then
 fi:
 *)
 
-report_path := "/cecm/home/mss59/Desktop/research_ServerMaple/rat_recon_mpl/timings/FTR_Timing.txt":
+report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_Timing.txt":
 # report_path := "/home/msokhi/Desktop/research_MS/rat_recon_mpl/timings/FTR_Timing.txt":
 fd := fopen(report_path, WRITE):
 fprintf(fd, "============================================================\n"):

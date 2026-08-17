@@ -1,405 +1,14 @@
 kernelopts(numcpus=1):
-read "./mapleWrapperv2.mpl":
 with(LinearAlgebra):
 with(IntegerRelations):
 
-# ============================================================================
-#  ParametricSystems  --  inlined benchmark catalog (was param_sys.mpl).
-#  Generate(id,n) -> [A,b];  Show(id,n);  List();  Catalog().
-# ============================================================================
-# ParametricSystems.mpl
-# -----------------------------------------------------------------------------
-# A catalog of scalable parametric linear systems  A x = b  (polynomial entries
-# in named parameters) for benchmarking sparse rational function interpolation /
-# fault-tolerant rational function reconstruction.
-#
-# Every generator returns a list [A, b] with A::Matrix and b::Vector over the
-# parameters shown. Feed straight into your solver, e.g.
-#       Ab := ParametricSystems:-Generate("A1", 8):
-#       A, b := Ab[1], Ab[2]:
-#       X := YourSolver(A, b):            # <-- your MRFI / FTRFR entry point
-#
-# Quick use:
-#       read "ParametricSystems.mpl":
-#       ParametricSystems:-List();               # print the catalog
-#       ParametricSystems:-Show("A1", 3);        # pretty-print a small instance
-#       Ab := ParametricSystems:-Generate("B1", 6):
-#
-# Notes
-#  * Generators reproduce the specimen plate at the small n shown there, then
-#    scale with n. Rational-entry families (A5, A8) return rational entries;
-#    clear per row before solving. B11 is singular by design -- solve for its
-#    kernel (the invariant), not A x = b.
-#  * The four instances tagged representative/schematic on the plate (B3, B4,
-#    B8, and the RHS of B2) are illustrative; the generator returns the clean
-#    scalable canonical form documented at each proc.
-#  * Parameter symbols are global names; nothing here calls a solver or mutates
-#    state, so the module is safe to read once and reuse.
-# -----------------------------------------------------------------------------
+read "./mapleWrapperv2.mpl":
+read "./pol_sys.mpl":
 
-ParametricSystems := module()
-  export Generate, Show, List, Catalog;
-  local catalog, order,
-        pMCReach, Herman, IsraeliJalfon, FeynmanIBP, MNA, CRN, Laplacian,
-        Kinematics, DixonVand, Resolvent, Lie, Stationary, Petri, NormalEq,
-        RandomSparse, KroneckerStress, Prescribed;
+ExpectedRawParams := ParametricSystems:-RawParams:
+ExpectedParamCount := ParametricSystems:-ParamCount:
+DB_system := ParametricSystems:-DBSystem:
 
-  # ---- structured matrix families -------------------------------------------
-  # PARAMETER POLICY:
-  #   Generic RHS placeholders are fixed numeric data, not interpolation
-  #   parameters.  For A2--A8 the deterministic RHS is [1,2,...,n].
-  #   A1 intentionally keeps the original TP all-ones RHS so n=4 reproduces
-  #   the known 76-probe benchmark.
-  #   Application RHS symbols are kept only when they are genuine model inputs.
-  # A1 must match the original TP benchmark exactly: the matrix is
-  # symmetric Toeplitz and the right-hand side is the constant all-ones
-  # vector.  Do NOT make c[1],...,c[n] parameters here; doing so doubles
-  # the parameter count and changes the MRFI probe count.
-  catalog["A1"] := ["Symmetric Toeplitz",
-      proc(n) [ Matrix(n,n,(i,j)->t[abs(i-j)]), Vector(n,fill=1) ] end proc];
-
-  catalog["A2"] := ["General Toeplitz",
-      proc(n) [ Matrix(n,n,(i,j)->piecewise(i=j, t[0], j>i, r[j-i], s[i-j])),
-                Vector(n,i->i) ] end proc];
-
-  catalog["A3"] := ["Hankel",
-      proc(n) [ Matrix(n,n,(i,j)->h[i+j-2]), Vector(n,i->i) ] end proc];
-
-  catalog["A4"] := ["Vandermonde",
-      proc(n) [ Matrix(n,n,(i,j)->v[i]^(j-1)), Vector(n,i->i) ] end proc];
-
-  catalog["A5"] := ["Cauchy  (rational entries -- clear per row)",
-      proc(n) [ Matrix(n,n,(i,j)->1/(x[i]-y[j])), Vector(n,i->i) ] end proc];
-
-  catalog["A6"] := ["KMS Toeplitz  (one parameter)",
-      proc(n) [ Matrix(n,n,(i,j)->r^abs(i-j)), Vector(n,i->i) ] end proc];
-
-  catalog["A7"] := ["Tridiagonal (continuant)",
-      proc(n) [ Matrix(n,n,(i,j)->piecewise(i=j, a[i], j=i+1, u[i], i=j+1, l[j], 0)),
-                Vector(n,i->i) ] end proc];
-
-  catalog["A8"] := ["Generalized Hilbert  (rational entries -- clear per row)",
-      proc(n) [ Matrix(n,n,(i,j)->1/(x[i]+y[j])), Vector(n,i->i) ] end proc];
-
-  # ---- application-derived systems ------------------------------------------
-  # (I - P) reachability chain: distinct p[i] per state (this is also B3).
-  pMCReach := proc(n)
-      [ Matrix(n,n,(i,j)->piecewise(i=j, 1, j=i+1, -p[i], i=j+1, -(1-p[i]), 0)),
-        Vector(n, i->piecewise(i=n, p[n], 0)) ]
-  end proc;
-  catalog["B1"] := ["Parametric Markov chain -- reachability", pMCReach];
-
-  # Single bias h; cyclic ring form (matches the plate at n=3).
-  Herman := proc(n)
-      [ Matrix(n,n,(i,j)->piecewise(i=j, 1, j=(i mod n)+1, -h, 0)),
-        Vector(n, i->1-h) ]
-  end proc;
-  catalog["B2"] := ["Herman self-stabilizing ring", Herman];
-
-  IsraeliJalfon := proc(n) pMCReach(n) end proc;   # n distinct parameters
-  catalog["B3"] := ["Israeli-Jalfon (multi-parameter)", IsraeliJalfon];
-
-  # Schematic IBP miniature: entries linear in dimension d and invariant s.
-  FeynmanIBP := proc(n)
-      [ Matrix(n,n,(i,j)->piecewise(i=j, d-(i+1), j=i+1, -s, i=j+1, i-1, 0)),
-        Vector(n,i->i) ]
-  end proc;
-  catalog["B4"] := ["Feynman IBP reduction (schematic)", FeynmanIBP];
-
-  # RC ladder nodal admittance matrix; J is the source current at node 1.
-  MNA := proc(n)
-      local ent;
-      ent := proc(i,j)
-          if i=j then g[i] + s*(`if`(i>1, c[i-1], 0) + `if`(i<n, c[i], 0))
-          elif j=i+1 then -s*c[i]
-          elif i=j+1 then -s*c[j]
-          else 0 end if
-      end proc;
-      [ Matrix(n,n,ent), Vector(n, i->`if`(i=1, J, 0)) ]
-  end proc;
-  catalog["B5"] := ["Symbolic MNA circuit (RC ladder)", MNA];
-
-  # Reversible species chain A1<->..<->A(n-1)->An + conservation row.
-  # Forward k[i], backward kb[i] with kb[n-1]:=0 (last step irreversible).
-  CRN := proc(n)
-      local ent;
-      ent := proc(i,j)
-          if i=n then 1
-          elif i=1 then piecewise(j=1, -k[1], j=2, kb[1], 0)
-          else piecewise(j=i-1, k[i-1],
-                         j=i,   -(kb[i-1] + k[i]),
-                         j=i+1, `if`(i<n-1, kb[i], 0), 0)
-          end if
-      end proc;
-      [ Matrix(n,n,ent), Vector(n, i->`if`(i=n, Tot, 0)) ]
-  end proc;
-  catalog["B6"] := ["Chemical reaction network (steady state)", CRN];
-
-  # Reduced weighted Laplacian of a path; w[i] edge i~i+1, w[n] edge n~ground.
-  Laplacian := proc(n)
-      [ Matrix(n,n,(i,j)->piecewise(i=j, `if`(i>1,w[i-1],0)+w[i],
-                                    j=i+1, -w[i], i=j+1, -w[j], 0)),
-        Vector(n, i->`if`(i=1, 1, 0)) ]
-  end proc;
-  catalog["B7"] := ["Weighted graph Laplacian (path)", Laplacian];
-
-  # Fixed representative planar IK block (does not scale; n ignored).
-  Kinematics := proc(n)
-      [ Matrix(3,3, [[cos_t, -sin_t, l[1]], [sin_t, cos_t, 0], [0, 0, 1]]),
-        Vector([px, py, 1]) ]
-  end proc;
-  catalog["B8"] := ["Kinematics linear block (representative 3x3)", Kinematics];
-
-  DixonVand := proc(n)    # transposed Vandermonde
-      [ Matrix(n,n,(i,j)->v[j]^(i-1)), Vector(n,i->i) ]
-  end proc;
-  catalog["B9"] := ["Dixon resultant interpolation", DixonVand];
-
-  # (s I - A(p)): diag s+i, super -1, two couplings -p at (1,2) and (n,1).
-  Resolvent := proc(n)
-      [ Matrix(n,n,(i,j)->piecewise(i=j, s+i,
-                                    (i=1 and j=2), -p,
-                                    (i=n and j=1), -p,
-                                    j=i+1, -1, 0)),
-        Vector(n,i->i) ]
-  end proc;
-  catalog["B10"] := ["Model-order reduction (resolvent)", Resolvent];
-
-  # Skew coadjoint matrix; solve for the kernel (the invariant), b = 0.
-  Lie := proc(n)
-      local A, k, i, j;
-      if n=3 then
-          A := Matrix([[0, x[3], -x[2]], [-x[3], 0, x[1]], [x[2], -x[1], 0]]);
-      else
-          A := Matrix(n,n,0); k := 0;
-          for i to n do for j from i+1 to n do
-              k := k+1; A[i,j] := x[k]; A[j,i] := -x[k];
-          end do end do;
-      end if;
-      [ A, Vector(n, 0) ]
-  end proc;
-  catalog["B11"] := ["Lie-algebra invariant (solve for kernel)", Lie];
-
-  # (P^T - I) for a parametric cycle (escape probs a[i]) + normalization row.
-  Stationary := proc(n)
-      [ Matrix(n,n,(i,j)->piecewise(i=n, 1, j=i, -a[i],
-                                    j=((i-2) mod n)+1, a[j], 0)),
-        Vector(n, i->`if`(i=n, 1, 0)) ]
-  end proc;
-  catalog["B12"] := ["Algebraic statistics (stationary distribution)", Stationary];
-
-  # Petri-net incidence / marking equation N sigma = delta_m, symbolic weights.
-  Petri := proc(n)
-      [ Matrix(n,n,(i,j)->piecewise(i=j, w[i], j=((i-2) mod n)+1, -1, 0)),
-        Vector(n, i->d[i]) ]
-  end proc;
-  catalog["B13"] := ["Petri-net marking / flow", Petri];
-
-  # Normal equations M^T M x = M^T y for polynomial regression, basis size n,
-  # npts = n+1 symbolic nodes u[k] with data y[k].
-  NormalEq := proc(n)
-      local npts; npts := n+1;
-      [ Matrix(n,n,(i,j)->add(u[k]^(i+j-2), k=1..npts)),
-        Vector(n, i->add(u[k]^(i-1)*y[k], k=1..npts)) ]
-  end proc;
-  catalog["B14"] := ["Parametric least squares (normal equations)", NormalEq];
-
-  # ---- synthetic scalable families ------------------------------------------
-  # Random sparse polynomials in m params, T terms, per-var degree <= deg.
-  RandomSparse := proc(n, m := 3, T := 3, deg := 3)
-      local vars, mono, poly, A, b;
-      vars := [seq(z[q], q=1..m)];
-      mono := proc() mul(vars[q]^(rand(0..deg)()), q=1..m) end proc;
-      poly := proc() add( rand(1..9)() * mono(), tt=1..T) end proc;
-      A := Matrix(n,n, (i,j)->poly());
-      b := Vector(n, i->poly());
-      # Guarantee that every declared z[q] is present in the generated system;
-      # otherwise a random draw could accidentally lower the parameter count.
-      A[1,1] := expand(A[1,1] + add(z[q], q=1..m));
-      [A, b]
-  end proc;
-  catalog["C1"] := ["Random sparse parametric  (n, m, T, deg)", RandomSparse];
-
-  # Uneven, large per-variable partial degrees to stress Kronecker substitution.
-  KroneckerStress := proc(n, m := 2)
-      local ent, A;
-      ent := proc(i,j) 1 + add( rand(1..5)()*z[q]^(rand(0..(9-2*(q-1)))()), q=1..m) end proc;
-      A := Matrix(n,n, ent);
-      # As in C1, force each declared parameter to occur at least once.
-      A[1,1] := expand(A[1,1] + add(z[q], q=1..m));
-      [ A, Vector(n, i->1 + z[1]^(rand(0..9)())) ]
-  end proc;
-  catalog["C2"] := ["Kronecker-substitution stress  (n, m)", KroneckerStress];
-
-  # Known sparse rational solution x*, sparse A, b := A . x*. Returns x* too.
-  Prescribed := proc(n)
-      local A, xstar, b;
-      A := Matrix(n,n,(i,j)->piecewise(i=j, z[i], abs(i-j)=1, 1, 0));
-      xstar := Vector(n, i->1/(z[i]+i));
-      b := A . xstar;
-      [A, b, xstar]
-  end proc;
-  catalog["C3"] := ["Prescribed-solution (fault injection)", Prescribed];
-
-  # ---- interface ------------------------------------------------------------
-  order := ["A1","A2","A3","A4","A5","A6","A7","A8",
-            "B1","B2","B3","B4","B5","B6","B7","B8","B9","B10","B11","B12","B13","B14",
-            "C1","C2","C3"];
-
-  Generate := proc(id, n)
-      if not assigned(catalog[id]) then error "unknown id: %1", id end if;
-      catalog[id][2](n)
-  end proc;
-
-  Show := proc(id, n)
-      local r;
-      r := Generate(id, n);
-      printf("%-4s %s   (%d x %d)\n", id, catalog[id][1], n, n);
-      print(r[1]);  print(r[2]);
-      NULL
-  end proc;
-
-  List := proc()
-      local id;
-      for id in order do printf("%-4s %s\n", id, catalog[id][1]) end do;
-      NULL
-  end proc;
-
-  Catalog := proc() eval(catalog) end proc;
-
-end module:
-
-# ============================================================================
-#  DB_system(id, n): turn any catalog family into (Sys, Vars, params, num_vars,
-#  num_eqn) for the driver below.  Every generator parameter is renamed to
-#  y1, y2, ... (concatenated names, same convention as the "TP" path), so
-#  nothing collides with the reserved names x (interp var), p (prime),
-#  Z (BMEA var).  Indexed names like y[1] in a generator are distinct from y1
-#  and get remapped too.  The substitution is done on the equation list, not
-#  the Matrix (subs does not reliably descend into rtables).  The
-#  original -> y map is left in the global DB_param_map; for C3 the remapped
-#  exact solution is left in DB_xstar.
-# ============================================================================
-ExpectedRawParams := proc(id::string, n::posint)
-    local i, npts;
-
-    if id = "A1" or id = "TP" then
-        return [seq(t[i], i=0..n-1)]:
-    elif id = "A2" then
-        return [t[0], seq(r[i], i=1..n-1), seq(s[i], i=1..n-1)]:
-    elif id = "A3" then
-        return [seq(h[i], i=0..2*n-2)]:
-    elif id = "A4" then
-        return [seq(v[i], i=1..n)]:
-    elif id = "A5" then
-        return [seq(x[i], i=1..n), seq(y[i], i=1..n)]:
-    elif id = "A6" then
-        return [r]:
-    elif id = "A7" then
-        return [seq(a[i], i=1..n), seq(u[i], i=1..n-1), seq(l[i], i=1..n-1)]:
-    elif id = "A8" then
-        return [seq(x[i], i=1..n), seq(y[i], i=1..n)]:
-
-    elif id = "B1" or id = "B3" then
-        return [seq(p[i], i=1..n)]:
-    elif id = "B2" then
-        return [h]:
-    elif id = "B4" then
-        return [d,s]:
-    elif id = "B5" then
-        # g[i], capacitor values c[i], Laplace variable s, source current J.
-        return [seq(g[i], i=1..n), seq(c[i], i=1..n-1), s, J]:
-    elif id = "B6" then
-        # k[1..n-1], kb[1..n-2], and the conserved total Tot.
-        return [seq(k[i], i=1..n-1), seq(kb[i], i=1..n-2), Tot]:
-    elif id = "B7" then
-        return [seq(w[i], i=1..n)]:
-    elif id = "B8" then
-        return [cos_t, sin_t, l[1], px, py]:
-    elif id = "B9" then
-        return [seq(v[i], i=1..n)]:
-    elif id = "B10" then
-        return [s,p]:
-    elif id = "B11" then
-        if n=3 then return [x[1],x[2],x[3]]:
-        else return [seq(x[i], i=1..n*(n-1)/2)]: fi:
-    elif id = "B12" then
-        return [seq(a[i], i=1..n)]:
-    elif id = "B13" then
-        # Both transition weights and the marking difference are model inputs.
-        return [seq(w[i], i=1..n), seq(d[i], i=1..n)]:
-    elif id = "B14" then
-        # Symbolic regression nodes and observed data are both model inputs.
-        npts := n+1:
-        return [seq(u[i], i=1..npts), seq(y[i], i=1..npts)]:
-
-    elif id = "C1" then
-        # Generate("C1",n) uses the defaults m=3, T=3, deg=3.
-        return [seq(z[i], i=1..3)]:
-    elif id = "C2" then
-        # Generate("C2",n) uses the default m=2.
-        return [z[1],z[2]]:
-    elif id = "C3" then
-        return [seq(z[i], i=1..n)]:
-    fi:
-
-    error "no parameter specification for system %1", id:
-end proc:
-
-ExpectedParamCount := proc(id::string, n::posint)
-    return numelems(ExpectedRawParams(id,n)):
-end proc:
-
-DB_system := proc(id::string, n::posint)
-    local res, A, b, nn, Sys, pars0, newp, remap, Vars, i, j,
-          seen, expected_set, unexpected, missing;
-    global DB_param_map, DB_xstar;
-
-    if id = "B11" then
-        error "%1 is singular by design (kernel problem); solve its null space, "
-              "not A x = b -- call ParametricSystems:-Generate(\"B11\",n) directly.", id:
-    fi:
-
-    res := ParametricSystems:-Generate(id, n):
-    A  := res[1]:
-    b  := res[2]:
-    nn := op(1, b):
-    Vars := [seq(x||i, i=1..nn)]:
-
-    # Build the equations first, then rename the explicitly declared model
-    # parameters.  We do NOT infer parameters from every symbolic name in the
-    # equations; that was the source of c[i]/e[i] RHS parameter mismatches.
-    Sys := [seq(add(A[i,j]*Vars[j], j=1..nn) = b[i], i=1..nn)]:
-    pars0 := ExpectedRawParams(id,n):
-
-    # Fail fast if the generator and the declared parameter policy disagree.
-    seen := indets(Sys, 'name') minus {op(Vars)}:
-    expected_set := {op(pars0)}:
-    unexpected := seen minus expected_set:
-    missing := expected_set minus seen:
-    if unexpected <> {} then
-        error "%1 has undeclared symbolic parameters %2", id, unexpected:
-    fi:
-    if missing <> {} then
-        error "%1 is missing declared parameters %2", id, missing:
-    fi:
-
-    # Stable order for the interpolation variables y1,y2,...
-    pars0 := sort(pars0,
-                  (u,v) -> lexorder(convert(u,string), convert(v,string)) ):
-    newp  := [seq(y||i, i=1..numelems(pars0))]:
-    remap := zip(`=`, pars0, newp):
-    Sys := subs(remap, Sys):
-    DB_param_map := remap:
-
-    if numelems(res) >= 3 then
-        DB_xstar := subs(remap, convert(res[3], list)):
-    else
-        DB_xstar := 'DB_xstar':
-    fi:
-
-    return Sys, Vars, newp, numelems(newp), nn:
-end proc:
 
 get_eqn := proc(Sys,vars)
     option remember:
@@ -537,7 +146,7 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
         t0 := time():
         subs_values := zip((par,pnt) -> par=pnt,params,point_):
         num_eqn := numelems(Vars):
-        A := Mod(p,L,subs_values,integer[8]):
+        A := Mod(p,L,subs_values,integer):
         T := traperror(LinearSolve(p,A,1)):
         t_avg := time() - t0:
         if bb_phase = "NDSA" then t_ndsa_total := t_ndsa_total+t_avg:
@@ -725,173 +334,29 @@ BMEA := proc(v::{Vector,list}, p::posint, Z::name)
     return BMEA_poly(BMEA_coeffs(v,p),Z):
 end proc:
 
-# -----------------------------------------------------------------------------
-# Monomial decoding for the Ben-Or/Tiwari geometric substitution.
-#
-# A monomial y1^e1*...*yn^en is sampled at
-#     (prime_1^j,...,prime_n^j),
-# so BMEA returns the field element
-#     root = product(prime_i^e_i) mod p.
-#
-# Integer factorization of root is valid only while the unreduced product is
-# smaller than p.  For larger systems (notably B9), the product wraps modulo p.
-# The old decoder then leaves a non-1 integer residue and returns FAIL.
-#
-# Below we retain the fast integer-factor path when it is provably safe.  When
-# modular wrap is possible, a bounded meet-in-the-middle decoder uses the total
-# degree already discovered by NDSA.  Ambiguous modular encodings are rejected
-# explicitly rather than silently producing the wrong monomial.
-# -----------------------------------------------------------------------------
-
-_mono_build_left := proc(idx,last_idx,remaining,deg,residue,mon,
-                         prime_points,vars,p,T)
-    local e,powp,key:
-    if idx > last_idx then
-        key := [deg,residue]:
-        if not assigned(T[key]) then
-            T[key] := mon:
-        elif T[key] <> mon then
-            T[key] := 'AMBIG':
-        fi:
-        return NULL:
-    fi:
-
-    powp := 1:
-    for e from 0 to remaining do
-        _mono_build_left(idx+1,last_idx,remaining-e,deg+e,
-                         (residue*powp) mod p,mon*vars[idx]^e,
-                         prime_points,vars,p,T):
-        powp := (powp*prime_points[idx]) mod p:
-    od:
-    return NULL:
-end proc:
-
-_mono_scan_right := proc(idx,last_idx,remaining,deg,residue,mon,
-                         root,degree_bound,prime_points,vars,p,L,state)
-    local e,powp,needed,invres,dl,key,cand:
-
-    if state["count"] > 1 then
-        return NULL:
-    fi:
-
-    if idx > last_idx then
-        invres := (1/residue) mod p:
-        needed := (root*invres) mod p:
-
-        for dl from 0 to degree_bound-deg do
-            key := [dl,needed]:
-            if assigned(L[key]) then
-                if L[key] = 'AMBIG' then
-                    state["count"] := 2:
-                    return NULL:
-                fi:
-                cand := L[key]*mon:
-                if state["count"] = 0 then
-                    state["monomial"] := cand:
-                    state["count"] := 1:
-                elif cand <> state["monomial"] then
-                    state["count"] := 2:
-                    return NULL:
-                fi:
-            fi:
-        od:
-        return NULL:
-    fi:
-
-    powp := 1:
-    for e from 0 to remaining do
-        _mono_scan_right(idx+1,last_idx,remaining-e,deg+e,
-                         (residue*powp) mod p,mon*vars[idx]^e,
-                         root,degree_bound,prime_points,vars,p,L,state):
-        if state["count"] > 1 then
-            return NULL:
-        fi:
-        powp := (powp*prime_points[idx]) mod p:
-    od:
-    return NULL:
-end proc:
-
-generate_monomials := proc(roots_,num_var,prime_points,vars,degree_bound,p)
-    local m,mm,i,j,counter_,M_,total_deg,exact_safe,
-          split,L,state,root0:
-
-    if degree_bound < 0 then
-        error "generate_monomials: negative degree bound %1", degree_bound:
-    fi:
-    if num_var <> numelems(prime_points) or num_var <> numelems(vars) then
-        error "generate_monomials: variable/base length mismatch":
-    fi:
-
+generate_monomials := proc(roots_,num_var,prime_points,vars)
+    local m,mm,i,j,counter_,M_,rem:
     M_ := Vector(numelems(roots_),0):
-    if num_var = 0 then
-        for i from 1 to numelems(roots_) do
-            if (roots_[i] mod p) <> 1 then return FAIL: fi:
-            M_[i] := 1:
-        od:
-        return convert(M_,list):
-    fi:
-
-    # largestPrime^degree_bound bounds every unreduced prime encoding of a
-    # monomial having total degree <= degree_bound.
-    exact_safe := evalb(prime_points[numelems(prime_points)]^degree_bound < p):
-    local rem:
-    if exact_safe then
-        for i from 1 to numelems(roots_) do
-            root0 := roots_[i] mod p:
-            if root0 = 0 then return FAIL: fi:
-            mm := root0:
-            m := 1:
-            total_deg := 0:
-            for j from 1 to numelems(prime_points) do
-                counter_ := 0:
-                while mm mod prime_points[j] = 0 do
-                    mm := iquo(mm,prime_points[j],'rem'):
-                    counter_ := counter_+1:
-                od:
-                total_deg := total_deg+counter_:
-                m := m*vars[j]^counter_:
-            od:
-            if mm <> 1 or total_deg > degree_bound then
-                print("Warning: exact monomial decode failed for root[",i,
-                      "] = ",root0," with degree bound ",degree_bound):
-                return FAIL:
-            fi:
-            M_[i] := m:
-        od:
-        return convert(M_,list):
-    fi:
-
-    split := iquo(num_var,2):
-    L := table():
-    _mono_build_left(1,split,degree_bound,0,1,1,
-                     prime_points,vars,p,L):
-
     for i from 1 to numelems(roots_) do
-        root0 := roots_[i] mod p:
-        if root0 = 0 then
-            print("Warning: zero BMEA root cannot encode a monomial at root[",i,"]"):
+        if roots_[i] = 0 then 
+            return FAIL: 
+        fi:
+        mm := roots_[i]:
+        m := 1:
+        for j from 1 to numelems(prime_points) do
+            counter_ := 0:
+            while mm mod prime_points[j] = 0 do
+                mm := iquo(mm,prime_points[j],'rem'):
+                counter_ := counter_+1:
+            od:
+            m := m*vars[j]^counter_:
+        od:
+        M_[i] := m:
+        if mm <> 1 then
+            print("Warning: residue mm=", mm, " (should be 1) for root[", i, "]"):
             return FAIL:
         fi:
-
-        state := table():
-        state["count"] := 0:
-        state["monomial"] := 0:
-        _mono_scan_right(split+1,num_var,degree_bound,0,1,1,
-                         root0,degree_bound,prime_points,vars,p,L,state):
-
-        if state["count"] = 0 then
-            print("Warning: no modular monomial matches root[",i,"] = ",root0,
-                  " within total degree <= ",degree_bound):
-            return FAIL:
-        elif state["count"] > 1 then
-            print("Warning: ambiguous modular monomial encoding for root[",i,
-                  "] = ",root0," within total degree <= ",degree_bound,
-                  ". Use a larger field prime."):
-            return FAIL:
-        fi:
-        M_[i] := state["monomial"]:
     od:
-
     return convert(M_,list):
 end proc:
 
@@ -1317,7 +782,7 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
 
     for k from 1 to num_eqn do
         t_helper := time():
-        temp := generate_monomials(Roots_num_eval[k],num_vars,Primes,vars,deg_num[k],p):
+        temp := generate_monomials(Roots_num_eval[k],num_vars,Primes,vars):
         t_genmono_total := t_genmono_total+(time()-t_helper):
         if temp = FAIL then 
             return FAIL: 
@@ -1331,7 +796,7 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
 
     if common_den_flag then
         t_helper := time():
-        temp := generate_monomials(Roots_den_eval[1],num_vars,Primes,vars,deg_den[1],p):
+        temp := generate_monomials(Roots_den_eval[1],num_vars,Primes,vars):
         t_genmono_total := t_genmono_total+(time()-t_helper):
         if temp = FAIL then 
             return FAIL:
@@ -1348,7 +813,7 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
     else
         for k from 1 to num_eqn do
             t_helper := time():
-            temp := generate_monomials(Roots_den_eval[k],num_vars,Primes,vars,deg_den[k],p):
+            temp := generate_monomials(Roots_den_eval[k],num_vars,Primes,vars):
             t_genmono_total := t_genmono_total+(time()-t_helper):
             if temp = FAIL then 
                 return FAIL:
@@ -1463,28 +928,24 @@ get_data := proc(test_case)
 end proc:
 
 # ---- system selection ------------------------------------------------------
-#  "TP" keeps the original hand-built symmetric-Toeplitz path (unchanged).
-#  A1 is routed through the original TP construction to preserve its known
-#  76-probe n=4 benchmark.  All other catalog IDs route through DB_system with
-#  an explicit per-system parameter specification.  Run ParametricSystems:-List()
-#  for the menu.  "B11" is singular (kernel) and is rejected; "A5","A8" have
-#  rational entries -- FFGE is auto-skipped for them.
-
-#  Edit this line to select the benchmark family.  It is deliberately a direct
-#  assignment (not "if not assigned") so re-reading this file in the same Maple
-#  session cannot silently reuse a stale system from an earlier run.
-SYSTEM_ID := "A1":
+# Change SYSTEM_ID to any ID printed by ParametricSystems:-List().
+# All matrix construction, RHS construction, physical parameter lists, and
+# y1,y2,... remapping are fetched from parametric_systems.mpl.
+#
+# Examples: "S1", "R2", "P1", "P13", "P35", "P40".
+SYSTEM_ID := "P40":
 if not type(SYSTEM_ID, string) then SYSTEM_ID := convert(SYSTEM_ID, string): fi:
 
-# Freeze the selected family for this benchmark run.  From here on, use
-# RUN_SYSTEM_ID so changing SYSTEM_ID later cannot relabel generated data.
+# Freeze the selected family for this benchmark run.
 RUN_SYSTEM_ID := SYSTEM_ID:
-BENCHMARK_BUILD := "ALL_SYSTEM_PARAMS_MODULAR_MONOMIAL_v5":
-printf("Benchmark build: %s\n", BENCHMARK_BUILD):
 
-test_prime := 2^31-1:  
-n_min := 12:
-n_max := 12:
+#test_prime := prevprime(2^63-1):
+test_prime := prevprime(2^31-1):
+
+# n is the scalable input knob used by the selected family.
+# For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
+n_min := 4:
+n_max := 8:
 do_verify := false:
 do_ffge := false:
 summary := []:
@@ -1507,15 +968,9 @@ FAULT_ON := false:
 kernelopts(gcfreq = 32*10^6):
 
 for n_test from n_min to n_max do
-    # A1 is intentionally routed through the original, known-good TP
-    # construction.  This is the benchmark for which n=4 gives 76 probes.
-    # Keep A1 as the external/reporting ID, but construct its equations exactly
-    # as TP: n Toeplitz parameters y1,...,yn and constant RHS = 1.
-    if member(RUN_SYSTEM_ID, {"TP","A1"}) then
-        Sys,Vars,params,num_vars,num_eqn := get_data("TP",n_test):
-    else
-        Sys,Vars,params,num_vars,num_eqn := DB_system(RUN_SYSTEM_ID,n_test):
-    fi:
+    Sys,Vars,params,num_vars,num_eqn := DB_system(RUN_SYSTEM_ID,n_test):
+
+    
 
     # Validate every catalog system before any black-box calls are made.
     expected_num_vars := ExpectedParamCount(RUN_SYSTEM_ID,n_test):
@@ -1528,9 +983,9 @@ for n_test from n_min to n_max do
 
     printf("\n==== SYSTEM %s : %s   (n = %d, params = %d) ====\n",
            RUN_SYSTEM_ID,
-           `if`(member(RUN_SYSTEM_ID, {"TP","A1"}), "Symmetric Toeplitz (hand-built TP path)",
-                ParametricSystems:-Catalog()[RUN_SYSTEM_ID][1]),
+           ParametricSystems:-Name(RUN_SYSTEM_ID),
            n_test, num_vars):
+
     print(Sys);
     print(Vars);
     print(params);
@@ -1602,16 +1057,10 @@ for n_test from n_min to n_max do
         stats_gc_Mbytes := 0.0:
     fi:
 
-    ffge_run := do_ffge and not member(RUN_SYSTEM_ID, {"A5","A8"}):
+    ffge_run := do_ffge:
     if ffge_run then
-        if member(RUN_SYSTEM_ID, {"TP","A1"}) then
-            Y_ffge := [seq(y||i,i=1..n_test)]:
-            A_ffge := LinearAlgebra:-ToeplitzMatrix(Y_ffge,symmetric):
-            b_ffge := Vector(n_test,fill=1):
-        else
-            A_ffge,b_ffge := GenerateMatrix(Sys,Vars):
-            Y_ffge := params:
-        fi:
+        A_ffge,b_ffge := GenerateMatrix(Sys,Vars):
+        Y_ffge := params:
         ffge_status := "OK":
         try
             det_ffge,f_ffge,g_ffge := FFGE(A_ffge,b_ffge,Y_ffge):
@@ -1829,7 +1278,7 @@ if do_ffge then
 fi:
 *)
 
-report_path := "/cecm/home/mss59/Desktop/research_ServerMaple/rat_recon_mpl/timings/FTR_sys_timing.txt":
+report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_sys_timing_UP.txt":
 # report_path := "/home/msokhi/Desktop/research_MS/rat_recon_mpl/timings/FTR_sys_Timing.txt":
 
 # Label the report from the data themselves, not from the mutable selector.
@@ -1848,8 +1297,7 @@ fd := fopen(report_path, WRITE):
 fprintf(fd, "============================================================\n"):
 fprintf(fd, "  MRFI benchmark (fault-tolerant) -- system %s : %s\n",
         REPORT_SYSTEM_ID,
-        `if`(member(REPORT_SYSTEM_ID, {"TP","A1"}), "Symmetric Toeplitz (hand-built TP path)",
-             ParametricSystems:-Catalog()[REPORT_SYSTEM_ID][1])):
+        ParametricSystems:-Name(REPORT_SYSTEM_ID)):
 fprintf(fd, "  Univariate RR : HFTRFR (degrees + bad set) + DFTRFR\n"):
 fprintf(fd, "  Prime p = %d\n", test_prime):
 fprintf(fd, "  Range   n = %d .. %d\n", n_min, n_max):
@@ -1867,9 +1315,6 @@ for entry in summary do
     fprintf(fd, "  n = %d\n", entry[1]):
     fprintf(fd, "  System ID                        : %s\n", entry[39]):
     fprintf(fd, "  Parameter count                  : %d\n", entry[40]):
-    fprintf(fd, "  Expected parameter count         : %d\n",
-            ExpectedParamCount(entry[39],entry[1])):
-    fprintf(fd, "  Parameter validation             : PASS\n"):
     fprintf(fd, "  MRFI Status                      : %s\n", entry[2]):
     fprintf(fd, "  Total BB calls                   : %d  (NDSA = %d, MRFI = %d)\n",
             entry[3], entry[4], entry[5]):
@@ -1937,5 +1382,3 @@ for entry in summary do
 od:
 fclose(fd):
 printf("Wrote %s\n", report_path):
-
-
