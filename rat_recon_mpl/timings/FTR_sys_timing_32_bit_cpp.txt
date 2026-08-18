@@ -20,20 +20,20 @@
   Time for MRFI Individual component -
   Time -> cppNewtonInterp (s)  : 0.000000000
   Time -> HFTRFR (s)           : 0.000000000
-  Time -> FTREval Interp+RR+EV : 0.000000000
+  Time -> FTREval Interp+RR+EV : 0.002000000
   Time -> BMEA (s)             : 0.000000000
-  Time -> Vandermonde (s)      : 0.001000000
-  Time -> Roots (s)            : 0.000000000
+  Time -> Vandermonde (s)      : 0.000000000
+  Time -> Roots (s)            : 0.001000000
   Time -> Gen. Monomials (s)   : 0.000000000
   Time -> Final Poly. (s)      : 0.000000000
   Time -> Get point AFL (s)    : 0.000000000
   Time -> Eval+List (s)        : 0.000000000
   Time -> Normalize Proc. (s)  : 0.000000000
   Time -> MapRR (s)            : 0.000000000
-  Time -> Overhead & Other (s) : 0.005000000
-  Time -> NDSA Proc. (s)       : 0.000000000
+  Time -> Overhead & Other (s) : 0.001000000
+  Time -> NDSA Proc. (s)       : 0.002000000
   GC -> collections            : 0
-  GC -> Mbytes allocated       : 0.914
+  GC -> Mbytes allocated       : 1.063
   Deg_num (per equation)   : [1, 1, 1, 1]
   Deg_den (per equation)   : [2, 2, 2, 2]
   Terms_num (per equation) : [2, 4, 4, 2]
@@ -60,26 +60,26 @@
   BB calls in NDSA                 : 12
   BB calls in MRFI                 : 192
   Total NDSA time for BB calls (s) : 0.000000000
-  Total MRFI time for BB calls (s) : 0.001000000
-  Total BB calls time (NDSA+MRFI)  : 0.001000000
-  Total time (s)                   : 0.009000000
+  Total MRFI time for BB calls (s) : 0.002000000
+  Total BB calls time (NDSA+MRFI)  : 0.002000000
+  Total time (s)                   : 0.011000000
   Time for MRFI Individual component -
   Time -> cppNewtonInterp (s)  : 0.000000000
-  Time -> HFTRFR (s)           : 0.001000000
+  Time -> HFTRFR (s)           : 0.000000000
   Time -> FTREval Interp+RR+EV : 0.001000000
   Time -> BMEA (s)             : 0.000000000
   Time -> Vandermonde (s)      : 0.000000000
-  Time -> Roots (s)            : 0.000000000
-  Time -> Gen. Monomials (s)   : 0.001000000
-  Time -> Final Poly. (s)      : 0.000000000
-  Time -> Get point AFL (s)    : 0.001000000
+  Time -> Roots (s)            : 0.001000000
+  Time -> Gen. Monomials (s)   : 0.000000000
+  Time -> Final Poly. (s)      : 0.001000000
+  Time -> Get point AFL (s)    : 0.000000000
   Time -> Eval+List (s)        : 0.000000000
   Time -> Normalize Proc. (s)  : 0.000000000
   Time -> MapRR (s)            : 0.000000000
-  Time -> Overhead & Other (s) : 0.005000000
+  Time -> Overhead & Other (s) : 0.008000000
   Time -> NDSA Proc. (s)       : 0.000000000
   GC -> collections            : 0
-  GC -> Mbytes allocated       : 1.321
+  GC -> Mbytes allocated       : 1.539
   Deg_num (per equation)   : [2, 2, 2, 2, 2]
   Deg_den (per equation)   : [3, 3, 3, 3, 3]
   Terms_num (per equation) : [7, 8, 11, 8, 7]
@@ -106,27 +106,27 @@
   Total BB calls                   : 780  (NDSA = 12, MRFI = 768)
   BB calls in NDSA                 : 12
   BB calls in MRFI                 : 768
-  Total NDSA time for BB calls (s) : 0.002000000
-  Total MRFI time for BB calls (s) : 0.009000000
-  Total BB calls time (NDSA+MRFI)  : 0.011000000
-  Total time (s)                   : 0.026000000
+  Total NDSA time for BB calls (s) : 0.000000000
+  Total MRFI time for BB calls (s) : 0.008000000
+  Total BB calls time (NDSA+MRFI)  : 0.008000000
+  Total time (s)                   : 0.027000000
   Time for MRFI Individual component -
-  Time -> cppNewtonInterp (s)  : 0.000000000
+  Time -> cppNewtonInterp (s)  : 0.001000000
   Time -> HFTRFR (s)           : 0.001000000
-  Time -> FTREval Interp+RR+EV : 0.000000000
-  Time -> BMEA (s)             : 0.001000000
+  Time -> FTREval Interp+RR+EV : 0.002000000
+  Time -> BMEA (s)             : 0.000000000
   Time -> Vandermonde (s)      : 0.000000000
-  Time -> Roots (s)            : 0.001000000
-  Time -> Gen. Monomials (s)   : 0.001000000
+  Time -> Roots (s)            : 0.004000000
+  Time -> Gen. Monomials (s)   : 0.002000000
   Time -> Final Poly. (s)      : 0.000000000
-  Time -> Get point AFL (s)    : 0.005000000
+  Time -> Get point AFL (s)    : 0.004000000
   Time -> Eval+List (s)        : 0.000000000
-  Time -> Normalize Proc. (s)  : 0.001000000
+  Time -> Normalize Proc. (s)  : 0.000000000
   Time -> MapRR (s)            : 0.000000000
-  Time -> Overhead & Other (s) : 0.016000000
+  Time -> Overhead & Other (s) : 0.013000000
   Time -> NDSA Proc. (s)       : 0.000000000
   GC -> collections            : 0
-  GC -> Mbytes allocated       : 3.128
+  GC -> Mbytes allocated       : 3.562
   Deg_num (per equation)   : [2, 2, 2, 2, 2, 2]
   Deg_den (per equation)   : [3, 3, 3, 3, 3, 3]
   Terms_num (per equation) : [7, 14, 15, 15, 14, 7]
@@ -154,27 +154,27 @@
   Total BB calls                   : 1052  (NDSA = 28, MRFI = 1024)
   BB calls in NDSA                 : 28
   BB calls in MRFI                 : 1024
-  Total NDSA time for BB calls (s) : 0.000000000
-  Total MRFI time for BB calls (s) : 0.010000000
-  Total BB calls time (NDSA+MRFI)  : 0.010000000
-  Total time (s)                   : 0.052000000
+  Total NDSA time for BB calls (s) : 0.001000000
+  Total MRFI time for BB calls (s) : 0.036000000
+  Total BB calls time (NDSA+MRFI)  : 0.037000000
+  Total time (s)                   : 0.083000000
   Time for MRFI Individual component -
-  Time -> cppNewtonInterp (s)  : 0.000000000
+  Time -> cppNewtonInterp (s)  : 0.001000000
   Time -> HFTRFR (s)           : 0.001000000
-  Time -> FTREval Interp+RR+EV : 0.007000000
-  Time -> BMEA (s)             : 0.002000000
-  Time -> Vandermonde (s)      : 0.001000000
-  Time -> Roots (s)            : 0.005000000
-  Time -> Gen. Monomials (s)   : 0.004000000
-  Time -> Final Poly. (s)      : 0.001000000
-  Time -> Get point AFL (s)    : 0.006000000
+  Time -> FTREval Interp+RR+EV : 0.004000000
+  Time -> BMEA (s)             : 0.001000000
+  Time -> Vandermonde (s)      : 0.000000000
+  Time -> Roots (s)            : 0.011000000
+  Time -> Gen. Monomials (s)   : 0.005000000
+  Time -> Final Poly. (s)      : 0.000000000
+  Time -> Get point AFL (s)    : 0.007000000
   Time -> Eval+List (s)        : 0.000000000
-  Time -> Normalize Proc. (s)  : 0.000000000
-  Time -> MapRR (s)            : 0.001000000
-  Time -> Overhead & Other (s) : 0.023000000
-  Time -> NDSA Proc. (s)       : 0.001000000
-  GC -> collections            : 0
-  GC -> Mbytes allocated       : 5.637
+  Time -> Normalize Proc. (s)  : 0.001000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.052000000
+  Time -> NDSA Proc. (s)       : 0.000000000
+  GC -> collections            : 1
+  GC -> Mbytes allocated       : 7.036
   Deg_num (per equation)   : [3, 3, 3, 3, 3, 3, 3]
   Deg_den (per equation)   : [4, 4, 4, 4, 4, 4, 4]
   Terms_num (per equation) : [32, 43, 49, 52, 49, 43, 32]
@@ -204,26 +204,26 @@
   BB calls in NDSA                 : 28
   BB calls in MRFI                 : 4096
   Total NDSA time for BB calls (s) : 0.000000000
-  Total MRFI time for BB calls (s) : 0.095000000
-  Total BB calls time (NDSA+MRFI)  : 0.095000000
-  Total time (s)                   : 0.193000000
+  Total MRFI time for BB calls (s) : 0.061000000
+  Total BB calls time (NDSA+MRFI)  : 0.061000000
+  Total time (s)                   : 0.201000000
   Time for MRFI Individual component -
   Time -> cppNewtonInterp (s)  : 0.000000000
-  Time -> HFTRFR (s)           : 0.002000000
-  Time -> FTREval Interp+RR+EV : 0.008000000
-  Time -> BMEA (s)             : 0.005000000
+  Time -> HFTRFR (s)           : 0.001000000
+  Time -> FTREval Interp+RR+EV : 0.015000000
+  Time -> BMEA (s)             : 0.003000000
   Time -> Vandermonde (s)      : 0.003000000
-  Time -> Roots (s)            : 0.011000000
+  Time -> Roots (s)            : 0.025000000
   Time -> Gen. Monomials (s)   : 0.008000000
-  Time -> Final Poly. (s)      : 0.002000000
-  Time -> Get point AFL (s)    : 0.019000000
+  Time -> Final Poly. (s)      : 0.003000000
+  Time -> Get point AFL (s)    : 0.048000000
   Time -> Eval+List (s)        : 0.000000000
-  Time -> Normalize Proc. (s)  : 0.001000000
+  Time -> Normalize Proc. (s)  : 0.000000000
   Time -> MapRR (s)            : 0.000000000
-  Time -> Overhead & Other (s) : 0.132000000
+  Time -> Overhead & Other (s) : 0.093000000
   Time -> NDSA Proc. (s)       : 0.002000000
   GC -> collections            : 1
-  GC -> Mbytes allocated       : 24.176
+  GC -> Mbytes allocated       : 19.161
   Deg_num (per equation)   : [3, 3, 3, 3, 3, 3, 3, 3]
   Deg_den (per equation)   : [4, 4, 4, 4, 4, 4, 4, 4]
   Terms_num (per equation) : [30, 65, 77, 78, 78, 77, 65, 30]
@@ -253,27 +253,27 @@
   Total BB calls                   : 10268  (NDSA = 28, MRFI = 10240)
   BB calls in NDSA                 : 28
   BB calls in MRFI                 : 10240
-  Total NDSA time for BB calls (s) : 0.001000000
-  Total MRFI time for BB calls (s) : 0.200000000
-  Total BB calls time (NDSA+MRFI)  : 0.201000000
-  Total time (s)                   : 0.561000000
+  Total NDSA time for BB calls (s) : 0.000000000
+  Total MRFI time for BB calls (s) : 0.159000000
+  Total BB calls time (NDSA+MRFI)  : 0.159000000
+  Total time (s)                   : 0.596000000
   Time for MRFI Individual component -
-  Time -> cppNewtonInterp (s)  : 0.001000000
+  Time -> cppNewtonInterp (s)  : 0.002000000
   Time -> HFTRFR (s)           : 0.001000000
-  Time -> FTREval Interp+RR+EV : 0.052000000
-  Time -> BMEA (s)             : 0.019000000
-  Time -> Vandermonde (s)      : 0.020000000
-  Time -> Roots (s)            : 0.078000000
-  Time -> Gen. Monomials (s)   : 0.030000000
-  Time -> Final Poly. (s)      : 0.006000000
-  Time -> Get point AFL (s)    : 0.049000000
+  Time -> FTREval Interp+RR+EV : 0.049000000
+  Time -> BMEA (s)             : 0.016000000
+  Time -> Vandermonde (s)      : 0.016000000
+  Time -> Roots (s)            : 0.130000000
+  Time -> Gen. Monomials (s)   : 0.035000000
+  Time -> Final Poly. (s)      : 0.005000000
+  Time -> Get point AFL (s)    : 0.088000000
   Time -> Eval+List (s)        : 0.000000000
-  Time -> Normalize Proc. (s)  : 0.001000000
+  Time -> Normalize Proc. (s)  : 0.002000000
   Time -> MapRR (s)            : 0.001000000
-  Time -> Overhead & Other (s) : 0.303000000
+  Time -> Overhead & Other (s) : 0.251000000
   Time -> NDSA Proc. (s)       : 0.000000000
-  GC -> collections            : 2
-  GC -> Mbytes allocated       : 42.669
+  GC -> collections            : 1
+  GC -> Mbytes allocated       : 63.631
   Deg_num (per equation)   : [4, 4, 4, 4, 4, 4, 4, 4, 4]
   Deg_den (per equation)   : [5, 5, 5, 5, 5, 5, 5, 5, 5]
   Terms_num (per equation) : [167, 208, 243, 267, 274, 267, 243, 208, 167]
@@ -305,26 +305,26 @@
   BB calls in NDSA                 : 28
   BB calls in MRFI                 : 20480
   Total NDSA time for BB calls (s) : 0.000000000
-  Total MRFI time for BB calls (s) : 0.385000000
-  Total BB calls time (NDSA+MRFI)  : 0.385000000
-  Total time (s)                   : 1.235000000
+  Total MRFI time for BB calls (s) : 0.370000000
+  Total BB calls time (NDSA+MRFI)  : 0.370000000
+  Total time (s)                   : 1.310000000
   Time for MRFI Individual component -
   Time -> cppNewtonInterp (s)  : 0.001000000
   Time -> HFTRFR (s)           : 0.002000000
-  Time -> FTREval Interp+RR+EV : 0.082000000
-  Time -> BMEA (s)             : 0.035000000
-  Time -> Vandermonde (s)      : 0.059000000
-  Time -> Roots (s)            : 0.270000000
-  Time -> Gen. Monomials (s)   : 0.068000000
+  Time -> FTREval Interp+RR+EV : 0.087000000
+  Time -> BMEA (s)             : 0.076000000
+  Time -> Vandermonde (s)      : 0.062000000
+  Time -> Roots (s)            : 0.396000000
+  Time -> Gen. Monomials (s)   : 0.066000000
   Time -> Final Poly. (s)      : 0.018000000
-  Time -> Get point AFL (s)    : 0.096000000
+  Time -> Get point AFL (s)    : 0.087000000
   Time -> Eval+List (s)        : 0.000000000
-  Time -> Normalize Proc. (s)  : 0.005000000
-  Time -> MapRR (s)            : 0.000000000
-  Time -> Overhead & Other (s) : 0.598000000
+  Time -> Normalize Proc. (s)  : 0.006000000
+  Time -> MapRR (s)            : 0.001000000
+  Time -> Overhead & Other (s) : 0.507000000
   Time -> NDSA Proc. (s)       : 0.001000000
-  GC -> collections            : 3
-  GC -> Mbytes allocated       : 85.963
+  GC -> collections            : 2
+  GC -> Mbytes allocated       : 133.727
   Deg_num (per equation)   : [4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
   Deg_den (per equation)   : [5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
   Terms_num (per equation) : [153, 333, 391, 428, 430, 430, 428, 391, 333, 153]
@@ -357,26 +357,26 @@
   BB calls in NDSA                 : 28
   BB calls in MRFI                 : 49152
   Total NDSA time for BB calls (s) : 0.001000000
-  Total MRFI time for BB calls (s) : 1.072000000
-  Total BB calls time (NDSA+MRFI)  : 1.073000000
-  Total time (s)                   : 6.361000000
+  Total MRFI time for BB calls (s) : 0.992000000
+  Total BB calls time (NDSA+MRFI)  : 0.993000000
+  Total time (s)                   : 5.792000000
   Time for MRFI Individual component -
-  Time -> cppNewtonInterp (s)  : 0.000000000
-  Time -> HFTRFR (s)           : 0.003000000
-  Time -> FTREval Interp+RR+EV : 0.341000000
-  Time -> BMEA (s)             : 0.326000000
-  Time -> Vandermonde (s)      : 0.673000000
-  Time -> Roots (s)            : 2.682000000
-  Time -> Gen. Monomials (s)   : 0.324000000
-  Time -> Final Poly. (s)      : 0.050000000
-  Time -> Get point AFL (s)    : 0.256000000
+  Time -> cppNewtonInterp (s)  : 0.001000000
+  Time -> HFTRFR (s)           : 0.001000000
+  Time -> FTREval Interp+RR+EV : 0.367000000
+  Time -> BMEA (s)             : 0.329000000
+  Time -> Vandermonde (s)      : 0.639000000
+  Time -> Roots (s)            : 2.306000000
+  Time -> Gen. Monomials (s)   : 0.287000000
+  Time -> Final Poly. (s)      : 0.051000000
+  Time -> Get point AFL (s)    : 0.241000000
   Time -> Eval+List (s)        : 0.000000000
-  Time -> Normalize Proc. (s)  : 0.039000000
+  Time -> Normalize Proc. (s)  : 0.011000000
   Time -> MapRR (s)            : 0.002000000
-  Time -> Overhead & Other (s) : 1.665000000
+  Time -> Overhead & Other (s) : 1.557000000
   Time -> NDSA Proc. (s)       : 0.000000000
-  GC -> collections            : 11
-  GC -> Mbytes allocated       : 248.834
+  GC -> collections            : 6
+  GC -> Mbytes allocated       : 488.629
   Deg_num (per equation)   : [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
   Deg_den (per equation)   : [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
   Terms_num (per equation) : [931, 1259, 1415, 1531, 1623, 1599, 1623, 1531, 1415, 1259, 931]
@@ -409,27 +409,27 @@
   Total BB calls                   : 196636  (NDSA = 28, MRFI = 196608)
   BB calls in NDSA                 : 28
   BB calls in MRFI                 : 196608
-  Total NDSA time for BB calls (s) : 0.000000000
-  Total MRFI time for BB calls (s) : 4.492000000
-  Total BB calls time (NDSA+MRFI)  : 4.492000000
-  Total time (s)                   : 21.166000000
+  Total NDSA time for BB calls (s) : 0.001000000
+  Total MRFI time for BB calls (s) : 4.319000000
+  Total BB calls time (NDSA+MRFI)  : 4.320000000
+  Total time (s)                   : 17.962000000
   Time for MRFI Individual component -
-  Time -> cppNewtonInterp (s)  : 0.001000000
-  Time -> HFTRFR (s)           : 0.002000000
-  Time -> FTREval Interp+RR+EV : 0.803000000
-  Time -> BMEA (s)             : 1.381000000
-  Time -> Vandermonde (s)      : 2.236000000
-  Time -> Roots (s)            : 8.911000000
-  Time -> Gen. Monomials (s)   : 0.594000000
-  Time -> Final Poly. (s)      : 0.134000000
-  Time -> Get point AFL (s)    : 1.106000000
+  Time -> cppNewtonInterp (s)  : 0.003000000
+  Time -> HFTRFR (s)           : 0.000000000
+  Time -> FTREval Interp+RR+EV : 0.802000000
+  Time -> BMEA (s)             : 1.315000000
+  Time -> Vandermonde (s)      : 2.235000000
+  Time -> Roots (s)            : 5.915000000
+  Time -> Gen. Monomials (s)   : 0.547000000
+  Time -> Final Poly. (s)      : 0.186000000
+  Time -> Get point AFL (s)    : 1.026000000
   Time -> Eval+List (s)        : 0.000000000
-  Time -> Normalize Proc. (s)  : 0.037000000
+  Time -> Normalize Proc. (s)  : 0.038000000
   Time -> MapRR (s)            : 0.004000000
-  Time -> Overhead & Other (s) : 5.957000000
-  Time -> NDSA Proc. (s)       : 0.000000000
-  GC -> collections            : 14
-  GC -> Mbytes allocated       : 842.752
+  Time -> Overhead & Other (s) : 5.890000000
+  Time -> NDSA Proc. (s)       : 0.001000000
+  GC -> collections            : 22
+  GC -> Mbytes allocated       : 1478.374
   Deg_num (per equation)   : [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
   Deg_den (per equation)   : [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
   Terms_num (per equation) : [849, 1854, 2193, 2414, 2563, 2546, 2546, 2563, 2414, 2193, 1854, 849]
@@ -464,26 +464,26 @@
   BB calls in NDSA                 : 28
   BB calls in MRFI                 : 458752
   Total NDSA time for BB calls (s) : 0.001000000
-  Total MRFI time for BB calls (s) : 11.363000000
-  Total BB calls time (NDSA+MRFI)  : 11.364000000
-  Total time (s)                   : 166.511000000
+  Total MRFI time for BB calls (s) : 11.373000000
+  Total BB calls time (NDSA+MRFI)  : 11.374000000
+  Total time (s)                   : 115.930000000
   Time for MRFI Individual component -
-  Time -> cppNewtonInterp (s)  : 0.003000000
-  Time -> HFTRFR (s)           : 0.001000000
-  Time -> FTREval Interp+RR+EV : 3.552000000
-  Time -> BMEA (s)             : 16.409000000
-  Time -> Vandermonde (s)      : 26.566000000
-  Time -> Roots (s)            : 97.811000000
-  Time -> Gen. Monomials (s)   : 2.650000000
-  Time -> Final Poly. (s)      : 0.502000000
-  Time -> Get point AFL (s)    : 2.419000000
+  Time -> cppNewtonInterp (s)  : 0.000000000
+  Time -> HFTRFR (s)           : 0.003000000
+  Time -> FTREval Interp+RR+EV : 3.599000000
+  Time -> BMEA (s)             : 16.923000000
+  Time -> Vandermonde (s)      : 26.567000000
+  Time -> Roots (s)            : 47.098000000
+  Time -> Gen. Monomials (s)   : 2.562000000
+  Time -> Final Poly. (s)      : 0.525000000
+  Time -> Get point AFL (s)    : 2.326000000
   Time -> Eval+List (s)        : 0.000000000
-  Time -> Normalize Proc. (s)  : 0.087000000
-  Time -> MapRR (s)            : 0.049000000
-  Time -> Overhead & Other (s) : 16.461000000
-  Time -> NDSA Proc. (s)       : 0.001000000
-  GC -> collections            : 39
-  GC -> Mbytes allocated       : 2362.862
+  Time -> Normalize Proc. (s)  : 0.099000000
+  Time -> MapRR (s)            : 0.055000000
+  Time -> Overhead & Other (s) : 16.173000000
+  Time -> NDSA Proc. (s)       : 0.000000000
+  GC -> collections            : 220
+  GC -> Mbytes allocated       : 7987.844
   Deg_num (per equation)   : [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
   Deg_den (per equation)   : [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
   Terms_num (per equation) : [5579, 7210, 8394, 8903, 9470, 9757, 9690, 9757, 9470, 8903, 8394, 7210, 5579]
