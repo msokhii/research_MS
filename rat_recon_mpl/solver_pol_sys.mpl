@@ -168,9 +168,13 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
         #  C++ rref kernel, which is good for any prime p < 2^63.  cppLSip
         #  overwrites A, which is what we want here: A is rebuilt on every
         #  black box call so a defensive copy would be pure overhead.
-        A := Matrix(nr,nc,(i,j) -> modp(eval(L[i,j],subs_values),p),
-             datatype=integer[8],order=C_order):
+        # A := Matrix(nr,nc,(i,j) -> modp(eval(L[i,j],subs_values),p),
+         #    datatype=integer[8],order=C_order):
+        A := LinearAlgebra:-Modular:-Mod(p,L,subs_values,integer[8]):
+        rtable_options(A,datatype), rtable_options(A,order);
         print(A):
+        whattype(A);
+        quit;
         soln := cppLSip(A,p):
         t_avg := time() - t0:
         if bb_phase = "NDSA" then t_ndsa_total := t_ndsa_total+t_avg:
