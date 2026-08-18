@@ -1,8 +1,0 @@
-============================================================
-  MRFI benchmark (fault-tolerant) -- system S1 : Symmetric Toeplitz
-  Univariate RR : HFTRFR (degrees + bad set) + DFTRFR
-  Prime p = 9223372036854775783
-  Range   n = 15 .. 15
-  Fault injection FAULT_ON = false , error budget FAULT_E = 0
-============================================================
-

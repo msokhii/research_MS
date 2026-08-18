@@ -135,7 +135,9 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
     local Lin_BB,L,nr,nc:
     L := GenerateMatrix(Sys,Vars,augmented=true):
     print(L);
-    nr,nc := op(1,L):
+    nr,nc := Dimension(L):
+    print(nr);
+    print(nc);
     Lin_BB := proc(point_::list(integer),p::prime)
         local A,T,subs_values,num_eqn,soln,t0,t_avg,i,j;
         global counter,bb_calls_ndsa,bb_calls_mrfi,t_ndsa_total,t_mrfi_total,bb_phase;
@@ -168,6 +170,7 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
         #  black box call so a defensive copy would be pure overhead.
         A := Matrix(nr,nc,(i,j) -> modp(eval(L[i,j],subs_values),p),
              datatype=integer[8],order=C_order):
+        print(A):
         soln := cppLSip(A,p):
         t_avg := time() - t0:
         if bb_phase = "NDSA" then t_ndsa_total := t_ndsa_total+t_avg:
@@ -953,14 +956,14 @@ end proc:
 # y1,y2,... remapping are fetched from parametric_systems.mpl.
 #
 # Examples: "S1", "R2", "P1", "P13", "P35", "P40".
-SYSTEM_ID := "P40":
+SYSTEM_ID := "S1":
 if not type(SYSTEM_ID, string) then SYSTEM_ID := convert(SYSTEM_ID, string): fi:
 
 # Freeze the selected family for this benchmark run.
 RUN_SYSTEM_ID := SYSTEM_ID:
 
-#test_prime := prevprime(2^63-1):
-test_prime := prevprime(2^31-1):
+test_prime := prevprime(2^63-1):
+#test_prime := prevprime(2^31-1):
 
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
@@ -1298,7 +1301,7 @@ if do_ffge then
 fi:
 *)
 
-report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_sys_timing_UP.txt":
+report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_sys_timing.txt":
 # report_path := "/home/msokhi/Desktop/research_MS/rat_recon_mpl/timings/FTR_sys_Timing.txt":
 
 # Label the report from the data themselves, not from the mutable selector.

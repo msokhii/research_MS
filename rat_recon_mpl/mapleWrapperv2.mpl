@@ -695,22 +695,6 @@ cppRREFext := define_external("cppRREF",
     RETURN::integer[4],
     LIB=libObj):
 
-#  Fail here, at read time, rather than 500 black box calls later with
-#  "cannot determine if this expression is true or false".
-if not type(cppRREFext,procedure) then
-    error "define_external did not bind cppRREFext; check that %1 exists and "
-          "exports cppRREF (nm -D %1 | grep cppRREF)",POLMATH_LIB:
-fi:
-
-#  cppMat64 : build the hardware matrix the external call needs.  Entries are
-#  reduced into [0,p) here so that every one of them fits in a machine word.
-cppMat64 := proc(A::Matrix,p::prime)
-    local n,m,i,j:
-    n,m := op(1,A):
-    return Matrix(n,m,(i,j) -> modp(A[i,j],p),
-                  datatype=integer[8],order=C_order):
-end proc:
-
 #  cppRREFip(B,p) puts B in reduced row echelon form IN PLACE and returns the
 #  rank.  B must be an integer[8] C_order Matrix.
 cppRREFip := proc(B::Matrix(datatype=integer[8]),p::prime)
@@ -725,14 +709,6 @@ cppRREFip := proc(B::Matrix(datatype=integer[8]),p::prime)
         error "cppRREF failed with code %1",r:
     fi:
     return r:
-end proc:
-
-#  cppRREF(A,p) returns rref(A) mod p and rank(A).  A itself is left alone.
-cppRREF := proc(A::Matrix,p::prime)
-    local B,r:
-    B := cppMat64(A,p):
-    r := cppRREFip(B,p):
-    return B,r:
 end proc:
 
 #  cppLSip(A,p) solves the n x (n+1) augmented system [A|b] mod p and returns
@@ -760,10 +736,4 @@ cppLSip := proc(A::Matrix(datatype=integer[8]),p::prime)
         fi:
     od:
     return [seq(A[i,n+1],i=1..n)]:
-end proc:
-
-#  cppLS(A,p) is the same thing for a general Matrix.  It copies first, so the
-#  caller's matrix survives the call.
-cppLS := proc(A::Matrix,p::prime)
-    return cppLSip(cppMat64(A,p),p):
 end proc:
