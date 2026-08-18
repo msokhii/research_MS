@@ -735,6 +735,7 @@ cppEvalSolveext := subsop(1=(
                        info),
                        op(cppEvalSolveext)):
 
+(*
 cppRootsext := define_external("cppRoots",
     degF::integer[4],
     f::ARRAY(datatype=integer[8]),
@@ -759,6 +760,8 @@ cppRootsext := subsop(1=(
                        infoLen,
                        info),
                        op(cppRootsext)):
+
+*)
 
 #  Fail here, at read time, rather than 500 black box calls later with
 #  "cannot determine if this expression is true or false".
@@ -1026,6 +1029,7 @@ end proc:
 #  same at both sizes.
 #  ---------------------------------------------------------------------------
 
+(*
 cppRootsOf := proc(F::polynom,x::name,p::prime)
     local d,fA,rts,mlt,info,rc,n,k:
     d := degree(F,x):
@@ -1047,3 +1051,4 @@ cppRootsOf := proc(F::polynom,x::name,p::prime)
     n := info[0]:
     return [seq([rts[k],mlt[k]],k=0..n-1)]:
 end proc:
+*)

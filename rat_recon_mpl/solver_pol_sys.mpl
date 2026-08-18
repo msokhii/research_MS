@@ -730,8 +730,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
             if terms_num[k] < iquo(num_eval_n[k], 2) then
                 lambda_num[k] := BMEA_poly(lam_c,Z):
                 t_helper := time():
-                #R_num[k] := Roots(lambda_num[k]) mod p:
-                R_num[k] := cppRootsOf(lambda_num[k],Z,p):
+                R_num[k] := Roots(lambda_num[k]) mod p:
+                #R_num[k] := cppRootsOf(lambda_num[k],Z,p):
                 t_roots_total := t_roots_total+(time()-t_helper):
                 if R_num[k] <> [] then
                     if nops(R_num[k]) > 0 and R_num[k][1][1] = 0 then
@@ -755,8 +755,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
                 if terms_den[1] < iquo(den_eval_n[1],2) then
                     lambda_den[1] := BMEA_poly(lam_c,Z):
                     t_helper := time():
-                    #R_den[1] := Roots(lambda_den[1]) mod p:
-                    R_den[1] := cppRootsOf(lambda_den[1],Z,p):
+                    R_den[1] := Roots(lambda_den[1]) mod p:
+                    #R_den[1] := cppRootsOf(lambda_den[1],Z,p):
                     t_roots_total := t_roots_total+(time()-t_helper):
                     if R_den[1] <> [] then
                         if nops(R_den[1]) > 0 and R_den[1][1][1] = 0 then
@@ -781,8 +781,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
                 if terms_den[k] < iquo(den_eval_n[k],2) then
                     lambda_den[k] := BMEA_poly(lam_c,Z):
                     t_helper := time():
-                    #R_den[k] := Roots(lambda_den[k]) mod p:
-                    R_den[k] := cppRootsOf(lambda_den[k],Z,p):
+                    R_den[k] := Roots(lambda_den[k]) mod p:
+                    #R_den[k] := cppRootsOf(lambda_den[k],Z,p):
                     t_roots_total := t_roots_total+(time()-t_helper):
                     if R_den[k] <> [] then
                         if nops(R_den[k]) > 0 and R_den[k][1][1] = 0 then
@@ -990,7 +990,7 @@ test_prime := prevprime(2^31-1):
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
 n_min := 4:
-n_max := 13:
+n_max := 8:
 do_verify := false:
 do_ffge := false:
 summary := []:
@@ -1323,7 +1323,7 @@ if do_ffge then
 fi:
 *)
 
-report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_sys_timing.txt":
+report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_sys_timing_UP.txt":
 # report_path := "/home/msokhi/Desktop/research_MS/rat_recon_mpl/timings/FTR_sys_Timing.txt":
 
 # Label the report from the data themselves, not from the mutable selector.
