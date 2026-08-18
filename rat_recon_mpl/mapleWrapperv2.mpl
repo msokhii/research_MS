@@ -695,6 +695,34 @@ cppRREFext := define_external("cppRREF",
     RETURN::integer[4],
     LIB=libObj):
 
+cppEvalSolveext := define_external("cppEvalSolve",
+    nr::integer[4],
+    nc::integer[4],
+    nv::integer[4],
+    entStart::ARRAY(datatype=integer[4]),
+    expo::ARRAY(datatype=integer[4]),
+    coef::ARRAY(datatype=integer[8]),
+    pnt::ARRAY(datatype=integer[8]),
+    p::integer[8],
+    dmax::integer[4],
+    outLen::integer[4],
+    xOut::ARRAY(datatype=integer[8]),
+    infoLen::integer[4],
+    info::ARRAY(datatype=integer[8]),
+    RETURN::integer[4],
+    LIB=libObj):
+
+#  Fail here, at read time, rather than 500 black box calls later with
+#  "cannot determine if this expression is true or false".
+if not type(cppRREFext,procedure) then
+    error "define_external did not bind cppRREFext; check that %1 exists and "
+          "exports cppRREF (nm -D %1 | grep cppRREF)",POLMATH_LIB:
+fi:
+if not type(cppEvalSolveext,procedure) then
+    error "define_external did not bind cppEvalSolveext; check that %1 exists "
+          "and exports cppEvalSolve",POLMATH_LIB:
+fi:
+
 #  cppMat64 : build the hardware matrix the external call needs.  Entries are
 #  reduced into [0,p) here so that every one of them fits in a machine word.
 cppMat64 := proc(A::Matrix,p::prime)
@@ -710,6 +738,10 @@ cppRREFip := proc(B::Matrix(datatype=integer[8]),p::prime)
     local n,m,r:
     n,m := op(1,B):
     r := cppRREFext(n,m,B,p):
+    if not type(r,integer) then
+        error "cppRREFext returned unevaluated -- the external call never ran; "
+              "check LIB=%1 and that pol_math.so exports cppRREF",POLMATH_LIB:
+    fi:
     if r < 0 then
         error "cppRREF failed with code %1",r:
     fi:
@@ -755,4 +787,130 @@ end proc:
 #  caller's matrix survives the call.
 cppLS := proc(A::Matrix,p::prime)
     return cppLSip(cppMat64(A,p),p):
+end proc:
+
+#  ---------------------------------------------------------------------------
+#  PARAMETRIC MATRIX EVALUATION + SOLVE
+#
+#  The black box evaluates ONE fixed augmented matrix L(y1,..,ynv) at many
+#  points.  Doing that in Maple costs an interpreted eval plus a modp per
+#  entry, which measured at about 1.5 microseconds per entry -- more than the
+#  linear solve itself.  cppEncodeMatrix turns L into a flat sparse monomial
+#  encoding ONCE, and cppEvalSolve then does evaluation and solve in a single
+#  external call.  Per call Maple only fills the nv parameter values.
+#
+#  The encoding is CSR over the nr*nc entries in row major order:
+#    ent[e] .. ent[e+1]-1   are the term indices of entry e
+#    coefRaw[t+1]           exact Maple coefficient of term t
+#    coef[t]                the same reduced mod p (rebuilt when p changes)
+#    expo[t*nv+k]           exponent of params[k+1] in term t
+#  ---------------------------------------------------------------------------
+
+cppEncodeMatrix := proc(L::Matrix,params::list)
+    local nr,nc,nv,i,j,k,t,e,cf,mm,T,nT,dmax,d,degs,idx,ent,expoA,coefL,E:
+    nr,nc := op(1,L):
+    nv := nops(params):
+    if nv < 1 then
+        error "expecting at least one parameter":
+    fi:
+    T    := table():
+    nT   := 0:
+    dmax := 0:
+    for i from 1 to nr do
+        for j from 1 to nc do
+            e := expand(L[i,j]):
+            if not type(e,polynom(rational,params)) then
+                error "entry (%1,%2) must be a polynomial in the parameters "
+                      "with rational coefficients",i,j:
+            fi:
+            if e = 0 then
+                T[i,j] := [[],[]]:
+                next:
+            fi:
+            cf := [coeffs(e,params,'mm')]:
+            mm := [mm]:
+            degs := []:
+            for k from 1 to nops(cf) do
+                for t from 1 to nv do
+                    d := degree(mm[k],params[t]):
+                    if d > dmax then dmax := d: fi:
+                    degs := [op(degs),d]:
+                od:
+            od:
+            T[i,j] := [cf,degs]:
+            nT := nT+nops(cf):
+        od:
+    od:
+    ent   := Array(0..nr*nc,datatype=integer[4]):
+    expoA := Array(0..max(nv*nT,1)-1,datatype=integer[4]):
+    coefL := Array(1..max(nT,1)):                 # exact, may be big or rational
+    idx := 0:
+    for i from 1 to nr do
+        for j from 1 to nc do
+            ent[(i-1)*nc+j-1] := idx:
+            cf   := T[i,j][1]:
+            degs := T[i,j][2]:
+            for k from 1 to nops(cf) do
+                coefL[idx+1] := cf[k]:
+                for t from 1 to nv do
+                    expoA[idx*nv+t-1] := degs[(k-1)*nv+t]:
+                od:
+                idx := idx+1:
+            od:
+        od:
+    od:
+    ent[nr*nc] := nT:
+
+    #  Everything the external call needs, allocated once.  The work arrays are
+    #  reused on every black box call so the hot path does not allocate.
+    E := table():
+    E["nr"]      := nr:
+    E["nc"]      := nc:
+    E["nv"]      := nv:
+    E["nT"]      := nT:
+    E["dmax"]    := dmax:
+    E["ent"]     := ent:
+    E["expo"]    := expoA:
+    E["coefRaw"] := coefL:
+    E["p"]       := 0:
+    E["coef"]    := Array(0..max(nT,1)-1,datatype=integer[8]):
+    E["pnt"]     := Array(0..nv-1,datatype=integer[8]):
+    E["x"]       := Array(0..nr-1,datatype=integer[8]):
+    E["info"]    := Array(0..1,datatype=integer[8]):
+    return E:
+end proc:
+
+#  cppEvalSolve(E,point_,p) evaluates the encoded matrix at point_ and solves
+#  the system mod p.  Returns the solution as a list, or FAIL when the
+#  evaluated matrix is singular or the system is inconsistent.
+#  The coefficients are reduced mod p only when p changes.
+cppEvalSolve := proc(E,point_::list,p::prime)
+    local k,rc,nr,nv:
+    nr := E["nr"]:
+    nv := E["nv"]:
+    if nops(point_) < nv then
+        error "expecting %1 parameter values, got %2",nv,nops(point_):
+    fi:
+    if E["p"] <> p then
+        for k from 1 to E["nT"] do
+            E["coef"][k-1] := modp(E["coefRaw"][k],p):
+        od:
+        E["p"] := p:
+    fi:
+    for k from 1 to nv do
+        E["pnt"][k-1] := modp(point_[k],p):
+    od:
+    rc := cppEvalSolveext(nr,E["nc"],nv,E["ent"],E["expo"],E["coef"],
+                          E["pnt"],p,E["dmax"],nr,E["x"],2,E["info"]):
+    if not type(rc,integer) then
+        error "cppEvalSolveext returned unevaluated -- the external call never "
+              "ran; check LIB=%1",POLMATH_LIB:
+    fi:
+    if rc < 0 then
+        error "cppEvalSolve failed with code %1",rc:
+    fi:
+    if rc = 1 then
+        return FAIL:
+    fi:
+    return [seq(E["x"][k],k=0..nr-1)]:
 end proc:

@@ -1854,22 +1854,27 @@ int c,r,i,j;
       }
       r++;  // go to next row
    }
-   printf("det(B)=%lld\n",det);
+   //printf("det(B)=%lld\n",det);
    return(r); // r = rank(B)
 }
 
 /*
 RREF WRAPPER FOR MAPLE.
+
+B is the n x m matrix in C (row major) order.  It is OVERWRITTEN with its
+reduced row echelon form.  The return value is rank(B), or a negative code
+on bad arguments.  Entries are reduced into [0,p) first, since rref assumes
+0 <= B[i,j] < p.
 */
- 
+
 extern "C" int cppRREF(int n,
     int m,
     LONG *B,
     const LONG p)
 {
- 
+
 // INITIAL CHECKS:
- 
+
 if (!B) {
     return -1;
 }
@@ -1879,13 +1884,145 @@ if (n <= 0 || m <= 0) {
 if (p < 2) {
     return -3;
 }
- 
+
 // NORMALIZE INPUT INTO [0,p):
- 
+
 for (size_t i = 0; i < (size_t)n*m; ++i) {
     LONG v = B[i] % p;
     B[i] = v + ((v>>63)&p);
 }
- 
+
 return (int)rref(B, n, m, p);
+}
+
+/*
+PARAMETRIC MATRIX EVALUATION + SOLVE FOR MAPLE.
+
+The black box evaluates one fixed augmented matrix L(y1,...,ynv) at a point
+and solves the resulting system mod p, millions of times.  Doing the
+evaluation in Maple costs one interpreted eval + one modp per entry, which
+measured at about 1.5 microseconds per entry, i.e. more than the whole
+linear solve.  Here L is encoded ONCE in Maple as a sparse list of monomials
+and the per call work is a gather plus nv multiplications per term.
+
+ENCODING (all arrays flat, row major, entry (i,j) has index i*nc+j):
+
+  entStart[0..nr*nc]   CSR style: the terms of entry e are
+                       t = entStart[e] .. entStart[e+1]-1
+  coef[t]              coefficient of term t, already reduced into [0,p)
+  expo[t*nv+k]         exponent of parameter k in term t
+  pnt[k]               value of parameter k
+  dmax                 max exponent appearing in expo
+
+Entry (i,j) evaluates to  sum_t coef[t] * prod_k pnt[k]^expo[t*nv+k] mod p.
+The powers are tabulated once per call, so a term costs nv multiplies and
+no exponentiation.
+
+Return value:  0  unique solution written to xOut
+               1  singular or inconsistent  (Maple side returns FAIL)
+              <0  bad arguments
+info[0] = rank of the evaluated augmented matrix.
+*/
+
+extern "C" int cppEvalSolve(int nr,
+    int nc,
+    int nv,
+    const int *entStart,
+    const int *expo,
+    const LONG *coef,
+    const LONG *pnt,
+    const LONG p,
+    int dmax,
+    int outLen,
+    LONG *xOut,
+    int infoLen,
+    LONG *info)
+{
+
+// INITIAL CHECKS:
+
+if (!entStart || !pnt || !xOut || !info) {
+    return -1;
+}
+if (nr <= 0 || nc != nr+1 || nv <= 0 || dmax < 0) {
+    return -2;
+}
+if (outLen < nr || infoLen < 1) {
+    return -3;
+}
+if (p < 2) {
+    return -4;
+}
+
+const int nEnt = nr*nc;
+const int nT   = entStart[nEnt];
+if (nT < 0) {
+    return -5;
+}
+if (nT > 0 && (!expo || !coef)) {
+    return -1;                             // coef/expo may be NULL only if L == 0
+}
+
+// INITIALIZING OUTPUT ARRAY:
+
+for (int i = 0; i < outLen; ++i) {
+    xOut[i] = 0;
+}
+info[0] = 0;
+
+// Workspaces are static so that the black box does not malloc on every
+// call.  Maple runs single threaded here (kernelopts(numcpus=1)).
+
+static std::vector<LONG> pw;
+static std::vector<LONG> B;
+
+const int W = dmax+1;
+if ((int)pw.size() < nv*W) pw.resize((size_t)nv*W);
+if ((int)B.size() < nEnt)  B.resize((size_t)nEnt);
+
+// POWER TABLE: pw[k*W+d] = pnt[k]^d mod p
+
+for (int k = 0; k < nv; ++k) {
+    LONG a = pnt[k] % p;
+    a += (a>>63)&p;
+    LONG *row = &pw[(size_t)k*W];
+    row[0] = 1;
+    for (int d = 1; d < W; ++d) row[d] = mul64b(row[d-1],a,p);
+}
+
+// EVALUATE THE MATRIX
+
+for (int e = 0; e < nEnt; ++e) {
+    LONG acc = 0;
+    const int t0 = entStart[e];
+    const int t1 = entStart[e+1];
+    for (int t = t0; t < t1; ++t) {
+        LONG c = coef[t] % p;
+        c += (c>>63)&p;
+        const int *ex = expo + (size_t)t*nv;
+        for (int k = 0; k < nv && c != 0; ++k) {
+            const int d = ex[k];
+            if (d) c = mul64b(c,pw[(size_t)k*W+d],p);
+        }
+        acc = add64b(acc,c,p);
+    }
+    B[e] = acc;
+}
+
+// SOLVE
+
+int r = (int)rref(B.data(), nr, nc, p);
+info[0] = r;
+
+if (r != nr) {
+    return 1;                              // rank deficient
+}
+for (int i = 0; i < nr; ++i) {
+    if (B[(size_t)i*nc+i] != 1) return 1;  // pivot in the b column
+}
+for (int i = 0; i < nr; ++i) {
+    xOut[i] = B[(size_t)i*nc+nr];
+}
+
+return 0;
 }
