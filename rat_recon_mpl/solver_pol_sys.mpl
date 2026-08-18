@@ -9,7 +9,6 @@ ExpectedRawParams := ParametricSystems:-RawParams:
 ExpectedParamCount := ParametricSystems:-ParamCount:
 DB_system := ParametricSystems:-DBSystem:
 
-
 get_eqn := proc(Sys,vars)
     option remember:
     return solve(Sys,vars):
@@ -133,15 +132,10 @@ local n, m, B, mu, i, j, k, det, x, y, num, r, numterms, f, g, h, mons,
 end:
 
 Constuct_Sys_Blackbox := proc(Sys,Vars,params)
-    local Lin_BB,L,nr,nc,LE:
+    local Lin_BB,L,nr,nc:
     L := GenerateMatrix(Sys,Vars,augmented=true):
     print(L);
     nr,nc := op(1,L):
-
-    #  Encode L as a flat sparse monomial table ONCE.  Everything the black box
-    #  needs per call is then a gather in C++ instead of nr*nc interpreted
-    #  eval/modp pairs in Maple.
-    LE := cppEncodeMatrix(L,params):
     Lin_BB := proc(point_::list(integer),p::prime)
         local A,T,subs_values,num_eqn,soln,t0,t_avg,i,j;
         global counter,bb_calls_ndsa,bb_calls_mrfi,t_ndsa_total,t_mrfi_total,bb_phase;
@@ -150,7 +144,7 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
         if bb_phase = "NDSA" then bb_calls_ndsa := bb_calls_ndsa+1:
         else                       bb_calls_mrfi := bb_calls_mrfi+1: fi:
         t0 := time():
-        #subs_values := zip((par,pnt) -> par=pnt,params,point_):
+        subs_values := zip((par,pnt) -> par=pnt,params,point_):
         num_eqn := numelems(Vars):
 
         #  OLD 32 BIT PATH.  LinearAlgebra:-Modular:-LinearSolve accumulates in
@@ -167,19 +161,14 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
         #soln := convert(A[1..num_eqn,num_eqn+1],list):
         #return soln:
 
-        #  FIRST 64 BIT PATH.  Correct, but it costs one interpreted eval plus
-        #  one modp per matrix entry, measured at about 1.5 microseconds per
-        #  entry -- an order of magnitude more than the linear solve itself.
-        #
-        #A := Matrix(nr,nc,(i,j) -> modp(eval(L[i,j],subs_values),p),
-        #            datatype=integer[8],order=C_order):
-        #soln := cppLSip(A,p):
-
-        #  CURRENT 64 BIT PATH.  L was encoded once by cppEncodeMatrix, so the
-        #  evaluation at the point AND the rref solve both happen inside one
-        #  external call.  Maple only fills the nv parameter values.  Good for
-        #  any prime p < 2^63.
-        soln := cppEvalSolve(LE,point_,p):
+        #  NEW 64 BIT PATH.  Evaluate the augmented matrix at the point, reduce
+        #  mod p into a hardware integer[8] C_order Matrix, and hand it to the
+        #  C++ rref kernel, which is good for any prime p < 2^63.  cppLSip
+        #  overwrites A, which is what we want here: A is rebuilt on every
+        #  black box call so a defensive copy would be pure overhead.
+        A := Matrix(nr,nc,(i,j) -> modp(eval(L[i,j],subs_values),p),
+             datatype=integer[8],order=C_order):
+        soln := cppLSip(A,p):
         t_avg := time() - t0:
         if bb_phase = "NDSA" then t_ndsa_total := t_ndsa_total+t_avg:
         else                       t_mrfi_total := t_mrfi_total+t_avg: fi:
@@ -964,19 +953,19 @@ end proc:
 # y1,y2,... remapping are fetched from parametric_systems.mpl.
 #
 # Examples: "S1", "R2", "P1", "P13", "P35", "P40".
-SYSTEM_ID := "S1":
+SYSTEM_ID := "P40":
 if not type(SYSTEM_ID, string) then SYSTEM_ID := convert(SYSTEM_ID, string): fi:
 
 # Freeze the selected family for this benchmark run.
 RUN_SYSTEM_ID := SYSTEM_ID:
 
-test_prime := prevprime(2^63-1):
-#test_prime := prevprime(2^31-1):
+#test_prime := prevprime(2^63-1):
+test_prime := prevprime(2^31-1):
 
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
-n_min := 15:
-n_max := 15:
+n_min := 4:
+n_max := 8:
 do_verify := false:
 do_ffge := false:
 summary := []:
