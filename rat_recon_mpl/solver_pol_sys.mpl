@@ -964,19 +964,19 @@ end proc:
 # y1,y2,... remapping are fetched from parametric_systems.mpl.
 #
 # Examples: "S1", "R2", "P1", "P13", "P35", "P40".
-SYSTEM_ID := "P40":
+SYSTEM_ID := "S1":
 if not type(SYSTEM_ID, string) then SYSTEM_ID := convert(SYSTEM_ID, string): fi:
 
 # Freeze the selected family for this benchmark run.
 RUN_SYSTEM_ID := SYSTEM_ID:
 
-#test_prime := prevprime(2^63-1):
-test_prime := prevprime(2^31-1):
+test_prime := prevprime(2^63-1):
+#test_prime := prevprime(2^31-1):
 
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
-n_min := 4:
-n_max := 8:
+n_min := 15:
+n_max := 15:
 do_verify := false:
 do_ffge := false:
 summary := []:
