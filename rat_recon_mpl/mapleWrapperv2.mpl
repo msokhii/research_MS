@@ -695,14 +695,6 @@ cppRREFext := define_external("cppRREF",
     RETURN::integer[4],
     LIB=libObj):
 
-cppRREFext := define_external("cppRREF",
-    n::integer[4],
-    m::integer[4],
-    B::ARRAY(datatype=integer[8],order=C_order),
-    p::integer[8],
-    RETURN::integer[4],
-    LIB=libObj):
-
 cppRREFext := subsop(1=(
                        n,
                        m,
@@ -754,7 +746,7 @@ cppRootsext := define_external("cppRoots",
     infoLen::integer[4],
     info::ARRAY(datatype=integer[8]),
     RETURN::integer[4],
-    LIB=POLMATH_LIB):
+    LIB=libObj):
 
 cppRootsext := subsop(1=(
                        degF,
