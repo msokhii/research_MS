@@ -9,6 +9,7 @@ ExpectedRawParams := ParametricSystems:-RawParams:
 ExpectedParamCount := ParametricSystems:-ParamCount:
 DB_system := ParametricSystems:-DBSystem:
 
+
 get_eqn := proc(Sys,vars)
     option remember:
     return solve(Sys,vars):
@@ -132,12 +133,15 @@ local n, m, B, mu, i, j, k, det, x, y, num, r, numterms, f, g, h, mons,
 end:
 
 Constuct_Sys_Blackbox := proc(Sys,Vars,params)
-    local Lin_BB,L,nr,nc:
+    local Lin_BB,L,nr,nc,LE:
     L := GenerateMatrix(Sys,Vars,augmented=true):
     print(L);
-    nr,nc := Dimension(L):
-    print(nr);
-    print(nc);
+    nr,nc := op(1,L):
+
+    #  Encode L as a flat sparse monomial table ONCE.  After this the black box
+    #  does no symbolic work at all: evaluation at the point and the rref solve
+    #  both happen inside a single external call.
+    LE := cppEncodeMatrix(L,params):
     Lin_BB := proc(point_::list(integer),p::prime)
         local A,T,subs_values,num_eqn,soln,t0,t_avg,i,j;
         global counter,bb_calls_ndsa,bb_calls_mrfi,t_ndsa_total,t_mrfi_total,bb_phase;
@@ -146,7 +150,9 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
         if bb_phase = "NDSA" then bb_calls_ndsa := bb_calls_ndsa+1:
         else                       bb_calls_mrfi := bb_calls_mrfi+1: fi:
         t0 := time():
-        subs_values := zip((par,pnt) -> par=pnt,params,point_):
+        #  Only the commented out paths below need subs_values; cppEvalSolve
+        #  takes the point as a plain list.
+        #subs_values := zip((par,pnt) -> par=pnt,params,point_):
         num_eqn := numelems(Vars):
 
         #  OLD 32 BIT PATH.  LinearAlgebra:-Modular:-LinearSolve accumulates in
@@ -163,19 +169,28 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
         #soln := convert(A[1..num_eqn,num_eqn+1],list):
         #return soln:
 
-        #  NEW 64 BIT PATH.  Evaluate the augmented matrix at the point, reduce
-        #  mod p into a hardware integer[8] C_order Matrix, and hand it to the
-        #  C++ rref kernel, which is good for any prime p < 2^63.  cppLSip
-        #  overwrites A, which is what we want here: A is rebuilt on every
-        #  black box call so a defensive copy would be pure overhead.
-        # A := Matrix(nr,nc,(i,j) -> modp(eval(L[i,j],subs_values),p),
-         #    datatype=integer[8],order=C_order):
-        A := LinearAlgebra:-Modular:-Mod(p,L,subs_values,integer[8]):
-        rtable_options(A,datatype), rtable_options(A,order);
-        print(A):
-        whattype(A);
-        quit;
-        soln := cppLSip(A,p):
+        #  FIRST 64 BIT ATTEMPT.  Correct, but modp(eval(...),p) evaluates over
+        #  Z before reducing, so the intermediates are bignums as soon as the
+        #  entries of L have any degree in the parameters.  That, not the rref,
+        #  is what made this path slow.
+        #
+        #A := Matrix(nr,nc,(i,j) -> modp(eval(L[i,j],subs_values),p),
+        #            datatype=integer[8],order=C_order):
+        #soln := cppLSip(A,p):
+
+        #  SECOND 64 BIT ATTEMPT.  cppEvalMatrix64 reduces as it evaluates
+        #  instead of afterwards, but Modular:-Mod refuses a 64 bit modulus, so
+        #  it falls back to Eval ... mod p, which is still one interpreted
+        #  evaluation per matrix entry.  Kept as a fallback, not the hot path.
+        #
+        #A := cppEvalMatrix64(L,subs_values,p):
+        #soln := cppLSip(A,p):
+
+        #  CURRENT 64 BIT PATH.  L was encoded once by cppEncodeMatrix, so the
+        #  evaluation at the point AND the rref solve both happen inside one
+        #  external call.  Maple only fills the nv parameter values, and no
+        #  intermediate ever leaves [0,p).  Good for any prime p < 2^63.
+        soln := cppEvalSolve(LE,point_,p):
         t_avg := time() - t0:
         if bb_phase = "NDSA" then t_ndsa_total := t_ndsa_total+t_avg:
         else                       t_mrfi_total := t_mrfi_total+t_avg: fi:
@@ -966,8 +981,8 @@ if not type(SYSTEM_ID, string) then SYSTEM_ID := convert(SYSTEM_ID, string): fi:
 # Freeze the selected family for this benchmark run.
 RUN_SYSTEM_ID := SYSTEM_ID:
 
-test_prime := prevprime(2^63-1):
-#test_prime := prevprime(2^31-1):
+#test_prime := prevprime(2^63-1):
+test_prime := prevprime(2^31-1):
 
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
