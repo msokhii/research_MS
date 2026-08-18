@@ -1,8 +1,0 @@
-============================================================
-  MRFI benchmark (fault-tolerant) -- system P40 : Quasi-birth-death queueing reachability
-  Univariate RR : HFTRFR (degrees + bad set) + DFTRFR
-  Prime p = 2147483629
-  Range   n = 4 .. 8
-  Fault injection FAULT_ON = false , error budget FAULT_E = 0
-============================================================
-

@@ -1,5 +1,5 @@
-# libObj := "/cecm/home/mss59/Desktop/resMaple_MS/inuse_cpp_routines/cpp_routines/cppObj.so":
-libObj := "/home/msokhi/Desktop/res_MS/inuse_cpp_routines/cpp_routines/cppObj.so":
+ libObj := "/cecm/home/mss59/Desktop/resMaple_MS/inuse_cpp_routines/cpp_routines/cppObj.so":
+#libObj := "/home/msokhi/Desktop/res_MS/inuse_cpp_routines/cpp_routines/cppObj.so":
 
 (* libObj := "/Users/msokhi/Desktop/researchFiles/newDir/routinesCPP/cppObj.so": *)
 

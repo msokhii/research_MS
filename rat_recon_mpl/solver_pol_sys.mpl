@@ -960,13 +960,13 @@ if not type(SYSTEM_ID, string) then SYSTEM_ID := convert(SYSTEM_ID, string): fi:
 # Freeze the selected family for this benchmark run.
 RUN_SYSTEM_ID := SYSTEM_ID:
 
-test_prime := prevprime(2^63-1):
-#test_prime := prevprime(2^31-1):
+#test_prime := prevprime(2^63-1):
+test_prime := prevprime(2^31-1):
 
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
 n_min := 4:
-n_max := 8:
+n_max := 10:
 do_verify := false:
 do_ffge := false:
 summary := []:
@@ -1299,8 +1299,8 @@ if do_ffge then
 fi:
 *)
 
-#report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_sys_timing_UP.txt":
-report_path := "/home/msokhi/Desktop/res_MS/rat_recon_mpl/timings/FTR_sys_Timing.txt":
+report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_sys_timing.txt":
+#report_path := "/home/msokhi/Desktop/res_MS/rat_recon_mpl/timings/FTR_sys_Timing.txt":
 
 # Label the report from the data themselves, not from the mutable selector.
 REPORT_SYSTEM_ID := RUN_SYSTEM_ID:
