@@ -1,5 +1,5 @@
- libObj := "/cecm/home/mss59/Desktop/resMaple_MS/inuse_cpp_routines/cpp_routines/cppObj.so":
-#libObj := "/home/msokhi/Desktop/research_MS/inuse_cpp_routines/cpp_routines/cppObj.so":
+# libObj := "/cecm/home/mss59/Desktop/resMaple_MS/inuse_cpp_routines/cpp_routines/cppObj.so":
+libObj := "/home/msokhi/Desktop/res_MS/inuse_cpp_routines/cpp_routines/cppObj.so":
 
 (* libObj := "/Users/msokhi/Desktop/researchFiles/newDir/routinesCPP/cppObj.so": *)
 
@@ -685,4 +685,74 @@ cppAffineLine := proc(T, numVar, alphaArr, betaArr, sigmaArr, p, outArr)
             error "cppAffineLine external error code %1", cppRet:
         fi:
         return 0:
+end proc:
+
+cppRREFext := define_external("cppRREF",
+    n::integer[4],
+    m::integer[4],
+    B::ARRAY(datatype=integer[8],order=C_order),
+    p::integer[8],
+    RETURN::integer[4],
+    LIB=libObj):
+
+#  cppMat64 : build the hardware matrix the external call needs.  Entries are
+#  reduced into [0,p) here so that every one of them fits in a machine word.
+cppMat64 := proc(A::Matrix,p::prime)
+    local n,m,i,j:
+    n,m := op(1,A):
+    return Matrix(n,m,(i,j) -> modp(A[i,j],p),
+                  datatype=integer[8],order=C_order):
+end proc:
+
+#  cppRREFip(B,p) puts B in reduced row echelon form IN PLACE and returns the
+#  rank.  B must be an integer[8] C_order Matrix.
+cppRREFip := proc(B::Matrix(datatype=integer[8]),p::prime)
+    local n,m,r:
+    n,m := op(1,B):
+    r := cppRREFext(n,m,B,p):
+    if r < 0 then
+        error "cppRREF failed with code %1",r:
+    fi:
+    return r:
+end proc:
+
+#  cppRREF(A,p) returns rref(A) mod p and rank(A).  A itself is left alone.
+cppRREF := proc(A::Matrix,p::prime)
+    local B,r:
+    B := cppMat64(A,p):
+    r := cppRREFip(B,p):
+    return B,r:
+end proc:
+
+#  cppLSip(A,p) solves the n x (n+1) augmented system [A|b] mod p and returns
+#  the solution as a list, or FAIL when the system is singular or
+#  inconsistent.  A MUST be an integer[8] C_order Matrix and IS DESTROYED --
+#  this is the entry point for the black box, where the matrix is built fresh
+#  on every call so a defensive copy would be pure overhead.
+#
+#  After rref the system has a unique solution exactly when the rank is n and
+#  the pivots sit in columns 1..n, i.e. A[i,i]=1 for i=1..n.  A pivot in the
+#  last column means the system is inconsistent.
+cppLSip := proc(A::Matrix(datatype=integer[8]),p::prime)
+    local n,m,r,i:
+    n,m := op(1,A):
+    if m <> n+1 then
+        error "expecting an n x (n+1) augmented matrix, got %1 x %2",n,m:
+    fi:
+    r := cppRREFip(A,p):
+    if r <> n then
+        return FAIL:
+    fi:
+    for i from 1 to n do
+        if A[i,i] <> 1 then
+            return FAIL:
+        fi:
+    od:
+    return [seq(A[i,n+1],i=1..n)]:
+end proc:
+
+#  cppLS(A,p) is the same thing for a general Matrix.  It copies first, so the
+#  caller's matrix survives the call.
+cppLS := proc(A::Matrix,p::prime)
+    return cppLSip(cppMat64(A,p),p):
 end proc:

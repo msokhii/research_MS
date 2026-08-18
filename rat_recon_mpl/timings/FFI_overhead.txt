@@ -1,4 +1,0 @@
-PRIME -> 2147483647
-CALLS -> 10
-ITER    degN    degD    NewtonMULREC            NewtonMUL64             NewtonFFIcpp            RRMUL64                 RRFFIcpp                
-1       5       5       2.2762                  1.887                   2.1502                  2.2982                  2.8382                  

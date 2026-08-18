@@ -133,28 +133,49 @@ local n, m, B, mu, i, j, k, det, x, y, num, r, numterms, f, g, h, mons,
 end:
 
 Constuct_Sys_Blackbox := proc(Sys,Vars,params)
-    local Lin_BB,L:
+    local Lin_BB,L,nr,nc:
     L := GenerateMatrix(Sys,Vars,augmented=true):
     print(L);
+    nr,nc := op(1,L):
     Lin_BB := proc(point_::list(integer),p::prime)
-        local A,T,subs_values,num_eqn,soln,t0,t_avg;
+        local A,T,subs_values,num_eqn,soln,t0,t_avg,i,j;
         global counter,bb_calls_ndsa,bb_calls_mrfi,t_ndsa_total,t_mrfi_total,bb_phase;
-        uses LinearAlgebra:-Modular:
+        #uses LinearAlgebra:-Modular:
         counter := counter+1:
         if bb_phase = "NDSA" then bb_calls_ndsa := bb_calls_ndsa+1:
         else                       bb_calls_mrfi := bb_calls_mrfi+1: fi:
         t0 := time():
         subs_values := zip((par,pnt) -> par=pnt,params,point_):
         num_eqn := numelems(Vars):
-        A := Mod(p,L,subs_values,integer):
-        T := traperror(LinearSolve(p,A,1)):
+
+        #  OLD 32 BIT PATH.  LinearAlgebra:-Modular:-LinearSolve accumulates in
+        #  a machine word, so the modulus has to stay below 2^32.
+        #
+        #A := Mod(p,L,subs_values,integer):
+        #T := traperror(LinearSolve(p,A,1)):
+        #t_avg := time() - t0:
+        #if bb_phase = "NDSA" then t_ndsa_total := t_ndsa_total+t_avg:
+        #else                       t_mrfi_total := t_mrfi_total+t_avg: fi:
+        #if T = "Matrix is singular." then
+        #    return FAIL:
+        #fi:
+        #soln := convert(A[1..num_eqn,num_eqn+1],list):
+        #return soln:
+
+        #  NEW 64 BIT PATH.  Evaluate the augmented matrix at the point, reduce
+        #  mod p into a hardware integer[8] C_order Matrix, and hand it to the
+        #  C++ rref kernel, which is good for any prime p < 2^63.  cppLSip
+        #  overwrites A, which is what we want here: A is rebuilt on every
+        #  black box call so a defensive copy would be pure overhead.
+        A := Matrix(nr,nc,(i,j) -> modp(eval(L[i,j],subs_values),p),
+                    datatype=integer[8],order=C_order):
+        soln := cppLSip(A,p):
         t_avg := time() - t0:
         if bb_phase = "NDSA" then t_ndsa_total := t_ndsa_total+t_avg:
         else                       t_mrfi_total := t_mrfi_total+t_avg: fi:
-        if T = "Matrix is singular." then 
+        if soln = FAIL then
             return FAIL:
         fi:
-        soln := convert(A[1..num_eqn,num_eqn+1],list):
         return soln:
     end proc:
 end proc:
@@ -933,14 +954,14 @@ end proc:
 # y1,y2,... remapping are fetched from parametric_systems.mpl.
 #
 # Examples: "S1", "R2", "P1", "P13", "P35", "P40".
-SYSTEM_ID := "P40":
+SYSTEM_ID := "S1":
 if not type(SYSTEM_ID, string) then SYSTEM_ID := convert(SYSTEM_ID, string): fi:
 
 # Freeze the selected family for this benchmark run.
 RUN_SYSTEM_ID := SYSTEM_ID:
 
-#test_prime := prevprime(2^63-1):
-test_prime := prevprime(2^31-1):
+test_prime := prevprime(2^63-1):
+#test_prime := prevprime(2^31-1):
 
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
@@ -1278,8 +1299,8 @@ if do_ffge then
 fi:
 *)
 
-report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_sys_timing_UP.txt":
-# report_path := "/home/msokhi/Desktop/research_MS/rat_recon_mpl/timings/FTR_sys_Timing.txt":
+#report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_sys_timing_UP.txt":
+report_path := "/home/msokhi/Desktop/res_MS/rat_recon_mpl/timings/FTR_sys_Timing.txt":
 
 # Label the report from the data themselves, not from the mutable selector.
 REPORT_SYSTEM_ID := RUN_SYSTEM_ID:

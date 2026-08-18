@@ -141,6 +141,8 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
         num_eqn := numelems(Vars):
         A := Mod(p,L,subs_values,integer[8]):
         T := traperror(LinearSolve(p,A,1)):
+        print(T);
+        quit;
         t_avg := time() - t0:
         if bb_phase = "NDSA" then t_ndsa_total := t_ndsa_total+t_avg:
         else                       t_mrfi_total := t_mrfi_total+t_avg: fi:
@@ -1238,8 +1240,8 @@ if do_ffge then
 fi:
 *)
 
-report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_Timing.txt":
-# report_path := "/home/msokhi/Desktop/research_MS/rat_recon_mpl/timings/FTR_Timing.txt":
+#report_path := "/cecm/home/mss59/Desktop/resMaple_MS/rat_recon_mpl/timings/FTR_Timing.txt":
+report_path := "/home/msokhi/Desktop/research_MS/rat_recon_mpl/timings/FTR_Timing.txt":
 fd := fopen(report_path, WRITE):
 fprintf(fd, "============================================================\n"):
 fprintf(fd, "  Symmetric Toeplitz MRFI benchmark (fault-tolerant)\n"):

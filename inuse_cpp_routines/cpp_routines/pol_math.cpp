@@ -1026,209 +1026,6 @@ pair<vector<LONG>,int> polGCDNEW64(vector<LONG> &a,vector<LONG> &b,int degA,int 
 	return {a,degA};
 }
 
-/*
-static inline void makeDenMonicIP64(vector<LONG> &num, int degNum,
-    vector<LONG> &den, int degDen,
-    const LONG p){
-if(degDen < 0) return;
-
-LONG lc = den[degDen] % p;
-if(lc < 0) lc += p;
-
-if(lc != 1){
-LONG inv = modinv64b(lc, p);
-polSCMULIP64(den, inv, degDen, p);
-if(degNum >= 0){
-polSCMULIP64(num, inv, degNum, p);
-}
-}
-}
-
-static inline bool exactDivIP64(vector<LONG> &num, int &degNum,
-const vector<LONG> &den, int degDen,
-const LONG p){
-if(degDen < 0) return false;
-if(degNum < degDen) return false;
-
-auto QR = pDIVDEG(num, den, degNum, degDen, p);
-int degQ = QR.first;
-int degR = QR.second;
-
-if(degR != -1){
-return false;
-}
-
-if(degQ < 0){
-num.clear();
-degNum = -1;
-return true;
-}
-
-// quotient lives in num[degDen .. degDen+degQ]
-for(int k = 0; k <= degQ; k++){
-num[k] = num[degDen + k];
-}
-num.resize(degQ + 1);
-degNum = degQ;
-return true;
-}
-
-static inline void makeDenMonicOut64(LONG *num, int degNum,
-    LONG *den, int degDen,
-    const LONG p,recint P){
-if(den[degDen]!=1){
-LONG inv=modinv64b(den[degDen],p);
-for(int i=0;i<=degDen;i++){
-den[i]=mulrec64(den[i],inv,P);
-}
-for(int i=0;i<=degNum;i++){
-num[i]=mulrec64(num[i],inv,P);
-}
-}
-}
-*/
-
-/*
-int ratReconFastKernelWS(const vector<LONG> &m,
-    const vector<LONG> &u,
-    int degM,
-    int degU,
-    int N,
-    int D,
-    const LONG p,
-    RatReconFastWS &W,
-    LONG *rOut,
-    int &degROut,
-    LONG *tOut,
-    int &degTOut,
-    recint P){
-
-// Copy inputs into workspace
-std::copy_n(m.data(), degM + 1, W.r1.data());
-std::copy_n(u.data(), degU + 1, W.r2.data());
-
-// Initialize t-sequence:
-// r1 = m, r2 = u
-// t1 = 0, t2 = 1
-W.t2[0] = 1;
-
-int degA  = degM;
-int degB  = degU;
-int degT1 = -1;
-int degT2 = 0;
-
-// Ensure degA >= degB initially
-if(degA < degB){
-std::swap(W.r1, W.r2);
-std::swap(degA, degB);
-std::swap(W.t1, W.t2);
-std::swap(degT1, degT2);
-}
-
-while(degB != -1){
-
-// Stop at the first index k such that deg(r_k) == N
-if(degB == N){
-    degROut = degB;
-    degTOut = degT2;
-
-    std::copy_n(W.r2.data(), degROut + 1, rOut);
-    std::copy_n(W.t2.data(), degTOut + 1, tOut);
-
-    // Normalize so denominator is monic
-    if(degTOut >= 0){
-        LONG lc = tOut[degTOut];
-        if(lc == 0){
-            degROut = -1;
-            degTOut = -1;
-            return -30; // unexpected bad denominator
-        }
-
-        if(lc != 1){
-            LONG lcInv = modinv64b(lc, p);
-            if(lcInv == 0){
-                degROut = -1;
-                degTOut = -1;
-                return -31; // inverse does not exist
-            }
-
-            for(int i = 0; i <= degROut; i++){
-                rOut[i] = mulrec64(rOut[i], lcInv, P);
-            }
-            for(int i = 0; i <= degTOut; i++){
-                tOut[i] = mulrec64(tOut[i], lcInv, P);
-            }
-        }
-    }
-
-    return 0;
-}
-
-LONG uInv, aVal, bVal;
-int degR, degQ, degT;
-
-// Special degree-1 quotient step
-if(degB > 0 && degA - degB == 1){
-uInv = modinv64b(W.r2[degB], p);
-
-aVal = mulrec64(W.r1[degA], uInv, P);
-
-bVal = mulrec64(aVal, W.r2[degB - 1], P);
-bVal = mulrec64(uInv, sub64b(W.r1[degA - 1], bVal, p), P);
-
-degR = polSUBMUL64P(W.r1.data(), W.r2.data(),
-           aVal, bVal, degA, degB, p, P);
-
-degT = polSUBMUL64P(W.t1.data(), W.t2.data(),
-           aVal, bVal, degT1, degT2, p, P);
-}
-else{
-// Divide r1 by r2:
-// quotient goes into high part of W.r1, remainder stays in low part
-degR = polDIVP(W.r1.data(), W.r2.data(), degA, degB, p, P);
-degQ = degA - degB;
-
-for(int i = 0; i <= degQ; i++){
-W.q[i] = W.r1[degB + i];
-}
-
-if(degT2 >= 0){
-for(int i = 0; i <= degT2; i++){
-W.tmpT[i] = W.t2[i];
-}
-
-int degTmpT = degT2;
-degTmpT = polMUL64P(W.tmpT.data(), W.q.data(), degTmpT, degQ, p, P);
-degT = pSUBIP64(W.t1.data(), W.tmpT.data(), degT1, degTmpT, p);
-}
-else{
-degT = degT1;
-}
-}
-
-if(degR < 0){
-break;
-}
-
-// Shift:
-// (r1,r2) <- (r2,r)
-// (t1,t2) <- (t2,t)
-std::swap(W.r1, W.r2);
-degA = degB;
-degB = degR;
-
-std::swap(W.t1, W.t2);
-int oldDegT2 = degT2;
-degT2 = degT;
-degT1 = oldDegT2;
-}
-
-degROut = -1;
-degTOut = -1;
-return -20;
-};
-*/
-
 int ratReconNormal(const vector<LONG> &m,
     const vector<LONG> &u,
     int degM,
@@ -1366,171 +1163,6 @@ degROut = -1;
 degTOut = -1;
 return -20;
 };
-
-/* 
-int ratReconNormal(const vector<LONG> &m,
-                   const vector<LONG> &u,
-                   int degM,
-                   int degU,
-                   int N,
-                   int D,
-                   const LONG p,
-                   RatReconFastWS &W,
-                   LONG *rOut,
-                   int &degROut,
-                   LONG *tOut,
-                   int &degTOut){
-    std::copy_n(m.data(),degM+1,W.r1.data());
-    std::copy_n(u.data(),degU+1,W.r2.data());
-    W.t2[0]=1;
-    int degA=degM;
-    int degB=degU;
-    int degT1=-1;
-    int degT2=0;
-    if(degA<degB){
-        std::swap(W.r1,W.r2);
-        std::swap(degA,degB);
-        std::swap(W.t1,W.t2);
-        std::swap(degT1,degT2);
-    }
-    while(degB!=-1){
-        if(degB==N){
-            degROut=degB;
-            degTOut=degT2;
-            std::copy_n(W.r2.data(),degROut+1,rOut);
-            std::copy_n(W.t2.data(),degTOut+1,tOut);
-            return 0;
-        }
-        LONG uInv,aVal,bVal;
-        int degR,degQ,degT;
-        if(degB>0 && degA-degB==1){
-            uInv=modinv64b(W.r2[degB],p);
-            aVal=mul64bASM(W.r1[degA],uInv,p);
-            bVal=mul64bASM(aVal,W.r2[degB-1],p);
-            bVal=mul64bASM(uInv,sub64b(W.r1[degA-1],bVal,p),p);
-            degR=polSUBMUL64(W.r1.data(),W.r2.data(),
-                            aVal,bVal,degA,degB,p);
-            degT=polSUBMUL64(W.t1.data(),W.t2.data(),
-                            aVal,bVal,degT1,degT2,p);
-        }
-        else{
-            degR=polDIVIP64(W.r1.data(),W.r2.data(),degA,degB,p);
-            degQ=degA-degB;
-            for(int i=0;i<=degQ;i++){
-                W.q[i]=W.r1[degB+i];
-            }
-            if(degT2>=0){
-                for(int i=0;i<=degT2;i++){
-                    W.tmpT[i]=W.t2[i];
-                }
-
-            int degTmpT=degT2;
-            degTmpT=pMULIP64(W.tmpT.data(),W.q.data(),degTmpT,degQ,p);
-            degT=pSUBIP64(W.t1.data(),W.tmpT.data(),degT1,degTmpT,p);
-            }
-        else{
-            degT=degT1;
-        }
-        }
-        if(degR<0){
-            break;
-        }
-        std::swap(W.r1,W.r2);
-        degA=degB;
-        degB=degR;
-        std::swap(W.t1,W.t2);
-        int oldDegT2=degT2;
-        degT2=degT;
-        degT1=oldDegT2;
-    }
-    degROut=-1;
-    degTOut=-1;
-    return -20;
-};
-*/
-
-/*
-int ratRecon2(const vector<LONG> &m,
-                   const vector<LONG> &u,
-                   int degM,
-                   int degU,
-                   int N,
-                   int D,
-                   const LONG p,
-                   RatReconFastWS &W,
-                   LONG *rOut,
-                   int &degROut,
-                   LONG *tOut,
-                   int &degTOut,
-                   recint P){
-    std::copy_n(m.data(),degM+1,W.r1.data());
-    std::copy_n(u.data(),degU+1,W.r2.data());
-    W.t2[0]=1;
-    int degA=degM;
-    int degB=degU;
-    int degT1=-1;
-    int degT2=0;
-    if(degA<degB){
-        std::swap(W.r1,W.r2);
-        std::swap(degA,degB);
-        std::swap(W.t1,W.t2);
-        std::swap(degT1,degT2);
-    }
-    while(degB!=-1){
-        if(degB==N){
-            degROut=degB;
-            degTOut=degT2;
-            std::copy_n(W.r2.data(),degROut+1,rOut);
-            std::copy_n(W.t2.data(),degTOut+1,tOut);
-            return 0;
-        }
-        LONG uInv,aVal,bVal;
-        int degR,degQ,degT;
-        if(degB>0 && degA-degB==1){
-            uInv=modinv64b(W.r2[degB],p);
-            aVal=mulrec64(W.r1[degA],uInv,P);
-            bVal=mulrec64(aVal,W.r2[degB-1],P);
-            bVal=mulrec64(uInv,sub64b(W.r1[degA-1],bVal,p),P);
-            degR=polSUBMUL64(W.r1.data(),W.r2.data(),
-                            aVal,bVal,degA,degB,p);
-            degT=polSUBMUL64(W.t1.data(),W.t2.data(),
-                            aVal,bVal,degT1,degT2,p);
-        }
-        else{
-            degR=polDIVIP64(W.r1.data(),W.r2.data(),degA,degB,p);
-            degQ=degA-degB;
-            for(int i=0;i<=degQ;i++){
-                W.q[i]=W.r1[degB+i];
-            }
-            if(degT2>=0){
-                for(int i=0;i<=degT2;i++){
-                    W.tmpT[i]=W.t2[i];
-                }
-
-            int degTmpT=degT2;
-            degTmpT=pMULIP64(W.tmpT.data(),W.q.data(),degTmpT,degQ,p);
-            degT=pSUBIP64(W.t1.data(),W.tmpT.data(),degT1,degTmpT,p);
-            }
-        else{
-            degT=degT1;
-        }
-        }
-        if(degR<0){
-            break;
-        }
-        std::swap(W.r1,W.r2);
-        degA=degB;
-        degB=degR;
-        std::swap(W.t1,W.t2);
-        int oldDegT2=degT2;
-        degT2=degT;
-        degT1=oldDegT2;
-    }
-    degROut=-1;
-    degTOut=-1;
-    return -20;
-};
-*/
 
 /* HFTRFR and DFTRFR */
 
@@ -1883,11 +1515,6 @@ std::copy_n(Lbuf.data(), d + 1, lOut);
 return 0;
 }
 
-/*
-NEWTON INTERPOLATION ROUTINES:
-*/
-
-
 int newtonInterpMulRec(LONG* x,
     LONG* y,
     const int n,
@@ -2040,19 +1667,12 @@ std::copy_n(y.data(), d + 1, yOut);
 return 0;
 }
 
-/* FUSED cppInterpDFTRFR */
-
-/* M = prod_i (x - alpha[i])  via pMULIP64 */
 static std::vector<LONG> ftr_buildM(const LONG *alpha,int n,LONG p){
     std::vector<LONG> M(n+1,0); M[0]=1; int degM=0; LONG lin[2]; lin[1]=1;
     for(int i=0;i<n;i++){ lin[0]=(alpha[i]==0?0:p-alpha[i]); degM=pMULIP64(M.data(),lin,degM,1,p); }
     return M;                                  // degree n
 }
 
-/* Interpolate Y at alpha, build the modulus, run DFTRFR -- one Maple call.
- *  Return code : 0 success, 1 reconstruction FAILED, negative = bad args.
- *  Maple recovers deg(num)/deg(den) from nOut/dOut via checkZeroPY.
- */
 extern "C" int cppInterpDFTRFR(int nPts,const LONG *alpha,const LONG *Yin,
                                int N,int D,int E,const LONG p,
                                int nOutLen,LONG *nOut,
@@ -2075,11 +1695,6 @@ extern "C" int cppInterpDFTRFR(int nPts,const LONG *alpha,const LONG *Yin,
     return (st==0)?1:0;
 }
 
-/*
-RATIONAL RECON. WRAPPER FOR MAPLE.
-*/
-
-/* CPP Affine line Implementation */
 extern "C" int cppAffineLine(int T,int numVar,
                              int alphaLen,const LONG *alpha,
                              int betaLen,const LONG *beta,
@@ -2106,7 +1721,6 @@ extern "C" int cppAffineLine(int T,int numVar,
     return 0;
 }
 
-/* CPP FTR+EVAL implementation */
 extern "C" int cppFTREval(int nPts,
                           int alphaLen,const LONG *alpha,
                           int yLen,const LONG *Yin,
@@ -2207,459 +1821,71 @@ std::copy_n(tTmp.data(), degTOut + 1, dOut);
 return 0;
 }
 
-/*
-int main(){
-    LONG p=4294967291; // This is prevprime(2^32-1) from maple. 
-    recint P=recip1(p);
-    int degN=5;
-    int degD=5;
-    const int CALLS=1000; 
-    const int ITER=7;
-
-    ofstream logFile("benchMark.txt");
-    logFile<<"PRIME -> "<<p<<"\n";
-    logFile<<"CALLS -> "<<CALLS<<"\n";
-    logFile<<left
-        <<setw(10)<<"ITER"
-        <<setw(10)<<"degN"
-        <<setw(10)<<"degD"
-        <<setw(28)<<"avgTimeNewton(mulRec)"
-        <<setw(28)<<"avgTimeNewton(mul64)"
-        <<setw(28)<<"avgTimeRR(No CPU+mulRec)"
-        <<setw(28)<<"avgTimeRR(CPU+mul64)"
-        <<setw(28)<<"avgTimeRR(CPU+mulRec)"
-        << "\n";
-
-    for(int step=1;step<ITER;step++){
-        vector<LONG>n(degN+1,0);
-        vector<LONG>d(degD+1,0);
-        
-        for(int i=0;i<degN+1;i++){
-            LONG temp=rand64s(p);
-            while(temp==0){
-                temp=rand64s(p);
-            }
-            n[i]=temp;
-        }
-    
-        for(int j=0;j<degD+1;j++){
-            LONG temp=rand64s(p);
-            while(temp==0){
-                temp=rand64s(p);
-            }
-            d[j]=temp;
-        }
-        if(d[degD]!=1){
-            LONG invTerm;
-            invTerm=modinv64b(d[degD],p);
-            for(int i=0;i<=degD;i++){
-                d[i]=mul64b(invTerm,d[i],p);
-            }
-            for(int j=0;j<=degN;j++){
-                n[j]=mul64b(invTerm,n[j],p);
-            }
-        }
-
-        vector<LONG>nCopy=n;
-        vector<LONG>dCopy=d;
-        // We need degN+degD+1 points to interpolate. Here we make the x vector. 
-        int m=degN+degD+1;
-        vector<LONG>x(m,0);
-        for(int i=0;i<m;i++){
-            x[i]=i+1;
-        }   
-        
-        vector<LONG>y(m,0);
-        for(int i=0;i<m;i++){
-            LONG denEval=pEVAL64(d.data(),degD,x[i],p);
-            if(denEval==0){
-                return -1;
-            }
-            LONG numEval=pEVAL64(n.data(),degN,x[i],p);
-            y[i]=mul64b(numEval,modinv64b(denEval,p),p);
-        }
-
-        vector<LONG>yCopy(m,0);
-        copy(y.begin(),y.end(),yCopy.begin());
-        int degU=newtonInterpMulRec(x.data(),yCopy.data(),m,p,P);
-        
-        // Timer for newton interpolation using mulrec64 routine.
-        auto start=chrono::steady_clock::now();
-        for(int i=0;i<CALLS;i++){
-            copy(y.begin(),y.end(),yCopy.begin());
-            int degU=newtonInterpMulRec(x.data(),yCopy.data(),m,p,P);
-        };
-        auto stop=chrono::steady_clock::now();
-        
-        // Timer for newton interpolation using mul64b routine.
-        auto newton2Start=chrono::steady_clock::now();
-        for(int i=0;i<CALLS;i++){
-            copy(y.begin(),y.end(),yCopy.begin());
-            int degU=newtonInterpMulNormal(x.data(),yCopy.data(),m,p);
-        }
-        auto newton2Stop=chrono::steady_clock::now();
-        
-        // Timer for copying y into y0 for newton interpolation.
-        auto cpStart=chrono::steady_clock::now();
-        for(int i=0;i<CALLS;i++){
-            copy(y.begin(),y.end(),yCopy.begin());
-        }
-        auto cpStop=chrono::steady_clock::now();
-        double cpTotal=chrono::duration<double,std::micro>(cpStop-cpStart).count();
-        double total=chrono::duration<double,std::micro>(stop-start).count();
-        double newton2Total=chrono::duration<double,std::micro>(newton2Stop-newton2Start).count();
-        double avgTimeCp=cpTotal/CALLS;
-        double avgTimeNewton=(total/CALLS)-avgTimeCp;
-        double avgTimeNewton2=(newton2Total/CALLS)-avgTimeCp;
-        vector<LONG>M(m+1,0);
-        M[0]=1;
-        int degM=mkM(M,x,p);
-
-        RatReconFastWS W(degM);
-        RatReconFastWS W2(degM);
-        RatReconFastWS W3(degM);
-        vector<LONG>rOut(m,0);
-        vector<LONG>tOut(m,0);
-        vector<LONG>rOut2(m,0);
-        vector<LONG>tOut2(m,0);
-        vector<LONG>rOut3(m,0);
-        vector<LONG>tOut3(m,0);
-        int degR=-1;
-        int degT=-1;
-        int flag=-999;
-        int degR2=-1;
-        int degT2=-1;
-        int flag2=-999;
-        int degR3=-1;
-        int degT3=-1;
-        int flag3=-999;
-        int degUCP=degU;
-        int degNCP=degN;
-        int degDCP=degD;
-        int mCP=m;
-        int degUCP3=degU;
-        int degNCP3=degN;
-        int degDCP3=degD;
-        int mCP3=m;
-        vector<LONG> MCP=M;
-        vector<LONG> yCP2=y;
-        vector<LONG> MCP3=M;
-        vector<LONG> yCP3=y;
-        auto start2=chrono::steady_clock::now();
-        for(int k=0;k<CALLS;k++){
-            flag=ratReconFastKernelWS(M,y,m,degU,
-            degN,degD,p,W,rOut.data(),degR,tOut.data(),degT,P);
-        }
-        auto stop2=chrono::steady_clock::now();
-        auto rrNormStart=chrono::steady_clock::now();
-        for(int k=0;k<CALLS;k++){
-            flag2=ratReconNormal(MCP,yCP2,mCP,degUCP,
-            degNCP,degDCP,p,W2,rOut2.data(),degR2,tOut2.data(),degT2);
-        }
-        auto rrNormStop=chrono::steady_clock::now();
-        auto rrNorm2Start=chrono::steady_clock::now();
-        for(int k=0;k<CALLS;k++){
-            flag3=ratRecon2(MCP3,yCP3,mCP3,degUCP3,
-            degNCP3,degDCP3,p,W3,rOut3.data(),degR3,tOut3.data(),degT3,P);
-        }
-        auto rrNorm2Stop=chrono::steady_clock::now();
-        double total2=chrono::duration<double,std::micro>(stop2-start2).count();
-        double rrNormTotal=chrono::duration<double,std::micro>(rrNormStop-rrNormStart).count();
-        double rrNorm2Total=chrono::duration<double,std::micro>(rrNorm2Stop-rrNorm2Start).count();
-        double avgTimeRR=total2/CALLS;
-        double avgTimeRRNorm=rrNormTotal/CALLS;
-        double avgTimeRRNorm2=rrNorm2Total/CALLS;
-        
-        logFile<<left<<
-                 setw(10)<<step<<
-                 setw(10)<<degN<<
-                 setw(10)<<degD<<
-                 setw(28)<<avgTimeNewton<<
-                 setw(28)<<avgTimeNewton2<<
-                 setw(28)<<avgTimeRR<<
-                 setw(28)<<avgTimeRRNorm<<
-                 setw(28)<<avgTimeRRNorm2<<
-                 "\n";
-                  
-        degN*=2;
-        degD*=2;
-    }
-    logFile.close();
-    return 0;
-}
+/* 
+Mike's linear Algebra routines for fast computation.
 */
 
-/*
-int main() {
-   // LONG p = 4294967291;   // prevprime(2^32-1)
-    LONG p = 2147483647; //This is 2^31-1.
-    recint P = recip1(p);
-
-    int degN = 5;
-    int degD = 5;
-
-    const int CALLS = 10000;
-    const int ITER  = 8;
-
-    ofstream logFile("benchMarkCPP.txt");
-    if (!logFile) {
-        cerr << "Could not open benchMark.txt\n";
-        return 1;
-    }
-
-    logFile << "PRIME -> " << p << "\n";
-    logFile << "CALLS -> " << CALLS << "\n";
-    logFile << left
-            << setw(8)  << "ITER"
-            << setw(8)  << "degN"
-            << setw(8)  << "degD"
-            << setw(24) << "NewtonKernelMULREC"
-            << setw(24) << "NewtonKernelMUL64"
-            << setw(24) << "NewtonWrapperCPP"
-            << setw(24) << "RRKernelMUL64"
-            << setw(24) << "RRWrapperCPP"
-            << "\n";
-
-    for (int step = 1; step < ITER; ++step) {
-        // ------------------------------------------------------------
-        // Build random monic rational function n(x)/d(x)
-        // ------------------------------------------------------------
-        vector<LONG> n(degN + 1, 0);
-        vector<LONG> d(degD + 1, 0);
-
-        for (int i = 0; i <= degN; ++i) {
-            LONG temp = rand64s(p);
-            while (temp == 0) temp = rand64s(p);
-            n[i] = temp;
-        }
-
-        for (int j = 0; j <= degD; ++j) {
-            LONG temp = rand64s(p);
-            while (temp == 0) temp = rand64s(p);
-            d[j] = temp;
-        }
-
-        if (d[degD] != 1) {
-            LONG invTerm = modinv64b(d[degD], p);
-            for (int i = 0; i <= degD; ++i) d[i] = mul64b(invTerm, d[i], p);
-            for (int i = 0; i <= degN; ++i) n[i] = mul64b(invTerm, n[i], p);
-        }
-
-        // ------------------------------------------------------------
-        // Sample the rational function at m = degN+degD+1 points
-        // ------------------------------------------------------------
-        int m = degN + degD + 1;
-
-        vector<LONG> x(m, 0);
-        for (int i = 0; i < m; ++i) x[i] = i + 1;
-
-        vector<LONG> yVals(m, 0);
-        for (int i = 0; i < m; ++i) {
-            LONG denEval = pEVAL64(d.data(), degD, x[i], p);
-            if (denEval == 0) {
-                cerr << "Encountered zero denominator evaluation.\n";
-                return 1;
-            }
-            LONG numEval = pEVAL64(n.data(), degN, x[i], p);
-            yVals[i] = mul64b(numEval, modinv64b(denEval, p), p);
-        }
-
-        // ------------------------------------------------------------
-        // Newton kernel timings
-        // We time:
-        //   (copy + kernel) - (copy only)
-        // so the result is kernel-only.
-        // ------------------------------------------------------------
-        vector<LONG> yWork(m, 0);
-
-        auto cpStart = chrono::steady_clock::now();
-        for (int i = 0; i < CALLS; ++i) {
-            copy(yVals.begin(), yVals.end(), yWork.begin());
-        }
-        auto cpStop = chrono::steady_clock::now();
-        double copyOnly_us =
-            chrono::duration<double, std::micro>(cpStop - cpStart).count() / CALLS;
-
-        // mulRec kernel
-        int degU_rec = -1;
-        auto nRecStart = chrono::steady_clock::now();
-        for (int i = 0; i < CALLS; ++i) {
-            copy(yVals.begin(), yVals.end(), yWork.begin());
-            degU_rec = newtonInterpMulRec(x.data(), yWork.data(), m, p, P);
-        }
-        auto nRecStop = chrono::steady_clock::now();
-        double newtonRecWithCopy_us =
-            chrono::duration<double, std::micro>(nRecStop - nRecStart).count() / CALLS;
-        double newtonKernelRec_us = newtonRecWithCopy_us - copyOnly_us;
-
-        if (degU_rec < 0) {
-            cerr << "newtonInterpMulRec failed.\n";
-            return 1;
-        }
-
-        // Recover coefficient vector Ucoeff from mulRec Newton
-        copy(yVals.begin(), yVals.end(), yWork.begin());
-        degU_rec = newtonInterpMulRec(x.data(), yWork.data(), m, p, P);
-        if (degU_rec < 0) {
-            cerr << "newtonInterpMulRec failed while building Ucoeff.\n";
-            return 1;
-        }
-        vector<LONG> Ucoeff(yWork.begin(), yWork.begin() + (degU_rec + 1));
-
-        // mul64 kernel
-        int degU_64 = -1;
-        auto n64Start = chrono::steady_clock::now();
-        for (int i = 0; i < CALLS; ++i) {
-            copy(yVals.begin(), yVals.end(), yWork.begin());
-            degU_64 = newtonInterpMulNormal(x.data(), yWork.data(), m, p);
-        }
-        auto n64Stop = chrono::steady_clock::now();
-        double newton64WithCopy_us =
-            chrono::duration<double, std::micro>(n64Stop - n64Start).count() / CALLS;
-        double newtonKernel64_us = newton64WithCopy_us - copyOnly_us;
-
-        // ------------------------------------------------------------
-        // Newton wrapper timing in C++
-        // This is the number you compare to Maple's
-        // "Local newton routine timing"
-        // ------------------------------------------------------------
-        vector<LONG> yOutWrap(m, 0);
-        int degOutWrap = -1;
-
-        auto nWrapStart = chrono::steady_clock::now();
-        for (int i = 0; i < CALLS; ++i) {
-            int rc = cppInterp(
-                m, x.data(),
-                m, yVals.data(),
-                p,
-                m, yOutWrap.data(),
-                &degOutWrap
-            );
-            if (rc != 0) {
-                cerr << "cppInterp failed with rc = " << rc << "\n";
-                return 1;
-            }
-        }
-        auto nWrapStop = chrono::steady_clock::now();
-        double newtonWrapCPP_us =
-            chrono::duration<double, std::micro>(nWrapStop - nWrapStart).count() / CALLS;
-
-        // ------------------------------------------------------------
-        // Build M(x) = prod (x - x_i)
-        // ------------------------------------------------------------
-        vector<LONG> M(degN + degD + 2, 0);   // size m+1
-        M[0] = 1;
-        int degM = mkM(M, x, p);              // should be m
-
-        if (degM < 0) {
-            cerr << "mkM failed.\n";
-            return 1;
-        }
-
-        vector<LONG> Mcoeff(M.begin(), M.begin() + (degM + 1));
-
-        // ------------------------------------------------------------
-        // RR kernel timing
-        // We use Ucoeff (coefficients of interpolant), not yVals.
-        // We also subtract copy-only cost to isolate the kernel better.
-        // ------------------------------------------------------------
-        vector<LONG> Mwork = Mcoeff;
-        vector<LONG> Uwork = Ucoeff;
-
-        auto rrCopyStart = chrono::steady_clock::now();
-        for (int i = 0; i < CALLS; ++i) {
-            copy(Mcoeff.begin(), Mcoeff.end(), Mwork.begin());
-            copy(Ucoeff.begin(), Ucoeff.end(), Uwork.begin());
-        }
-        auto rrCopyStop = chrono::steady_clock::now();
-        double rrCopyOnly_us =
-            chrono::duration<double, std::micro>(rrCopyStop - rrCopyStart).count() / CALLS;
-
-        RatReconFastWS W(degM);
-        vector<LONG> rOut(degN + 1, 0);
-        vector<LONG> tOut(degD + 1, 0);
-
-        int flag = -999;
-        int degR = -1;
-        int degT = -1;
-
-        auto rrKernelStart = chrono::steady_clock::now();
-        for (int i = 0; i < CALLS; ++i) {
-            copy(Mcoeff.begin(), Mcoeff.end(), Mwork.begin());
-            copy(Ucoeff.begin(), Ucoeff.end(), Uwork.begin());
-
-            degR = -1;
-            degT = -1;
-            flag = ratReconNormal(
-                Mwork,
-                Uwork,
-                degM,
-                degU_rec,
-                degN,
-                degD,
-                p,
-                W,
-                rOut.data(),
-                degR,
-                tOut.data(),
-                degT
-            );
-
-            if (flag != 0) {
-                cerr << "ratReconNormal failed with rc = " << flag << "\n";
-                return 1;
-            }
-        }
-        auto rrKernelStop = chrono::steady_clock::now();
-        double rrKernelWithCopy_us =
-            chrono::duration<double, std::micro>(rrKernelStop - rrKernelStart).count() / CALLS;
-        double rrKernelFastWS_us = rrKernelWithCopy_us - rrCopyOnly_us;
-
-        // ------------------------------------------------------------
-        // RR wrapper timing in C++
-        // ------------------------------------------------------------
-        vector<LONG> nOutWrap(degN + 1, 0);
-        vector<LONG> dOutWrap(degD + 1, 0);
-        int degNOutWrap = -1;
-        int degDOutWrap = -1;
-
-        auto rrWrapStart = chrono::steady_clock::now();
-        for (int i = 0; i < CALLS; ++i) {
-            int rc = ratRECON_C(
-                degM + 1, degM, Mcoeff.data(),
-                degU_rec + 1, degU_rec, Ucoeff.data(),
-                degN, degD, p,
-                degN + 1, nOutWrap.data(), &degNOutWrap,
-                degD + 1, dOutWrap.data(), &degDOutWrap
-            );
-            if (rc != 0) {
-                cerr << "ratRECON_C failed with rc = " << rc << "\n";
-                return 1;
-            }
-        }
-        auto rrWrapStop = chrono::steady_clock::now();
-        double rrWrapCPP_us =
-            chrono::duration<double, std::micro>(rrWrapStop - rrWrapStart).count() / CALLS;
-
-        // ------------------------------------------------------------
-        // Log
-        // ------------------------------------------------------------
-        logFile << left
-                << setw(8)  << step
-                << setw(8)  << degN
-                << setw(8)  << degD
-                << setw(24) << newtonKernelRec_us
-                << setw(24) << newtonKernel64_us
-                << setw(24) << newtonWrapCPP_us
-                << setw(24) << rrKernelFastWS_us
-                << setw(24) << rrWrapCPP_us
-                << "\n";
-
-        degN *= 2;
-        degD *= 2;
-    }
-
-    logFile.close();
-    return 0;
+LONG rref( LONG *B, int n, int m, LONG p ) {
+// Put B in reduced row Echelon form and return rank(B)
+// The code assumes 0 <= B[i,j] < p
+LONG t,det;
+int c,r,i,j;
+//recint P;
+   //printf("rref: n=%d m=%d\n",n,m);
+   //P = recip1(p);
+   det = 1;
+   for( c=0,r=0; c<m && r<n; c++ ) {
+      // Search for a pivot element
+      for( i=r; i<n && B[m*i+c]==0; i++ );
+      if( i==n ) { det = 0; continue; }
+      if( i!=r ) { // interchange row i with row r
+          det = neg64s(det,p);
+          for( j=c; j<m; j++ ) { t = B[i*m+j]; B[i*m+j] = B[r*m+j]; B[r*m+j] = t; }
+      }
+      det = mul64b(det,B[r*m+c],p);
+      t = modinv64b(B[r*m+c],p);
+      for( j=c+1; j<m; j++ ) B[r*m+j] = mul64b(t,B[r*m+j],p);
+      B[r*m+c] = 1;
+      for( i=0; i<n; i++ ) {
+         if( i==r || B[i*m+c]==0 ) continue;
+         for( j=c+1; j<m; j++ )
+            B[i*m+j] = sub64b(B[i*m+j],mul64b(B[i*m+c],B[r*m+j],p),p);
+         B[i*m+c] = 0;
+      }
+      r++;  // go to next row
+   }
+   printf("det(B)=%lld\n",det);
+   return(r); // r = rank(B)
 }
+
+/*
+RREF WRAPPER FOR MAPLE.
 */
+ 
+extern "C" int cppRREF(int n,
+    int m,
+    LONG *B,
+    const LONG p)
+{
+ 
+// INITIAL CHECKS:
+ 
+if (!B) {
+    return -1;
+}
+if (n <= 0 || m <= 0) {
+    return -2;
+}
+if (p < 2) {
+    return -3;
+}
+ 
+// NORMALIZE INPUT INTO [0,p):
+ 
+for (size_t i = 0; i < (size_t)n*m; ++i) {
+    LONG v = B[i] % p;
+    B[i] = v + ((v>>63)&p);
+}
+ 
+return (int)rref(B, n, m, p);
+}
