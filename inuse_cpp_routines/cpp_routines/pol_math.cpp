@@ -2027,3 +2027,250 @@ for (int i = 0; i < nr; ++i) {
 
 return 0;
 }
+
+/*
+ROOT FINDING OVER GF(p) FOR MAPLE.
+
+Roots(f) mod p is 85% of the run once the black box is out of the way, and
+it is 14x slower at a 64 bit prime than at a 32 bit one because Maple's fast
+univariate representation only covers p < 2^31.5.  Everything below is built
+on polmul64s and polDIVIP64, which measured the same at 31 and 62 bits.
+
+  1. f is made monic.
+  2. g = gcd(f, x^p - x) collects exactly the distinct roots of f that lie
+     in GF(p).  x^p mod f is computed by square and multiply, so this is
+     log2(p) multiplications and divisions of polynomials of degree < deg f.
+  3. g is a product of DISTINCT linear factors, so Cantor-Zassenhaus equal
+     degree splitting applies: for a shift s, gcd(g,(x+s)^((p-1)/2) - 1)
+     keeps the roots r with r+s a nonzero quadratic residue, which splits g
+     into two proper factors for about half of all s.  Recurse.
+  4. Multiplicities, when f is not squarefree, come from deflating f by
+     (x - r) with synthetic division.
+
+The shifts come from a fixed LCG rather than rand64s, so a given f always
+takes the same path; that makes failures reproducible.
+*/
+
+static inline LONG czNEXTS(LONG &state,const LONG p){
+    state = state*6364136223846793005LL + 1442695040888963407LL;
+    LONG s = (LONG)(((ULNG)state)>>1) % p;
+    return s;
+}
+
+// h := h*g mod f, f monic of degree d.  W needs 2d+2 entries.
+static int polMULMOD64(LONG *h,int dh,const LONG *g,int dg,
+                       const LONG *f,int d,const LONG p,LONG *W){
+    int dt,dr,i;
+    if( dh<0 || dg<0 ) return -1;
+    dt = polmul64s(h,(LONG*)g,W,dh,dg,p);
+    if( dt<d ) {
+        for( i=0; i<=dt; i++ ) h[i]=W[i];
+        return dt;
+    }
+    dr = polDIVIP64(W,f,dt,d,p);
+    for( i=0; i<=dr; i++ ) h[i]=W[i];
+    return dr;
+}
+
+// monic gcd of a and b, written to g.  a and b are read only.
+static int polGCD64s(const LONG *a,int da,const LONG *b,int db,const LONG p,LONG *g){
+    std::vector<LONG> A,B;
+    int dr,i;
+    LONG inv;
+    A.assign(a,a+std::max(da+1,1));
+    B.assign(b,b+std::max(db+1,1));
+    if( da<db ) { A.swap(B); std::swap(da,db); }
+    while( db>=0 ) {
+        dr = polDIVIP64(A.data(),B.data(),da,db,p);
+        A.resize(std::max(dr+1,1));
+        A.swap(B);
+        da = db;
+        db = dr;
+        B.resize(std::max(db+1,1));
+    }
+    if( da<0 ) return -1;
+    inv = modinv64b(A[da],p);
+    for( i=0; i<da; i++ ) g[i]=mul64b(A[i],inv,p);
+    g[da]=1;
+    return da;
+}
+
+// (x+s)^e mod f, f monic of degree d >= 2.  Result in out.
+static int polPOWMOD64(LONG s,LONG e,const LONG *f,int d,const LONG p,
+                       std::vector<LONG> &out){
+    std::vector<LONG> base(d+1,0),h(d+1,0),W(2*d+2,0);
+    int db,dh,nb,i;
+    base[0]=s%p;
+    base[1]=1;
+    db=1;
+    h[0]=1;
+    dh=0;
+    nb=63;
+    while( nb>0 && !((e>>(nb-1))&1) ) nb--;
+    for( i=nb-1; i>=0; i-- ) {
+        dh = polMULMOD64(h.data(),dh,h.data(),dh,f,d,p,W.data());
+        if( (e>>i)&1 )
+            dh = polMULMOD64(h.data(),dh,base.data(),db,f,d,p,W.data());
+    }
+    if( dh<0 ) { out.assign(1,0); return -1; }
+    out.assign(h.begin(),h.begin()+dh+1);
+    return dh;
+}
+
+// g is a product of distinct linear factors; append its roots to R.
+static void polEDF64(std::vector<LONG> g,int dg,const LONG p,LONG &state,
+                     std::vector<LONG> &R){
+    std::vector<LONG> w,gc,A,Q,S;
+    int dw,ds,dq,i,tries;
+    LONG s,inv,e;
+    if( dg<=0 ) return;
+    if( dg==1 ) { R.push_back(neg64s(g[0],p)); return; }
+    e=(p-1)/2;
+    for( tries=0; tries<200; tries++ ) {
+        s = czNEXTS(state,p);
+        dw = polPOWMOD64(s,e,g.data(),dg,p,w);
+        if( dw<0 ) continue;
+        w[0]=sub64b(w[0],1,p);
+        while( dw>=0 && w[dw]==0 ) dw--;
+        if( dw<0 ) continue;
+        gc.assign(dg+1,0);
+        ds = polGCD64s(g.data(),dg,w.data(),dw,p,gc.data());
+        if( ds<=0 || ds>=dg ) continue;
+        A.assign(g.begin(),g.begin()+dg+1);
+        polDIVIP64(A.data(),gc.data(),dg,ds,p);   // quotient lands in A[ds..dg]
+        dq=dg-ds;
+        Q.assign(A.begin()+ds,A.begin()+dg+1);
+        inv=modinv64b(Q[dq],p);
+        for( i=0; i<=dq; i++ ) Q[i]=mul64b(Q[i],inv,p);
+        S.assign(gc.begin(),gc.begin()+ds+1);
+        polEDF64(S,ds,p,state,R);
+        polEDF64(Q,dq,p,state,R);
+        return;
+    }
+    return;   // gave up; caller sees fewer roots than deg
+}
+
+// multiplicity of r in f, by synthetic division. f is not modified.
+static int polMULT64(const LONG *f,int d,LONG r,const LONG p){
+    std::vector<LONG> a(f,f+d+1);
+    int m=0,i,da=d;
+    LONG carry;
+    while( da>0 ) {
+        // divide a by (x-r): b[i] = a[i+1] + r*b[i+1]
+        std::vector<LONG> b(da,0);
+        carry=0;
+        for( i=da-1; i>=0; i-- ) {
+            carry = add64b(a[i+1],mul64b(r,carry,p),p);
+            b[i]=carry;
+        }
+        if( add64b(a[0],mul64b(r,carry,p),p)!=0 ) break;   // remainder != 0
+        a.assign(b.begin(),b.end());
+        da--;
+        m++;
+        while( da>0 && a[da]==0 ) da--;
+    }
+    return m;
+}
+
+/*
+f is given by its degF+1 coefficients in ASCENDING order, f[k] the
+coefficient of x^k, each already reduced into [0,p).  The distinct roots in
+GF(p) are written to rootsOut in increasing order and their multiplicities
+to multOut.  info[0] is the number of distinct roots.
+
+Return value:  0  success
+              <0  bad arguments
+               1  outLen too small for the roots found
+*/
+
+extern "C" int cppRoots(int degF,
+    const LONG *f,
+    const LONG p,
+    int outLen,
+    LONG *rootsOut,
+    int multLen,
+    LONG *multOut,
+    int infoLen,
+    LONG *info)
+{
+
+// INITIAL CHECKS:
+
+if (!f || !rootsOut || !multOut || !info) {
+    return -1;
+}
+if (infoLen < 1 || outLen < 0 || multLen < outLen) {
+    return -2;
+}
+if (p < 3) {
+    return -3;
+}
+
+info[0] = 0;
+if (degF < 1) {
+    return 0;
+}
+
+// MAKE f MONIC
+
+std::vector<LONG> F(f, f+degF+1);
+int d = degF;
+while (d > 0 && F[d] == 0) d--;
+if (d < 1) {
+    return 0;
+}
+if (F[d] != 1) {
+    LONG inv = modinv64b(F[d], p);
+    for (int i = 0; i < d; ++i) F[i] = mul64b(F[i], inv, p);
+    F[d] = 1;
+}
+
+// g = gcd(f, x^p - x) : the distinct roots of f lying in GF(p)
+
+std::vector<LONG> xp;
+int dxp = polPOWMOD64(0, p, F.data(), d, p, xp);
+std::vector<LONG> h(std::max(dxp+1, 2), 0);
+for (int i = 0; i <= dxp; ++i) h[i] = xp[i];
+h[1] = sub64b(h[1], 1, p);
+int dh = (int)h.size()-1;
+while (dh >= 0 && h[dh] == 0) dh--;
+
+std::vector<LONG> G;
+int dg;
+if (dh < 0) {                       // f divides x^p - x already
+    G = F;
+    dg = d;
+} else {
+    G.assign(d+1, 0);
+    dg = polGCD64s(F.data(), d, h.data(), dh, p, G.data());
+    if (dg < 1) {
+        return 0;                   // no roots in GF(p)
+    }
+    G.resize(dg+1);
+}
+
+// SPLIT INTO LINEAR FACTORS
+
+std::vector<LONG> R;
+LONG state = 88172645463325252LL ^ (LONG)d ^ (p<<1);
+polEDF64(G, dg, p, state, R);
+std::sort(R.begin(), R.end());
+R.erase(std::unique(R.begin(), R.end()), R.end());
+
+if ((int)R.size() > outLen) {
+    info[0] = (LONG)R.size();
+    return 1;
+}
+
+// MULTIPLICITIES (all 1 when f is squarefree, which is the usual case)
+
+int nr = (int)R.size();
+bool squarefree = (nr == d);
+for (int i = 0; i < nr; ++i) {
+    rootsOut[i] = R[i];
+    multOut[i]  = squarefree ? 1 : polMULT64(F.data(), d, R[i], p);
+}
+info[0] = nr;
+
+return 0;
+}

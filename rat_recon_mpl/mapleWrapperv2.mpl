@@ -695,6 +695,14 @@ cppRREFext := define_external("cppRREF",
     RETURN::integer[4],
     LIB=libObj):
 
+cppRREFext := define_external("cppRREF",
+    n::integer[4],
+    m::integer[4],
+    B::ARRAY(datatype=integer[8],order=C_order),
+    p::integer[8],
+    RETURN::integer[4],
+    LIB=libObj):
+
 cppRREFext := subsop(1=(
                        n,
                        m,
@@ -735,6 +743,31 @@ cppEvalSolveext := subsop(1=(
                        info),
                        op(cppEvalSolveext)):
 
+cppRootsext := define_external("cppRoots",
+    degF::integer[4],
+    f::ARRAY(datatype=integer[8]),
+    p::integer[8],
+    outLen::integer[4],
+    rootsOut::ARRAY(datatype=integer[8]),
+    multLen::integer[4],
+    multOut::ARRAY(datatype=integer[8]),
+    infoLen::integer[4],
+    info::ARRAY(datatype=integer[8]),
+    RETURN::integer[4],
+    LIB=POLMATH_LIB):
+
+cppRootsext := subsop(1=(
+                       degF,
+                       f,
+                       p,
+                       outLen,
+                       rootsOut,
+                       multLen,
+                       multOut,
+                       infoLen,
+                       info),
+                       op(cppRootsext)):
+
 #  Fail here, at read time, rather than 500 black box calls later with
 #  "cannot determine if this expression is true or false".
 if not type(cppRREFext,procedure) then
@@ -744,6 +777,10 @@ fi:
 if not type(cppEvalSolveext,procedure) then
     error "define_external did not bind cppEvalSolveext; check that %1 exists "
           "and exports cppEvalSolve",POLMATH_LIB:
+fi:
+if not type(cppRootsext,procedure) then
+    error "define_external did not bind cppRootsext; check that %1 exists and "
+          "exports cppRoots",POLMATH_LIB:
 fi:
 
 #  cppMat64 : build the hardware matrix the external call needs.  Entries are
@@ -984,4 +1021,37 @@ cppEvalSolve := proc(E,point_::list,p::prime)
         return FAIL:
     fi:
     return [seq(E["x"][k],k=0..nr-1)]:
+end proc:
+
+#  ---------------------------------------------------------------------------
+#  ROOTS OVER GF(p)
+#
+#  Drop in replacement for  Roots(F) mod p .  Same shape of answer: a list of
+#  [root,multiplicity] pairs, sorted by root, so R[1][1] = 0 still detects the
+#  zero root.  Maple's Roots falls off its fast univariate representation above
+#  p = 2^31.5, which is why it costs 14x more at a 64 bit prime than a 32 bit
+#  one; the C++ side is built on polmul64s and polDIVIP64, which measured the
+#  same at both sizes.
+#  ---------------------------------------------------------------------------
+
+cppRootsOf := proc(F::polynom,x::name,p::prime)
+    local d,fA,rts,mlt,info,rc,n,k:
+    d := degree(F,x):
+    if d < 1 then
+        return []:
+    fi:
+    fA  := Array(0..d,[seq(modp(coeff(F,x,k),p),k=0..d)],datatype=integer[8]):
+    rts := Array(0..d-1,datatype=integer[8]):
+    mlt := Array(0..d-1,datatype=integer[8]):
+    info := Array(0..0,datatype=integer[8]):
+    rc := cppRootsext(d,fA,p,d,rts,d,mlt,1,info):
+    if not type(rc,integer) then
+        error "cppRootsext returned unevaluated -- the external call never "
+              "ran; check LIB=%1",POLMATH_LIB:
+    fi:
+    if rc < 0 then
+        error "cppRoots failed with code %1",rc:
+    fi:
+    n := info[0]:
+    return [seq([rts[k],mlt[k]],k=0..n-1)]:
 end proc:

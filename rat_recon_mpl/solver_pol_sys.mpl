@@ -730,7 +730,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
             if terms_num[k] < iquo(num_eval_n[k], 2) then
                 lambda_num[k] := BMEA_poly(lam_c,Z):
                 t_helper := time():
-                R_num[k] := Roots(lambda_num[k]) mod p:
+                #R_num[k] := Roots(lambda_num[k]) mod p:
+                R_num[k] := cppRootsOf(lambda_num[k],Z,p):
                 t_roots_total := t_roots_total+(time()-t_helper):
                 if R_num[k] <> [] then
                     if nops(R_num[k]) > 0 and R_num[k][1][1] = 0 then
@@ -754,7 +755,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
                 if terms_den[1] < iquo(den_eval_n[1],2) then
                     lambda_den[1] := BMEA_poly(lam_c,Z):
                     t_helper := time():
-                    R_den[1] := Roots(lambda_den[1]) mod p:
+                    #R_den[1] := Roots(lambda_den[1]) mod p:
+                    R_den[1] := cppRootsOf(lambda_den[1],Z,p):
                     t_roots_total := t_roots_total+(time()-t_helper):
                     if R_den[1] <> [] then
                         if nops(R_den[1]) > 0 and R_den[1][1][1] = 0 then
@@ -779,7 +781,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
                 if terms_den[k] < iquo(den_eval_n[k],2) then
                     lambda_den[k] := BMEA_poly(lam_c,Z):
                     t_helper := time():
-                    R_den[k] := Roots(lambda_den[k]) mod p:
+                    #R_den[k] := Roots(lambda_den[k]) mod p:
+                    R_den[k] := cppRootsOf(lambda_den[k],Z,p):
                     t_roots_total := t_roots_total+(time()-t_helper):
                     if R_den[k] <> [] then
                         if nops(R_den[k]) > 0 and R_den[k][1][1] = 0 then
