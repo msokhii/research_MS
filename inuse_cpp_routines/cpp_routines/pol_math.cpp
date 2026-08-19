@@ -2407,7 +2407,8 @@ int polroots64s( LONG * f, int d, LONG * R, LONG *W, LONG p )
 ROOT FINDING WRAPPER FOR MAPLE  (Monagan's polroots64s).
 
 f is given by its d+1 coefficients in ASCENDING order, f[k] the coefficient of
-x^k, each already reduced into [0,p).  The roots in GF(p) are written to
+x^k, in any integer representatives (they are reduced into [0,p) here).
+The roots in GF(p) are written to
 rootsOut in increasing order and their count to info[0].  The caller's f is NOT
 modified: polroots64s monics its input, writes the gcd back over it and
 recurses on f+i for the zero root, so the coefficients are copied to scratch
@@ -2450,9 +2451,13 @@ if (d < 1) {
     return 0;
 }
 
-// SCRATCH COPY OF f, TRIMMED TO ITS TRUE DEGREE
+// SCRATCH COPY OF f, REDUCED INTO [0,p) AND TRIMMED TO ITS TRUE DEGREE
 
 std::vector<LONG> F(f, f+d+1);
+for (int i = 0; i <= d; ++i) {
+    LONG v = F[i] % p;
+    F[i] = v + ((v>>63)&p);
+}
 int df = d;
 while (df > 0 && F[df] == 0) df--;
 if (df < 1) {

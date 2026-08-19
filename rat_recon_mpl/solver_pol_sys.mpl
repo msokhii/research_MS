@@ -3,6 +3,7 @@ with(LinearAlgebra):
 with(IntegerRelations):
 
 read "./mapleWrapperv2.mpl":
+read "./mapleWrapperRREF.mpl":
 read "./pol_sys.mpl":
 
 ExpectedRawParams := ParametricSystems:-RawParams:
@@ -169,21 +170,19 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
         return X:
     end proc:
     Lin_BB := proc(point_::list(integer),p::prime)
-        local A,T,subs_values,num_eqn,soln,t0,t_avg,i,j;
+        local soln,t0,t_avg;
         global counter,bb_calls_ndsa,bb_calls_mrfi,t_ndsa_total,t_mrfi_total,bb_phase;
         #uses LinearAlgebra:-Modular:
         counter := counter+1:
         if bb_phase = "NDSA" then bb_calls_ndsa := bb_calls_ndsa+1:
         else                       bb_calls_mrfi := bb_calls_mrfi+1: fi:
         t0 := time():
-        #  Only the commented out paths below need subs_values; cppEvalSolve
-        #  takes the point as a plain list.
-        #subs_values := zip((par,pnt) -> par=pnt,params,point_):
-        num_eqn := numelems(Vars):
 
-        #  OLD 32 BIT PATH.  LinearAlgebra:-Modular:-LinearSolve accumulates in
-        #  a machine word, so the modulus has to stay below 2^32.
+        #  ORIGINAL 32 BIT PATH.  LinearAlgebra:-Modular:-LinearSolve
+        #  accumulates in a machine word, so the modulus stays below 2^32.
         #
+        #subs_values := zip((par,pnt) -> par=pnt,params,point_):
+        #num_eqn := numelems(Vars):
         #A := Mod(p,L,subs_values,integer):
         #T := traperror(LinearSolve(p,A,1)):
         #t_avg := time() - t0:
@@ -195,27 +194,9 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
         #soln := convert(A[1..num_eqn,num_eqn+1],list):
         #return soln:
 
-        #  FIRST 64 BIT ATTEMPT.  Correct, but modp(eval(...),p) evaluates over
-        #  Z before reducing, so the intermediates are bignums as soon as the
-        #  entries of L have any degree in the parameters.  That, not the rref,
-        #  is what made this path slow.
-        #
-        #A := Matrix(nr,nc,(i,j) -> modp(eval(L[i,j],subs_values),p),
-        #            datatype=integer[8],order=C_order):
-        #soln := cppLSip(A,p):
-
-        #  SECOND 64 BIT ATTEMPT.  cppEvalMatrix64 reduces as it evaluates
-        #  instead of afterwards, but Modular:-Mod refuses a 64 bit modulus, so
-        #  it falls back to Eval ... mod p, which is still one interpreted
-        #  evaluation per matrix entry.  Kept as a fallback, not the hot path.
-        #
-        #A := cppEvalMatrix64(L,subs_values,p):
-        #soln := cppLSip(A,p):
-
-        #  CURRENT 64 BIT PATH.  L was encoded once by cppEncodeMatrix, so the
-        #  evaluation at the point AND the rref solve both happen inside one
-        #  external call.  Maple only fills the nv parameter values, and no
-        #  intermediate ever leaves [0,p).  Good for any prime p < 2^63.
+        #  CURRENT PATH, any prime p < 2^63.  L was encoded once by
+        #  cppEncodeMatrix, so evaluation at the point AND the rref solve both
+        #  happen inside one external call; no intermediate leaves [0,p).
         soln := cppEvalSolve(LE,point_,p):
         t_avg := time() - t0:
         if bb_phase = "NDSA" then t_ndsa_total := t_ndsa_total+t_avg:
@@ -402,11 +383,10 @@ get_u_faulty := proc(M,col,alpha,p)
     return U:
 end proc:
 
-#  Berlekamp-Massey runs in C++ (cppBMM -> cppBM).  It is split in two here:
-#  BMEA_coeffs returns the raw coefficient list, and BMEA_poly turns that list
-#  into a polynomial in Z.  Only the degree is needed to test convergence, and
-#  the degree is just nops(L)-1, so the (large) symbolic polynomial is built
-#  only on the rounds where Roots is actually called.
+#  Berlekamp-Massey runs in C++ (cppBMM -> cppBM).  BMEA_coeffs returns the
+#  raw coefficient list; the degree test is nops(list)-1 and rootsMODp takes
+#  the list directly, so the pipeline never builds the symbolic polynomial.
+#  BMEA_poly / BMEA are kept for interactive use only.
 BMEA_coeffs := proc(v::{Vector,list}, p::posint)
     if numelems(v)=0 then
         return []:
@@ -455,8 +435,7 @@ generate_monomials := proc(roots_,num_var,prime_points,vars)
 end proc:
 
 Zippel_Transpose_Vandermonde_solver := proc(y::{Vector,list}, terms::integer,
-                                            roots_::list, lambda_::polynom,
-                                            p::integer)
+                                            roots_::list, p::integer)
     if terms = 0 then 
     return []: 
     fi:
@@ -561,14 +540,14 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
           numerator_done,denominator_done,Tcur,jDone,
           mqrfr_results,lin_sys,num_points_mqrfr,
           Numerators,Denominiators,deg_num,deg_den,
-          lambda_num,lambda_den,terms_num,terms_den,
+          terms_num,terms_den,
           R_num,R_den,Roots_num_eval,Roots_den_eval,
           num_mono,den_mono,coeff_num,coeff_den,
           final_num,final_den,temp,common_den_flag,
           bmea_done,temp_den,all_den_done,all_done,max_num_points_mqrfr,
           init_sigma,sampleCounts,mMax,tempG,
           sigma_j,sigma_run,alphaVal,
-          Psi_alpha,BBvals,m_i,PtsArr,Xblock,
+          m_i,PtsArr,Xblock,
           alphaArr,Yarr,outArr,Yfault,
           evalCap,newCap,tmpV,lam_c,
           gc0,alloc0,t_helper,tempR:
@@ -594,10 +573,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
     bmea_done := [seq(false,i=1..num_eqn)]:
     all_done := true:
 
-    lambda_num := table(): 
     terms_num := table(): 
     R_num := table():
-    lambda_den := table(): 
     terms_den := table(): 
     R_den := table():
     final_num  := table(): 
@@ -608,10 +585,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
     coeff_den := table():
 
     for i from 1 to num_eqn do
-        lambda_num[i] := []: 
         terms_num[i] := []: 
         R_num[i] := []:
-        lambda_den[i] := []: 
         terms_den[i] := []: 
         R_den[i] := []:
     od:
@@ -693,20 +668,10 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
             sigma_j := sigma_run:
             if lin_sys then
                 t_helper := time():
-
-                #  OLD: build T lists of num_vars values, then call the black
-                #  box once per point, then transpose the result in Maple.
-                #
-                #Psi_alpha := get_point_on_affine_line(num_vars,alphaVal,
-                #                                     direction,sigma_j,
-                #                                     p,mMax):
-                #t_points_total := t_points_total+(time()-t_helper):
-                #BBvals := [seq(B(Psi_alpha[s], p),s=1...mMax)]:
-
-                #  NEW: the points stay in the flat Array cppAffineLine wrote,
-                #  the whole block is solved in ONE external call, and the
-                #  answers come back already transposed -- row i of Xblock is
-                #  the sequence of x_i over the points, contiguous.
+                #  The points stay in the flat Array cppAffineLine wrote, the
+                #  whole block is solved in ONE external call, and the answers
+                #  come back already transposed: row i of Xblock is the
+                #  sequence of x_i over the points, contiguous.
                 PtsArr := get_point_block_on_affine_line(num_vars,alphaVal,
                                                         direction,sigma_j,
                                                         p,mMax):
@@ -725,16 +690,7 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
                         next:
                     fi:
                     m_i := sampleCounts[i]:
-
-                    #  OLD transpose: copy column i of the point major block
-                    #  into Yarr, one interpreted element store at a time.
-                    #
-                    #for s from 1 to m_i do
-                    #    Yarr[s-1] := BBvals[s][i]:
-                    #od:
-
-                    #  NEW: row i is already contiguous in Xblock, so alias it.
-                    #  No copy, no allocation.
+                    #  Row i is already contiguous in Xblock: alias, no copy.
                     Yarr := cppBlockRow(Xblock,i,mMax,m_i):
                     if FAULT_ON then
                         Yfault := inject_faults([seq(Yarr[s-1],s=1..m_i)],
@@ -802,11 +758,12 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
             t_bmea_total := t_bmea_total+(time()-t_helper):
             terms_num[k] := `if`(lam_c = [], 0, nops(lam_c)-1):
             if terms_num[k] < iquo(num_eval_n[k], 2) then
-                lambda_num[k] := BMEA_poly(lam_c,Z):
+                #  lam_c IS the ascending coefficient list of lambda, so the
+                #  roots go straight from it; the symbolic polynomial the old
+                #  path built here (and then took apart again with coeff())
+                #  cost O(deg^2) interpreted work per call.
                 t_helper := time():
-                #R_num[k] := Roots(lambda_num[k]) mod p:
-                R_num[k] := rootsMODp(lambda_num[k],Z,p):
-                #R_num[k] := cppRootsOf(lambda_num[k],Z,p):
+                R_num[k] := rootsMODp(lam_c,Z,p):
                 t_roots_total := t_roots_total+(time()-t_helper):
                 if R_num[k] <> [] then
                     if nops(R_num[k]) > 0 and R_num[k][1][1] = 0 then
@@ -828,11 +785,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
                 t_bmea_total := t_bmea_total+(time()-t_helper):
                 terms_den[1] := `if`(lam_c = [], 0, nops(lam_c)-1):
                 if terms_den[1] < iquo(den_eval_n[1],2) then
-                    lambda_den[1] := BMEA_poly(lam_c,Z):
                     t_helper := time():
-                    #R_den[1] := Roots(lambda_den[1]) mod p:
-                    R_den[1] := rootsMODp(lambda_den[1],Z,p):
-                    #R_den[1] := cppRootsOf(lambda_den[1],Z,p):
+                    R_den[1] := rootsMODp(lam_c,Z,p):
                     t_roots_total := t_roots_total+(time()-t_helper):
                     if R_den[1] <> [] then
                         if nops(R_den[1]) > 0 and R_den[1][1][1] = 0 then
@@ -855,11 +809,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
                 t_bmea_total := t_bmea_total+(time()-t_helper):
                 terms_den[k] := `if`(lam_c = [], 0, nops(lam_c)-1):
                 if terms_den[k] < iquo(den_eval_n[k],2) then
-                    lambda_den[k] := BMEA_poly(lam_c,Z):
                     t_helper := time():
-                    #R_den[k] := Roots(lambda_den[k]) mod p:
-                    R_den[k] := rootsMODp(lambda_den[k],Z,p):
-                    #R_den[k] := cppRootsOf(lambda_den[k],Z,p):
+                    R_den[k] := rootsMODp(lam_c,Z,p):
                     t_roots_total := t_roots_total+(time()-t_helper):
                     if R_den[k] <> [] then
                         if nops(R_den[k]) > 0 and R_den[k][1][1] = 0 then
@@ -912,7 +863,7 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
         num_mono[k] := temp:
         t_helper := time():
         coeff_num[k] := Zippel_Transpose_Vandermonde_solver(num_eval[k][1..terms_num[k]],
-                              terms_num[k],Roots_num_eval[k],lambda_num[k],p):
+                              terms_num[k],Roots_num_eval[k],p):
         t_zippel_total := t_zippel_total+(time()-t_helper):
     od:
 
@@ -926,7 +877,7 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
         den_mono[1] := temp:
         t_helper := time():
         coeff_den[1] := Zippel_Transpose_Vandermonde_solver(den_eval[1][1..terms_den[1]],
-                              terms_den[1],Roots_den_eval[1],lambda_den[1],p):
+                              terms_den[1],Roots_den_eval[1],p):
         t_zippel_total := t_zippel_total+(time()-t_helper):
         for k from 2 to num_eqn do
             den_mono[k] := den_mono[1]:
@@ -943,7 +894,7 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
             den_mono[k] := temp:
             t_helper := time():
             coeff_den[k] := Zippel_Transpose_Vandermonde_solver(den_eval[k][1..terms_den[k]],
-                              terms_den[k],Roots_den_eval[k],lambda_den[k],p):
+                              terms_den[k],Roots_den_eval[k],p):
             t_zippel_total := t_zippel_total+(time()-t_helper):
         od:
     fi:
@@ -1061,13 +1012,13 @@ if not type(SYSTEM_ID, string) then SYSTEM_ID := convert(SYSTEM_ID, string): fi:
 # Freeze the selected family for this benchmark run.
 RUN_SYSTEM_ID := SYSTEM_ID:
 
-test_prime := prevprime(2^63-1):
-#test_prime := prevprime(2^31-1):
+#test_prime := prevprime(2^63-1):
+test_prime := prevprime(2^31-1):
 
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
 n_min := 4:
-n_max := 12:
+n_max := 8:
 do_verify := false:
 do_ffge := false:
 summary := []:
