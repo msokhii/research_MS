@@ -1036,7 +1036,7 @@ if USE_POLROOTS64S then
         infoLen::integer[4],
         info::ARRAY(datatype=integer[8]),
         RETURN::integer[4],
-        LIB=POLMATH_LIB):
+        LIB=libObj):
     if not type(cppPolRootsext,procedure) then
         error "define_external did not bind cppPolRootsext; check that %1 "
               "exports cppPolRoots",libObj:
