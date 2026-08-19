@@ -1017,8 +1017,8 @@ test_prime := prevprime(2^63-1):
 
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
-n_min := 15:
-n_max := 15:
+n_min := 4:
+n_max := 12:
 do_verify := false:
 do_ffge := false:
 summary := []:
