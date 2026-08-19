@@ -695,13 +695,6 @@ cppRREFext := define_external("cppRREF",
     RETURN::integer[4],
     LIB=libObj):
 
-cppRREFext := subsop(1=(
-                       n,
-                       m,
-                       B,
-                       p),
-                       op(cppRREFext)):
-
 cppEvalSolveext := define_external("cppEvalSolve",
     nr::integer[4],
     nc::integer[4],
@@ -719,49 +712,36 @@ cppEvalSolveext := define_external("cppEvalSolve",
     RETURN::integer[4],
     LIB=libObj):
 
-cppEvalSolveext := subsop(1=(
-                       nr,
-                       nc,
-                       nv,
-                       entStart,
-                       expo,
-                       coef,
-                       pnt,
-                       p,
-                       dmax,
-                       outLen,
-                       xOut,
-                       infoLen,
-                       info),
-                       op(cppEvalSolveext)):
-
-(*
-cppRootsext := define_external("cppRoots",
-    degF::integer[4],
-    f::ARRAY(datatype=integer[8]),
+cppEvalSolveBlockext := define_external("cppEvalSolveBlock",
+    nr::integer[4],
+    nc::integer[4],
+    nv::integer[4],
+    entStart::ARRAY(datatype=integer[4]),
+    expo::ARRAY(datatype=integer[4]),
+    coef::ARRAY(datatype=integer[8]),
+    pts::ARRAY(datatype=integer[8]),
+    npts::integer[4],
     p::integer[8],
-    outLen::integer[4],
-    rootsOut::ARRAY(datatype=integer[8]),
-    multLen::integer[4],
-    multOut::ARRAY(datatype=integer[8]),
+    dmax::integer[4],
+    ldx::integer[4],
+    xOut::ARRAY(datatype=integer[8]),
     infoLen::integer[4],
     info::ARRAY(datatype=integer[8]),
     RETURN::integer[4],
     LIB=libObj):
 
-cppRootsext := subsop(1=(
-                       degF,
-                       f,
-                       p,
-                       outLen,
-                       rootsOut,
-                       multLen,
-                       multOut,
-                       infoLen,
-                       info),
-                       op(cppRootsext)):
-
-*)
+#cppRootsext := define_external("cppRoots",
+#    degF::integer[4],
+#    f::ARRAY(datatype=integer[8]),
+#    p::integer[8],
+#    outLen::integer[4],
+#    rootsOut::ARRAY(datatype=integer[8]),
+#    multLen::integer[4],
+#    multOut::ARRAY(datatype=integer[8]),
+#    infoLen::integer[4],
+#    info::ARRAY(datatype=integer[8]),
+#    RETURN::integer[4],
+#    LIB=POLMATH_LIB):
 
 #  Fail here, at read time, rather than 500 black box calls later with
 #  "cannot determine if this expression is true or false".
@@ -773,10 +753,14 @@ if not type(cppEvalSolveext,procedure) then
     error "define_external did not bind cppEvalSolveext; check that %1 exists "
           "and exports cppEvalSolve",POLMATH_LIB:
 fi:
-if not type(cppRootsext,procedure) then
-    error "define_external did not bind cppRootsext; check that %1 exists and "
-          "exports cppRoots",POLMATH_LIB:
+if not type(cppEvalSolveBlockext,procedure) then
+    error "define_external did not bind cppEvalSolveBlockext; check that %1 "
+          "exists and exports cppEvalSolveBlock",POLMATH_LIB:
 fi:
+#if not type(cppRootsext,procedure) then
+#    error "define_external did not bind cppRootsext; check that %1 exists and "
+#          "exports cppRoots",POLMATH_LIB:
+#fi:
 
 #  cppMat64 : build the hardware matrix the external call needs.  Entries are
 #  reduced into [0,p) here so that every one of them fits in a machine word.
@@ -866,6 +850,12 @@ end proc:
 #                 = 1   LinearAlgebra:-Modular:-Mod
 #                 = 2   Eval ... mod p
 #  ---------------------------------------------------------------------------
+
+#  Maple's modp1 / Modular kernels only cover primes below about 2^31.5, and
+#  below that bound they beat the external route.  Above it they fall back to
+#  generic Zp arithmetic and the C++ path wins.  Every dispatch in this file
+#  uses this one constant.
+MAPLE_FAST_BOUND := 2^31:
 
 CPPEVALMODE := 0:
 
@@ -967,6 +957,8 @@ cppEncodeMatrix := proc(L::Matrix,params::list)
     #  Everything the external call needs, allocated once.  The work arrays are
     #  reused on every black box call so the hot path does not allocate.
     E := table():
+    E["L"]       := L:
+    E["params"]  := params:
     E["nr"]      := nr:
     E["nc"]      := nc:
     E["nv"]      := nv:
@@ -988,7 +980,21 @@ end proc:
 #  evaluated matrix is singular or the system is inconsistent.
 #  The coefficients are reduced mod p only when p changes.
 cppEvalSolve := proc(E,point_::list,p::prime)
-    local k,rc,nr,nv:
+    local k,rc,nr,nv,A,T:
+
+    #  Below the bound Maple's own compiled path wins: measured at n=12 it is
+    #  2.2x faster per black box call than going out to C++.  Only use the
+    #  external route where Maple cannot follow.
+    if p < MAPLE_FAST_BOUND then
+        A := LinearAlgebra:-Modular:-Mod(p,E["L"],
+                 zip((par,pnt) -> par=pnt,E["params"],point_),integer):
+        T := traperror(LinearAlgebra:-Modular:-LinearSolve(p,A,1)):
+        if T = "Matrix is singular." then
+            return FAIL:
+        fi:
+        return convert(A[1..E["nr"],E["nc"]],list):
+    fi:
+
     nr := E["nr"]:
     nv := E["nv"]:
     if nops(point_) < nv then
@@ -1000,9 +1006,9 @@ cppEvalSolve := proc(E,point_::list,p::prime)
         od:
         E["p"] := p:
     fi:
-    for k from 1 to nv do
-        E["pnt"][k-1] := modp(point_[k],p):
-    od:
+    #  One kernel conversion instead of nv interpreted modp + element stores.
+    #  The C side reduces anything outside [0,p) itself.
+    E["pnt"] := Array(point_,datatype=integer[8]):
     rc := cppEvalSolveext(nr,E["nc"],nv,E["ent"],E["expo"],E["coef"],
                           E["pnt"],p,E["dmax"],nr,E["x"],2,E["info"]):
     if not type(rc,integer) then
@@ -1015,11 +1021,16 @@ cppEvalSolve := proc(E,point_::list,p::prime)
     if rc = 1 then
         return FAIL:
     fi:
-    return [seq(E["x"][k],k=0..nr-1)]:
+    return convert(E["x"],list):
 end proc:
 
 #  ---------------------------------------------------------------------------
-#  ROOTS OVER GF(p)
+#  ROOTS OVER GF(p)   -- COMMENTED OUT, Roots(F) mod p is used instead.
+#
+#  At n=12 the inputs are degree 2563 and 5579 and the classical O(d^2 log p)
+#  Cantor-Zassenhaus below loses to Maple.  cppRoots stays in pol_math.cpp,
+#  unreferenced; uncomment this section and the three call sites in
+#  solver_pol_sys.mpl to put it back.
 #
 #  Drop in replacement for  Roots(F) mod p .  Same shape of answer: a list of
 #  [root,multiplicity] pairs, sorted by root, so R[1][1] = 0 still detects the
@@ -1029,26 +1040,183 @@ end proc:
 #  same at both sizes.
 #  ---------------------------------------------------------------------------
 
-(*
-cppRootsOf := proc(F::polynom,x::name,p::prime)
-    local d,fA,rts,mlt,info,rc,n,k:
+#cppRootsOf := proc(F::polynom,x::name,p::prime)
+#    local d,fA,rts,mlt,info,rc,n,k:
+#    d := degree(F,x):
+#    if d < 1 then
+#        return []:
+#    fi:
+#    #  Same dispatch as cppEvalSolve.  Measured at n=12 with degree 2563 and
+#    #  5579 inputs, Maple's Roots is 2.4x faster than the C++ Cantor-Zassenhaus
+#    #  below the bound and 13.7x slower above it.
+#    if p < MAPLE_FAST_BOUND then
+#        return Roots(F) mod p:
+#    fi:
+#    fA  := Array(0..d,[seq(modp(coeff(F,x,k),p),k=0..d)],datatype=integer[8]):
+#    rts := Array(0..d-1,datatype=integer[8]):
+#    mlt := Array(0..d-1,datatype=integer[8]):
+#    info := Array(0..0,datatype=integer[8]):
+#    rc := cppRootsext(d,fA,p,d,rts,d,mlt,1,info):
+#    if not type(rc,integer) then
+#        error "cppRootsext returned unevaluated -- the external call never "
+#              "ran; check LIB=%1",POLMATH_LIB:
+#    fi:
+#    if rc < 0 then
+#        error "cppRoots failed with code %1",rc:
+#    fi:
+#    n := info[0]:
+#    return [seq([rts[k],mlt[k]],k=0..n-1)]:
+#end proc:
+
+#  ---------------------------------------------------------------------------
+#  BATCHED, TRANSPOSED BLACK BOX
+#
+#  The MRFI loop wants, for each equation i, the sequence of x_i over the whole
+#  block of points on the affine line.  Point at a time that costs npts
+#  external calls, npts solution lists, and an interpreted transpose:
+#
+#      BBvals := [seq(B(Psi_alpha[s],p),s=1..mMax)]:
+#      for i ... for s ... Yarr[s-1] := BBvals[s][i]
+#
+#  cppEvalSolveBlock does the whole block in ONE call and writes the answers
+#  already transposed, so row i is contiguous and ArrayTools:-Alias hands it to
+#  cppFTREval with no copy.  Nothing is built and then rearranged.
+#
+#  E   from cppEncodeMatrix
+#  pts flat Array of npts*nv values, point major, exactly as cppAffineLine
+#      writes them (get_point_block_on_affine_line returns this)
+#
+#  Returns an nr x npts row major Array X with X[(i-1)*npts+(s-1)] = x_i at
+#  point s, or FAIL when some point gave a singular system.
+#  ---------------------------------------------------------------------------
+
+cppEvalSolveBlock := proc(E,pts::Array,npts::posint,p::prime)
+    local k,s,rc,nr,nv,X,soln:
+    nr := E["nr"]:
+    nv := E["nv"]:
+    if E["p"] <> p then
+        for k from 1 to E["nT"] do
+            E["coef"][k-1] := modp(E["coefRaw"][k],p):
+        od:
+        E["p"] := p:
+    fi:
+    #  One buffer per (nr,npts) shape, reused across calls.
+    if not assigned(E["Xn"]) or E["Xn"] < nr*npts then
+        E["X"]  := Array(0..nr*npts-1,datatype=integer[8]):
+        E["Xn"] := nr*npts:
+    fi:
+    X := E["X"]:
+
+    #  Below the bound cppEvalSolve takes Maple's compiled Modular path, which
+    #  is faster per solve than going out to C++.  Loop it, but still write the
+    #  answers transposed so the caller gets the same contiguous rows.
+    if p < MAPLE_FAST_BOUND then
+        for s from 1 to npts do
+            soln := cppEvalSolve(E,[seq(pts[(s-1)*nv+k],k=0..nv-1)],p):
+            if soln = FAIL then
+                E["info"][1] := s:
+                return FAIL:
+            fi:
+            for k from 1 to nr do
+                X[(k-1)*npts+s-1] := soln[k]:
+            od:
+        od:
+        return X:
+    fi:
+
+    rc := cppEvalSolveBlockext(nr,E["nc"],nv,E["ent"],E["expo"],E["coef"],
+                               pts,npts,p,E["dmax"],npts,X,2,E["info"]):
+    if not type(rc,integer) then
+        error "cppEvalSolveBlockext returned unevaluated -- the external call "
+              "never ran; check LIB=%1",POLMATH_LIB:
+    fi:
+    if rc < 0 then
+        error "cppEvalSolveBlock failed with code %1",rc:
+    fi:
+    if rc = 1 then
+        return FAIL:                      # E["info"][1] is the first bad point
+    fi:
+    return X:
+end proc:
+
+#  Row i of the block as a zero copy alias.  m entries starting at x_i(point 1).
+#  The result shares storage with X, so writing into it (the fault injection
+#  path does) writes into X -- that is harmless here because row i is finished
+#  with before the next equation is touched, but it is worth knowing.
+cppBlockRow := proc(X::Array,i::posint,npts::posint,m::posint)
+    #  0..m-1 on purpose: cppFTREval and the fault path index Yarr[s-1].
+    return ArrayTools:-Alias(X,(i-1)*npts,[0..m-1]):
+end proc:
+
+#  ---------------------------------------------------------------------------
+#  MONAGAN'S polroots64s THROUGH THE FFI
+#
+#  cppPolRoots is now part of pol_math.cpp, so this is on.  Set it back to false
+#  to unbind everything here and fall back to Roots(F) mod p without touching
+#  the call sites.
+#
+#  ROOTS_MODE picks the dispatch:
+#     0  by prime size: Maple below MAPLE_FAST_BOUND, polroots64s above
+#     1  always Roots(F) mod p
+#     2  always polroots64s
+#  ---------------------------------------------------------------------------
+
+USE_POLROOTS64S := true:
+ROOTS_MODE      := 0:
+
+if USE_POLROOTS64S then
+    cppPolRootsext := define_external("cppPolRoots",
+        d::integer[4],
+        f::ARRAY(datatype=integer[8]),
+        p::integer[8],
+        wsize::integer[4],
+        outLen::integer[4],
+        rootsOut::ARRAY(datatype=integer[8]),
+        infoLen::integer[4],
+        info::ARRAY(datatype=integer[8]),
+        RETURN::integer[4],
+        LIB=libObj):
+    if not type(cppPolRootsext,procedure) then
+        error "define_external did not bind cppPolRootsext; check that %1 "
+              "exports cppPolRoots",POLMATH_LIB:
+    fi:
+fi:
+
+#  polroots64s returns DISTINCT roots, so every multiplicity here is 1.  The
+#  shape matches Roots(F) mod p: a list of [root,multiplicity] pairs sorted by
+#  root, so R[1][1] = 0 still detects the zero root.
+cppPolRootsOf := proc(F::polynom,x::name,p::prime,wsize::integer := 0)
+    local d,fA,rts,info,rc,n,k:
     d := degree(F,x):
     if d < 1 then
         return []:
     fi:
-    fA  := Array(0..d,[seq(modp(coeff(F,x,k),p),k=0..d)],datatype=integer[8]):
-    rts := Array(0..d-1,datatype=integer[8]):
-    mlt := Array(0..d-1,datatype=integer[8]):
+    fA   := Array(0..d,[seq(modp(coeff(F,x,k),p),k=0..d)],datatype=integer[8]):
+    rts  := Array(0..d-1,datatype=integer[8]):
     info := Array(0..0,datatype=integer[8]):
-    rc := cppRootsext(d,fA,p,d,rts,d,mlt,1,info):
+    rc := cppPolRootsext(d,fA,p,wsize,d,rts,1,info):
     if not type(rc,integer) then
-        error "cppRootsext returned unevaluated -- the external call never "
+        error "cppPolRootsext returned unevaluated -- the external call never "
               "ran; check LIB=%1",POLMATH_LIB:
     fi:
+    if rc = 1 then
+        error "cppPolRoots found %1 roots, more than the %2 slots given",
+              info[0],d:
+    fi:
     if rc < 0 then
-        error "cppRoots failed with code %1",rc:
+        error "cppPolRoots failed with code %1",rc:
     fi:
     n := info[0]:
-    return [seq([rts[k],mlt[k]],k=0..n-1)]:
+    return [seq([rts[k],1],k=0..n-1)]:
 end proc:
-*)
+
+#  Single dispatch point for the three MRFI call sites.
+rootsMODp := proc(F::polynom,x::name,p::prime)
+    if ROOTS_MODE = 1 or not USE_POLROOTS64S then
+        return Roots(F) mod p:
+    fi:
+    if ROOTS_MODE = 2 or p >= MAPLE_FAST_BOUND then
+        return cppPolRootsOf(F,x,p):
+    fi:
+    return Roots(F) mod p:
+end proc:

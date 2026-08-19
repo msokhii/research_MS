@@ -134,6 +134,7 @@ end:
 
 Constuct_Sys_Blackbox := proc(Sys,Vars,params)
     local Lin_BB,L,nr,nc,LE:
+    global BB_BLOCK:
     L := GenerateMatrix(Sys,Vars,augmented=true):
     print(L);
     nr,nc := op(1,L):
@@ -142,6 +143,31 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
     #  does no symbolic work at all: evaluation at the point and the rref solve
     #  both happen inside a single external call.
     LE := cppEncodeMatrix(L,params):
+
+    #  Block entry point for the MRFI loop.  Same black box, but a whole line
+    #  of points per call and the answers come back transposed: row i is the
+    #  sequence of x_i over the points.  The call counters are kept in step
+    #  with the point at a time path so the summary still adds up.
+    BB_BLOCK := proc(pts,npts,p)
+        local X,t0:
+        global counter,bb_calls_mrfi,t_mrfi_total,bb_phase,t_ndsa_total,
+               bb_calls_ndsa:
+        t0 := time():
+        X := cppEvalSolveBlock(LE,pts,npts,p):
+        counter := counter+npts:
+        if bb_phase = "NDSA" then
+            bb_calls_ndsa := bb_calls_ndsa+npts:
+            t_ndsa_total  := t_ndsa_total+(time()-t0):
+        else
+            bb_calls_mrfi := bb_calls_mrfi+npts:
+            t_mrfi_total  := t_mrfi_total+(time()-t0):
+        fi:
+        if X = FAIL then
+            error "black box: singular system at point %1 of the line",
+                  LE["info"][1]:
+        fi:
+        return X:
+    end proc:
     Lin_BB := proc(point_::list(integer),p::prime)
         local A,T,subs_values,num_eqn,soln,t0,t_avg,i,j;
         global counter,bb_calls_ndsa,bb_calls_mrfi,t_ndsa_total,t_mrfi_total,bb_phase;
@@ -227,6 +253,32 @@ get_point_on_affine_line := proc(num_var::posint,alpha::list,beta_::list,
     outArr := Array(0..T*num_var-1,datatype=integer[8]):
     cppAffineLine(T,num_var,aArr,bArr,sArr,p,outArr):
     return [seq([seq(outArr[(s-1)*num_var+i],i=0..num_var-1)],s=1..T)]:
+end proc:
+
+#  Same points, returned as the flat point major Array cppAffineLine already
+#  filled, with no list of lists built on top.  That conversion is T*num_var
+#  interpreted element reads per line -- 2.36 million of them at n=12 -- and
+#  the batched black box wants the flat layout anyway.
+get_point_block_on_affine_line := proc(num_var::posint,alpha::list,beta_::list,
+                                       sigma_::list,p::prime,T::posint)
+    local aArr,bArr,sArr,outArr,i:
+    global num_lines:
+    num_lines := num_lines+1:
+    aArr := Array(0..T-1,datatype=integer[8]):
+    for i from 1 to T do
+        aArr[i-1] := alpha[i]:
+    od:
+    bArr := Array(0..max(num_var-1,1)-1,datatype=integer[8]):
+    for i from 1 to num_var-1 do
+        bArr[i-1] := beta_[i]:
+    od:
+    sArr := Array(0..num_var-1,datatype=integer[8]):
+    for i from 1 to num_var do
+        sArr[i-1] := sigma_[i]:
+    od:
+    outArr := Array(0..T*num_var-1,datatype=integer[8]):
+    cppAffineLine(T,num_var,aArr,bArr,sArr,p,outArr):
+    return outArr:
 end proc:
 
 MQRFR := proc(r0,r1,t0,t1,p)
@@ -516,7 +568,7 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
           bmea_done,temp_den,all_den_done,all_done,max_num_points_mqrfr,
           init_sigma,sampleCounts,mMax,tempG,
           sigma_j,sigma_run,alphaVal,
-          Psi_alpha,BBvals,m_i,
+          Psi_alpha,BBvals,m_i,PtsArr,Xblock,
           alphaArr,Yarr,outArr,Yfault,
           evalCap,newCap,tmpV,lam_c,
           gc0,alloc0,t_helper,tempR:
@@ -641,11 +693,25 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
             sigma_j := sigma_run:
             if lin_sys then
                 t_helper := time():
-                Psi_alpha := get_point_on_affine_line(num_vars,alphaVal,
-                                                     direction,sigma_j,
-                                                     p,mMax):
+
+                #  OLD: build T lists of num_vars values, then call the black
+                #  box once per point, then transpose the result in Maple.
+                #
+                #Psi_alpha := get_point_on_affine_line(num_vars,alphaVal,
+                #                                     direction,sigma_j,
+                #                                     p,mMax):
+                #t_points_total := t_points_total+(time()-t_helper):
+                #BBvals := [seq(B(Psi_alpha[s], p),s=1...mMax)]:
+
+                #  NEW: the points stay in the flat Array cppAffineLine wrote,
+                #  the whole block is solved in ONE external call, and the
+                #  answers come back already transposed -- row i of Xblock is
+                #  the sequence of x_i over the points, contiguous.
+                PtsArr := get_point_block_on_affine_line(num_vars,alphaVal,
+                                                        direction,sigma_j,
+                                                        p,mMax):
                 t_points_total := t_points_total+(time()-t_helper):
-                BBvals := [seq(B(Psi_alpha[s], p),s=1...mMax)]:
+                Xblock := BB_BLOCK(PtsArr,mMax,p):
                 for i from 1 to num_eqn do
 
                     # Optimization 2:
@@ -659,9 +725,17 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
                         next:
                     fi:
                     m_i := sampleCounts[i]:
-                    for s from 1 to m_i do
-                        Yarr[s-1] := BBvals[s][i]:
-                    od:
+
+                    #  OLD transpose: copy column i of the point major block
+                    #  into Yarr, one interpreted element store at a time.
+                    #
+                    #for s from 1 to m_i do
+                    #    Yarr[s-1] := BBvals[s][i]:
+                    #od:
+
+                    #  NEW: row i is already contiguous in Xblock, so alias it.
+                    #  No copy, no allocation.
+                    Yarr := cppBlockRow(Xblock,i,mMax,m_i):
                     if FAULT_ON then
                         Yfault := inject_faults([seq(Yarr[s-1],s=1..m_i)],
                                                 FAULT_E,p)[1]:
@@ -730,7 +804,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
             if terms_num[k] < iquo(num_eval_n[k], 2) then
                 lambda_num[k] := BMEA_poly(lam_c,Z):
                 t_helper := time():
-                R_num[k] := Roots(lambda_num[k]) mod p:
+                #R_num[k] := Roots(lambda_num[k]) mod p:
+                R_num[k] := rootsMODp(lambda_num[k],Z,p):
                 #R_num[k] := cppRootsOf(lambda_num[k],Z,p):
                 t_roots_total := t_roots_total+(time()-t_helper):
                 if R_num[k] <> [] then
@@ -755,7 +830,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
                 if terms_den[1] < iquo(den_eval_n[1],2) then
                     lambda_den[1] := BMEA_poly(lam_c,Z):
                     t_helper := time():
-                    R_den[1] := Roots(lambda_den[1]) mod p:
+                    #R_den[1] := Roots(lambda_den[1]) mod p:
+                    R_den[1] := rootsMODp(lambda_den[1],Z,p):
                     #R_den[1] := cppRootsOf(lambda_den[1],Z,p):
                     t_roots_total := t_roots_total+(time()-t_helper):
                     if R_den[1] <> [] then
@@ -781,7 +857,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
                 if terms_den[k] < iquo(den_eval_n[k],2) then
                     lambda_den[k] := BMEA_poly(lam_c,Z):
                     t_helper := time():
-                    R_den[k] := Roots(lambda_den[k]) mod p:
+                    #R_den[k] := Roots(lambda_den[k]) mod p:
+                    R_den[k] := rootsMODp(lambda_den[k],Z,p):
                     #R_den[k] := cppRootsOf(lambda_den[k],Z,p):
                     t_roots_total := t_roots_total+(time()-t_helper):
                     if R_den[k] <> [] then
@@ -984,13 +1061,13 @@ if not type(SYSTEM_ID, string) then SYSTEM_ID := convert(SYSTEM_ID, string): fi:
 # Freeze the selected family for this benchmark run.
 RUN_SYSTEM_ID := SYSTEM_ID:
 
-test_prime := prevprime(2^63-1):
-#test_prime := prevprime(2^31-1):
+#test_prime := prevprime(2^63-1):
+test_prime := prevprime(2^31-1):
 
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
 n_min := 4:
-n_max := 10:
+n_max := 8:
 do_verify := false:
 do_ffge := false:
 summary := []:

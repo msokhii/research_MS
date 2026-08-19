@@ -471,8 +471,7 @@ int polMUL64P(LONG *a,
               LONG *b,
               int degA,
               int degB,
-              LONG p,
-              recint P){
+              LONG p){
     int i;
     int k;
     int m;
@@ -485,7 +484,7 @@ int polMUL64P(LONG *a,
         i=max(0,k-degB);
         m=min(k,degA);
         for(t=0;i<=m;i++){
-            t=add64b(t,mulrec64(a[i],b[k-i],P),p);
+            t=add64b(t,mul64b(a[i],b[k-i],p),p);
         }
         a[k]=t;
     }
@@ -719,8 +718,7 @@ int polSUBMUL64P(LONG *a,
                  LONG bVal,
                  int degA,
                  int degB,
-                 const LONG p,
-                 recint P){
+                 const LONG p){
     LONG s;
     LONG t;
     int i;
@@ -733,14 +731,14 @@ int polSUBMUL64P(LONG *a,
         ++degA;
         a[degA]=0;
     }
-    t=mulrec64(bVal,b[0],P);
+    t=mul64b(bVal,b[0],p);
     a[0]=sub64b(a[0],t,p);
     for(i=1;i<=degB;i++){
-        t=mulrec64(aVal,b[i-1],P);
-        t=add64b(t,mulrec64(bVal,b[i],P),p);
+        t=mul64b(aVal,b[i-1],p);
+        t=add64b(t,mul64b(bVal,b[i],p),p);
         a[i]=sub64b(a[i],t,p);
     }
-    t=mulrec64(aVal,b[degB],P);
+    t=mul64b(aVal,b[degB],p);
     a[degB+1]=sub64b(a[degB+1],t,p);
     while(degA>=0 && (a[degA]==0 || a[degA]==p)){
         degA--;
@@ -941,8 +939,7 @@ int polDIVP(LONG *a,
             LONG *b,
             int degA,
             int degB,
-            LONG p,
-            recint P){
+            LONG p){
     int degQ;
     int degR;
     int k;
@@ -970,10 +967,10 @@ int polDIVP(LONG *a,
         m=min(degR,k);
         j=max(0,k-degQ);
         for(t=a[k];j<=m;j++){
-            t=sub64b(t,mulrec64(b[j],a[k-j+degB],P),p);
+            t=sub64b(t,mul64b(b[j],a[k-j+degB],p),p);
         }
         if(k>=degB && inv!=1){
-            t=mulrec64(t,inv,P);
+            t=mul64b(t,inv,p);
         }
         a[k]=t;
     }
@@ -1349,11 +1346,11 @@ void VandermondeSolve64s(LONG *m,LONG *y,int n,LONG *a,LONG *M,int shift,LONG p)
          // compute a[j] = M dot y
          for( s=0,i=0; i<n; i++ ) s = add64b(s,mul64b(M[i],y[i],p),p);
          s = mul64b(u,s,p);
-         //s = mulrec64(u,s,P);
+         //s = mul64b(u,s,p);
          if( shift!=0 ) {
              u = modinv64b(m[j],p);
              u = powmod64s(u,shift,p);
-             //s = mulrec64(u,s,P);
+             //s = mul64b(u,s,p);
              s = mul64b(u,s,p);
          }
          a[j] = s;
@@ -1518,8 +1515,7 @@ return 0;
 int newtonInterpMulRec(LONG* x,
     LONG* y,
     const int n,
-    const LONG p,
-    recint P){
+    const LONG p){
     if(n<1){
         return -1;
     }
@@ -1535,13 +1531,13 @@ int newtonInterpMulRec(LONG* x,
         s=Y[0];
         prod=sub64b(xj,X[0],p);
         for(i=1;i<j;i++){
-            s=add64b(s,mulrec64(prod,Y[i],P),p);
-	        prod=mulrec64(prod,sub64b(X[j],X[i],p),P);
+            s=add64b(s,mul64b(prod,Y[i],p),p);
+	        prod=mul64b(prod,sub64b(X[j],X[i],p),p);
         }
         if(prod==0){
             return -1;
         }
-        Y[j]=mulrec64(sub64b(Y[j],s,p),modinv64b(prod,p),P);	
+        Y[j]=mul64b(sub64b(Y[j],s,p),modinv64b(prod,p),p);	
     }
     d=n-1;
     while(d>=0&&y[d]==0){
@@ -1549,7 +1545,7 @@ int newtonInterpMulRec(LONG* x,
     }
     for(i=1;i<=d;i++){
         for(j=d-i;j<=d-1;j++){
-            Y[j]=sub64b(Y[j],mulrec64(X[d-i],Y[j+1],P),p);        
+            Y[j]=sub64b(Y[j],mul64b(X[d-i],Y[j+1],p),p);        
 	    }
     }
     return d;
@@ -1788,7 +1784,6 @@ std::vector<LONG> tTmp(wsSize, 0);
 int degROut = -1;
 int degTOut = -1;
 RatReconFastWS W(wsSize);
-recint P = recip1(p);
 
 int rc = ratReconNormal(m,
             u,
@@ -1924,6 +1919,69 @@ Return value:  0  unique solution written to xOut
 info[0] = rank of the evaluated augmented matrix.
 */
 
+/*
+Shared kernel: evaluate the encoded matrix at ONE point and solve.
+B and pw are caller supplied workspaces so the batch entry point below can
+allocate them once for the whole block.
+  returns  0 unique solution written to x
+           1 singular or inconsistent
+  rank is written to *rankOut.
+*/
+
+static int evalSolveOne(int nr,int nc,int nv,
+    const int *entStart,const int *expo,const LONG *coef,
+    const LONG *pnt,const LONG p,int dmax,
+    LONG *x,int *rankOut,LONG *pw,LONG *B)
+{
+const int nEnt = nr*nc;
+const int W = dmax+1;
+
+// POWER TABLE: pw[k*W+d] = pnt[k]^d mod p
+
+for (int k = 0; k < nv; ++k) {
+    LONG a = pnt[k];
+    if (a < 0 || a >= p) { a %= p; a += (a>>63)&p; }
+    LONG *row = pw + (size_t)k*W;
+    row[0] = 1;
+    for (int d = 1; d < W; ++d) row[d] = mul64b(row[d-1],a,p);
+}
+
+// EVALUATE THE MATRIX.  The coefficients arrive already reduced into [0,p),
+// so the test below costs a predicted branch instead of a divq per term.
+
+for (int e = 0; e < nEnt; ++e) {
+    LONG acc = 0;
+    const int t0 = entStart[e];
+    const int t1 = entStart[e+1];
+    for (int t = t0; t < t1; ++t) {
+        LONG c = coef[t];
+        if (c < 0 || c >= p) { c %= p; c += (c>>63)&p; }
+        const int *ex = expo + (size_t)t*nv;
+        for (int k = 0; k < nv && c != 0; ++k) {
+            const int d = ex[k];
+            if (d) c = mul64b(c,pw[(size_t)k*W+d],p);
+        }
+        acc = add64b(acc,c,p);
+    }
+    B[e] = acc;
+}
+
+// SOLVE
+
+int r = (int)rref(B, nr, nc, p);
+if (rankOut) *rankOut = r;
+if (r != nr) {
+    return 1;                                  // rank deficient
+}
+for (int i = 0; i < nr; ++i) {
+    if (B[(size_t)i*nc+i] != 1) return 1;      // pivot in the b column
+}
+for (int i = 0; i < nr; ++i) {
+    x[i] = B[(size_t)i*nc+nr];
+}
+return 0;
+}
+
 extern "C" int cppEvalSolve(int nr,
     int nc,
     int nv,
@@ -1980,297 +2038,460 @@ const int W = dmax+1;
 if ((int)pw.size() < nv*W) pw.resize((size_t)nv*W);
 if ((int)B.size() < nEnt)  B.resize((size_t)nEnt);
 
-// POWER TABLE: pw[k*W+d] = pnt[k]^d mod p
-
-for (int k = 0; k < nv; ++k) {
-    LONG a = pnt[k];
-    if (a < 0 || a >= p) { a %= p; a += (a>>63)&p; }
-    LONG *row = &pw[(size_t)k*W];
-    row[0] = 1;
-    for (int d = 1; d < W; ++d) row[d] = mul64b(row[d-1],a,p);
-}
-
-// EVALUATE THE MATRIX.  The coefficients arrive already reduced into [0,p),
-// so the test below costs a predicted branch instead of a divq per term.
-
-for (int e = 0; e < nEnt; ++e) {
-    LONG acc = 0;
-    const int t0 = entStart[e];
-    const int t1 = entStart[e+1];
-    for (int t = t0; t < t1; ++t) {
-        LONG c = coef[t];
-        if (c < 0 || c >= p) { c %= p; c += (c>>63)&p; }
-        const int *ex = expo + (size_t)t*nv;
-        for (int k = 0; k < nv && c != 0; ++k) {
-            const int d = ex[k];
-            if (d) c = mul64b(c,pw[(size_t)k*W+d],p);
-        }
-        acc = add64b(acc,c,p);
-    }
-    B[e] = acc;
-}
-
-// SOLVE
-
-int r = (int)rref(B.data(), nr, nc, p);
-info[0] = r;
-
-if (r != nr) {
-    return 1;                              // rank deficient
-}
-for (int i = 0; i < nr; ++i) {
-    if (B[(size_t)i*nc+i] != 1) return 1;  // pivot in the b column
-}
-for (int i = 0; i < nr; ++i) {
-    xOut[i] = B[(size_t)i*nc+nr];
-}
-
-return 0;
+int rank = 0;
+int st = evalSolveOne(nr,nc,nv,entStart,expo,coef,pnt,p,dmax,
+                      xOut,&rank,pw.data(),B.data());
+info[0] = rank;
+return st;
 }
 
 /*
-ROOT FINDING OVER GF(p) FOR MAPLE.
+BATCHED, TRANSPOSED BLACK BOX.
 
-Roots(f) mod p is 85% of the run once the black box is out of the way, and
-it is 14x slower at a 64 bit prime than at a 32 bit one because Maple's fast
-univariate representation only covers p < 2^31.5.  Everything below is built
-on polmul64s and polDIVIP64, which measured the same at 31 and 62 bits.
+The MRFI loop asks for the whole block of npts points on an affine line and
+then, for each equation i, needs the sequence of x_i over those points.  Done
+one point at a time in Maple that is npts external calls, npts solution lists,
+and an interpreted transpose of an npts x nr matrix.  Here the block is solved
+in ONE call and the answers are written already transposed:
 
-  1. f is made monic.
-  2. g = gcd(f, x^p - x) collects exactly the distinct roots of f that lie
-     in GF(p).  x^p mod f is computed by square and multiply, so this is
-     log2(p) multiplications and divisions of polynomials of degree < deg f.
-  3. g is a product of DISTINCT linear factors, so Cantor-Zassenhaus equal
-     degree splitting applies: for a shift s, gcd(g,(x+s)^((p-1)/2) - 1)
-     keeps the roots r with r+s a nonzero quadratic residue, which splits g
-     into two proper factors for about half of all s.  Recurse.
-  4. Multiplicities, when f is not squarefree, come from deflating f by
-     (x - r) with synthetic division.
+    xOut[(i-1)*ldx + (s-1)]  =  x_i evaluated at point s
 
-The shifts come from a fixed LCG rather than rand64s, so a given f always
-takes the same path; that makes failures reproducible.
-*/
+so row i is contiguous and Maple can hand it straight to cppFTREval through
+ArrayTools:-Alias with no copy at all.
 
-static inline LONG czNEXTS(LONG &state,const LONG p){
-    state = state*6364136223846793005LL + 1442695040888963407LL;
-    LONG s = (LONG)(((ULNG)state)>>1) % p;
-    return s;
-}
+pts holds the points as cppAffineLine writes them, point major:
+    pts[(s-1)*nv + k]  =  parameter k+1 of point s
 
-// h := h*g mod f, f monic of degree d.  W needs 2d+2 entries.
-static int polMULMOD64(LONG *h,int dh,const LONG *g,int dg,
-                       const LONG *f,int d,const LONG p,LONG *W){
-    int dt,dr,i;
-    if( dh<0 || dg<0 ) return -1;
-    dt = polmul64s(h,(LONG*)g,W,dh,dg,p);
-    if( dt<d ) {
-        for( i=0; i<=dt; i++ ) h[i]=W[i];
-        return dt;
-    }
-    dr = polDIVIP64(W,f,dt,d,p);
-    for( i=0; i<=dr; i++ ) h[i]=W[i];
-    return dr;
-}
-
-// monic gcd of a and b, written to g.  a and b are read only.
-static int polGCD64s(const LONG *a,int da,const LONG *b,int db,const LONG p,LONG *g){
-    std::vector<LONG> A,B;
-    int dr,i;
-    LONG inv;
-    A.assign(a,a+std::max(da+1,1));
-    B.assign(b,b+std::max(db+1,1));
-    if( da<db ) { A.swap(B); std::swap(da,db); }
-    while( db>=0 ) {
-        dr = polDIVIP64(A.data(),B.data(),da,db,p);
-        A.resize(std::max(dr+1,1));
-        A.swap(B);
-        da = db;
-        db = dr;
-        B.resize(std::max(db+1,1));
-    }
-    if( da<0 ) return -1;
-    inv = modinv64b(A[da],p);
-    for( i=0; i<da; i++ ) g[i]=mul64b(A[i],inv,p);
-    g[da]=1;
-    return da;
-}
-
-// (x+s)^e mod f, f monic of degree d >= 2.  Result in out.
-static int polPOWMOD64(LONG s,LONG e,const LONG *f,int d,const LONG p,
-                       std::vector<LONG> &out){
-    std::vector<LONG> base(d+1,0),h(d+1,0),W(2*d+2,0);
-    int db,dh,nb,i;
-    base[0]=s%p;
-    base[1]=1;
-    db=1;
-    h[0]=1;
-    dh=0;
-    nb=63;
-    while( nb>0 && !((e>>(nb-1))&1) ) nb--;
-    for( i=nb-1; i>=0; i-- ) {
-        dh = polMULMOD64(h.data(),dh,h.data(),dh,f,d,p,W.data());
-        if( (e>>i)&1 )
-            dh = polMULMOD64(h.data(),dh,base.data(),db,f,d,p,W.data());
-    }
-    if( dh<0 ) { out.assign(1,0); return -1; }
-    out.assign(h.begin(),h.begin()+dh+1);
-    return dh;
-}
-
-// g is a product of distinct linear factors; append its roots to R.
-static void polEDF64(std::vector<LONG> g,int dg,const LONG p,LONG &state,
-                     std::vector<LONG> &R){
-    std::vector<LONG> w,gc,A,Q,S;
-    int dw,ds,dq,i,tries;
-    LONG s,inv,e;
-    if( dg<=0 ) return;
-    if( dg==1 ) { R.push_back(neg64s(g[0],p)); return; }
-    e=(p-1)/2;
-    for( tries=0; tries<200; tries++ ) {
-        s = czNEXTS(state,p);
-        dw = polPOWMOD64(s,e,g.data(),dg,p,w);
-        if( dw<0 ) continue;
-        w[0]=sub64b(w[0],1,p);
-        while( dw>=0 && w[dw]==0 ) dw--;
-        if( dw<0 ) continue;
-        gc.assign(dg+1,0);
-        ds = polGCD64s(g.data(),dg,w.data(),dw,p,gc.data());
-        if( ds<=0 || ds>=dg ) continue;
-        A.assign(g.begin(),g.begin()+dg+1);
-        polDIVIP64(A.data(),gc.data(),dg,ds,p);   // quotient lands in A[ds..dg]
-        dq=dg-ds;
-        Q.assign(A.begin()+ds,A.begin()+dg+1);
-        inv=modinv64b(Q[dq],p);
-        for( i=0; i<=dq; i++ ) Q[i]=mul64b(Q[i],inv,p);
-        S.assign(gc.begin(),gc.begin()+ds+1);
-        polEDF64(S,ds,p,state,R);
-        polEDF64(Q,dq,p,state,R);
-        return;
-    }
-    return;   // gave up; caller sees fewer roots than deg
-}
-
-// multiplicity of r in f, by synthetic division. f is not modified.
-static int polMULT64(const LONG *f,int d,LONG r,const LONG p){
-    std::vector<LONG> a(f,f+d+1);
-    int m=0,i,da=d;
-    LONG carry;
-    while( da>0 ) {
-        // divide a by (x-r): b[i] = a[i+1] + r*b[i+1]
-        std::vector<LONG> b(da,0);
-        carry=0;
-        for( i=da-1; i>=0; i-- ) {
-            carry = add64b(a[i+1],mul64b(r,carry,p),p);
-            b[i]=carry;
-        }
-        if( add64b(a[0],mul64b(r,carry,p),p)!=0 ) break;   // remainder != 0
-        a.assign(b.begin(),b.end());
-        da--;
-        m++;
-        while( da>0 && a[da]==0 ) da--;
-    }
-    return m;
-}
-
-/*
-f is given by its degF+1 coefficients in ASCENDING order, f[k] the
-coefficient of x^k, each already reduced into [0,p).  The distinct roots in
-GF(p) are written to rootsOut in increasing order and their multiplicities
-to multOut.  info[0] is the number of distinct roots.
-
-Return value:  0  success
+Return value:  0  every point solved
+               1  at least one point was singular or inconsistent
               <0  bad arguments
-               1  outLen too small for the roots found
+info[0] = number of points solved, info[1] = 1-based index of the first
+singular point, or 0 when there was none.
 */
 
-extern "C" int cppRoots(int degF,
-    const LONG *f,
+extern "C" int cppEvalSolveBlock(int nr,
+    int nc,
+    int nv,
+    const int *entStart,
+    const int *expo,
+    const LONG *coef,
+    const LONG *pts,
+    int npts,
     const LONG p,
-    int outLen,
-    LONG *rootsOut,
-    int multLen,
-    LONG *multOut,
+    int dmax,
+    int ldx,
+    LONG *xOut,
     int infoLen,
     LONG *info)
 {
 
 // INITIAL CHECKS:
 
-if (!f || !rootsOut || !multOut || !info) {
+if (!entStart || !pts || !xOut || !info) {
     return -1;
 }
-if (infoLen < 1 || outLen < 0 || multLen < outLen) {
+if (nr <= 0 || nc != nr+1 || nv <= 0 || dmax < 0 || npts <= 0) {
     return -2;
 }
-if (p < 3) {
+if (ldx < npts || infoLen < 2) {
     return -3;
+}
+if (p < 2) {
+    return -4;
+}
+
+const int nEnt = nr*nc;
+const int nT   = entStart[nEnt];
+if (nT < 0) {
+    return -5;
+}
+if (nT > 0 && (!expo || !coef)) {
+    return -1;
 }
 
 info[0] = 0;
-if (degF < 1) {
-    return 0;
+info[1] = 0;
+
+static std::vector<LONG> pw;
+static std::vector<LONG> B;
+static std::vector<LONG> x;
+
+const int W = dmax+1;
+if ((int)pw.size() < nv*W) pw.resize((size_t)nv*W);
+if ((int)B.size() < nEnt)  B.resize((size_t)nEnt);
+if ((int)x.size() < nr)    x.resize((size_t)nr);
+
+int solved = 0;
+int firstBad = 0;
+
+for (int s = 0; s < npts; ++s) {
+    int rank = 0;
+    int st = evalSolveOne(nr,nc,nv,entStart,expo,coef,
+                          pts + (size_t)s*nv,p,dmax,
+                          x.data(),&rank,pw.data(),B.data());
+    if (st != 0) {
+        if (firstBad == 0) firstBad = s+1;
+        for (int i = 0; i < nr; ++i) xOut[(size_t)i*ldx + s] = 0;
+        continue;
+    }
+    for (int i = 0; i < nr; ++i) xOut[(size_t)i*ldx + s] = x[i];
+    solved++;
 }
 
-// MAKE f MONIC
+info[0] = solved;
+info[1] = firstBad;
 
-std::vector<LONG> F(f, f+degF+1);
-int d = degF;
-while (d > 0 && F[d] == 0) d--;
+return firstBad ? 1 : 0;
+}
+
+
+/*
+COMPATIBILITY LAYER FOR THE ROOT FINDING CODE.
+
+polgcdext64s, polpowmod64s, polsplit64s and polroots64s are written against
+Mike's ...64s naming.  Everything they need already exists in this file under
+the ...64b / ...IP64 names, except for four routines that were not here at all.
+Nothing below duplicates existing arithmetic: the forwarders compile away, and
+only polgcd64s, polscamul64s, polsqr64s and polprint64s add code.
+
+MISSING BEFORE, DEFINED HERE:
+  max32s        integer max
+  add64s sub64s mul64s modinv64s     names for add64b sub64b mul64b modinv64b
+  poldiv64s     name for polDIVIP64  (same contract: a := [remainder,quotient],
+                returns deg of the remainder, quotient starts at a+degB)
+
+polgcdext64s used polsubmulP with a recint reciprocal.  It now calls
+polSUBMUL64 directly, which does the same A -= (a*x+b)*B with ZMUL/ZFMA/ZMOD
+accumulators and no reciprocal, so there is no recint anywhere in the root
+finding path.
+  polscamul64s  in place scalar multiply on a raw pointer
+  polsqr64s     square, via polmul64s with both operands aliased
+  polgcd64s     monic gcd, RESULT LEFT IN THE FIRST ARGUMENT
+  polprint64s   only referenced from commented out debugging lines, but the
+                calls are there, so it is defined rather than deleted
+  ULONG         polroots64s declares  extern ULONG seed,mult;  and the globals
+                at the top of this file are ULNG, so the two names must denote
+                the same type or that declaration is a type mismatch
+*/
+
+using ULONG = ULNG;
+
+inline int max32s(int a,int b){ return a>b ? a : b; }
+
+inline LONG add64s(LONG a,LONG b,LONG p){ return add64b(a,b,p); }
+inline LONG sub64s(LONG a,LONG b,LONG p){ return sub64b(a,b,p); }
+inline LONG mul64s(LONG a,LONG b,LONG p){ return mul64b(a,b,p); }
+inline LONG modinv64s(LONG c,LONG p){ return modinv64b(c,p); }
+
+inline int poldiv64s(LONG *a,const LONG *b,int da,int db,LONG p){
+    return polDIVIP64(a,b,da,db,p);
+}
+
+// A := c*A
+void polscamul64s(LONG c,LONG *A,int d,LONG p){
+    int i;
+    if( c==1 ) return;
+    for( i=0; i<=d; i++ ) A[i]=mul64b(A[i],c,p);
+    return;
+}
+
+// C := A^2.  polmul64s reads A twice and writes a separate C, so aliasing the
+// two inputs is safe.  C must hold 2*da+1 coefficients.
+int polsqr64s(LONG *A,LONG *C,int da,LONG p){
+    return polmul64s(A,A,C,da,da,p);
+}
+
+void polprint64s(LONG *A,int d){
+    int i;
+    if( d<0 ) { printf("0\n"); return; }
+    for( i=d; i>=0; i-- ) {
+        if( A[i]==0 ) continue;
+        printf("%lld",(long long)A[i]);
+        if( i>0 ) printf("*x^%d",i);
+        if( i>0 ) printf(" + ");
+    }
+    printf("\n");
+    return;
+}
+
+/*
+Monic gcd(A,B) in Zp[x].  BOTH inputs are destroyed and the answer is left in
+A, which is what polsplit64s and polroots64s assume:
+
+    dg = polgcd64s( W, W+d, da, d, p );   // g = gcd(W,f) lands in W
+    dg = polgcd64s( f, W, d, da, p );     // g = gcd(f,W-1) lands in f
+
+Returns deg(gcd), so 0 means the gcd is the constant 1.
+*/
+int polgcd64s(LONG *A,LONG *B,int da,int db,LONG p){
+    LONG *r1,*r2,*t;
+    int d1,d2,dr,i;
+    LONG inv;
+    while( da>=0 && A[da]==0 ) da--;
+    while( db>=0 && B[db]==0 ) db--;
+    if( da<0 && db<0 ) return -1;                 // gcd(0,0)
+    if( da<0 ) { polcopy64s(B,db,A); da=db; db=-1; }
+    r1=A; d1=da; r2=B; d2=db;
+    if( d1<d2 ) { t=r1; r1=r2; r2=t; i=d1; d1=d2; d2=i; }
+    while( d2>=0 ) {
+        dr = polDIVIP64(r1,r2,d1,d2,p);           // remainder in r1[0..dr]
+        t=r1; r1=r2; r2=t;
+        d1=d2; d2=dr;
+    }
+    if( d1<0 ) return -1;
+    if( r1!=A ) polcopy64s(r1,d1,A);              // answer must end up in A
+    if( A[d1]!=1 ) {
+        inv=modinv64b(A[d1],p);
+        for( i=0; i<d1; i++ ) A[i]=mul64b(A[i],inv,p);
+        A[d1]=1;
+    }
+    return d1;
+}
+
+void polgcdext64s( LONG *A, LONG *B, int da, int db,
+    LONG *G, LONG *S, LONG *T, int *dG, int *dS, int *dT,
+    //LONG *s1, *s2, *t1, *t2, int *ds1, int *ds2, int *dt1, int *dt2,
+    LONG *W, LONG p )
+{
+// Solve S A + T B = G = monic gcd(A,B) for G,S,T in Zp[x]
+// The arrays A and B are used for the remainder sequence so they are destroyed
+// G,S,T must all be of size max(da+1,db+1)
+// if( S==0 ) W is working storage of size max(da+1,db+1)
+// if( T==0 ) W is working storage of size max(da+1,db+1)
+// if S==0 or T==0 then S (and/or T) are not computed
+
+int m,dr,ds,dt,dq,ds1,ds2,dt1,dt2; LONG a,b,u;
+LONG *q,*r,*r1,*r2,*s,*s1,*s2,*t,*t1,*t2;
+
+if( da<0 || db<0 ) { printf("inputs must be non-zero\n"); exit(1); }
+m = max32s(da+1,db+1);
+r1 = A; r2 = B;
+if(S) { s1 = S; s2 = W;   s1[0]=1; ds1=0; ds2=-1; }
+if(T) { t1 = T; 
+if(S) t2 = W+m; else t2 = W;
+t2[0]=1; dt2=0; dt1=-1;
+}
+while( 1 ) {
+if( db>0 && da-db==1 ) { // normal case
+u = modinv64s(r2[db],p);
+a = mul64s(r1[da],u,p);
+b = mul64s(a,r2[db-1],p);
+b = mul64s(u,sub64s(r1[da-1],b,p),p);             // quotient = a x + b
+//dr = polsubmul(r1,r2,a,b,da,db,p);                // r1 = r1 - (a x + b) r2
+//if(S) ds = polsubmul(s1,s2,a,b,ds1,ds2,p);        // s1 = s1 - (a x + b) s2
+//if(T) dt = polsubmul(t1,t2,a,b,dt1,dt2,p);        // t1 = t1 - (a x + b) t2
+dr = polSUBMUL64(r1,r2,a,b,da,db,p);               // r1 = r1 - (a x + b) r2
+if(S) ds = polSUBMUL64(s1,s2,a,b,ds1,ds2,p);       // s1 = s1 - (a x + b) s2
+if(T) dt = polSUBMUL64(t1,t2,a,b,dt1,dt2,p);       // t1 = t1 - (a x + b) t2
+}
+else {
+dr = poldiv64s(r1,r2,da,db,p);                 // r1 = [remainder,quotient]
+q  = r1+db; dq = da-db;
+if(S) ds = polmul64s(q,s2,G,dq,ds2,p);
+if(S) ds = polsub64s(s1,G,s1,ds1,ds,p);        // s1 = s1 - q s2
+if(T) dt = polmul64s(q,t2,G,dq,dt2,p);
+if(T) dt = polsub64s(t1,G,t1,dt1,dt,p);        // t1 = t1 - q t2
+}
+if( dr<0 ) { /* D|C so gcd(A,B)=D */
+polcopy64s(r2,db,G);
+if(S) if( s2!=S ) polcopy64s(s2,ds2,S);
+if(T) if( t2!=T ) polcopy64s(t2,dt2,T);
+if( G[db]!=1 ) {
+  u = modinv64s(G[db],p);
+  polscamul64s(u,G,db,p);
+  if(S) polscamul64s(u,S,ds2,p);
+  if(T) polscamul64s(u,T,dt2,p);
+}
+dG[0] = db;
+if(S) dS[0] = ds2;
+if(T) dT[0] = dt2;
+return;
+}
+r = r1; r1 = r2; r2 = r;  da = db;   db = dr;
+if(S) { s = s1; s1 = s2; s2 = s; ds1 = ds2; ds2 = ds; }
+if(T) { t = t1; t1 = t2; t2 = t; dt1 = dt2; dt2 = dt; }
+}
+}
+
+// S = 1/A mod B
+int polmodinv64s( LONG *A, LONG *M, int da, int dm,
+    LONG *G, LONG *S, LONG *W, LONG p )
+{   int dG, dS, dT;
+// W must be able to hold three polynomials of degree dm
+while( da>=0 && A[da]==0 ) da--;
+if( da<0 ) { printf("A is zero\n"); exit(1); }
+while( dm>=0 && M[dm]==0 ) dm--;
+if( da>=dm ) { printf("deg(A) < deg(M) error\n"); exit(1); }
+//printf("dA=%d dM=%d\n",da,dm);
+// copy A and M into W
+polcopy64s(A,da,W); A = W; W += da+1;
+polcopy64s(M,dm,W); M = W; W += dm+1;
+polgcdext64s( A, M, da, dm, G, S, 0, &dG, &dS, &dT, W, p );
+//printf("dG=%d  dS=%d\n",dG,dS);
+if( dG>0 ) return -dG; else return dS;
+}
+
+/* C(x) := A(x)^n mod B(x) mod p;  0<=deg(A)<deg(B) and R must be of size 2*db-1 */
+/* If A(x) is not reduced mod B(x) then we first compute C(x) := A(x) mod B(x)   */
+int polpowmod64s( LONG * A, LONG n, LONG * B, int da, int db, LONG *C, LONG *R, LONG p )
+{
+    int dc,k,b[63];
+
+    if( n==0 ) { C[0] = 1; return 0; }
+    if( da>=db ) da = poldiv64s(A,B,da,db,p);                   // reduce A mod B first
+    for( k=0; n>0; k++ ) { b[k]=n&1; n=n/2; }
+    polcopy64s(A,da,C);
+    dc = da;
+    k--;
+    while( k>0 ) { k--;
+       // Main step: compute C := C^2 mod B in Zp[x]
+       //dc = polmul64s(C,C,R,dc,dc,p);                           //printf("deg(R) = %d; R = ",dc); polprint64s(R,dc);
+       dc = polsqr64s(C,R,dc,p);                                //printf("deg(R) = %d; R = ",dc); polprint64s(R,dc);
+       dc = poldiv64s(R,B,dc,db,p);
+       polcopy64s(R,dc,C);                                      //printf("deg(C) = %d; C = ",dc); polprint64s(C,dc);
+       if( b[k]==1 ) {                                          //printf(" b[%d]=%d \n", k, b[k] );
+           dc = polmul64s(A,C,R,da,dc,p);                       //printf("deg(R) = %d; R = ",dc); polprint64s(R,dc);
+           dc = poldiv64s(R,B,dc,db,p);
+           polcopy64s(R,dc,C);                                  //printf("deg(C) = %d; C = ",dc); polprint64s(C,dc);
+       }
+    }
+    return dc;
+}
+
+// Input f in Zp[x] of degree d > 0, a known product of d linear factors.
+// Output roots of f in R.
+// The input array f is destroyed.
+// W is a scratch array of size at least 3*d
+void polsplit64s( LONG *f, int d, LONG *R, LONG *W, LONG p )
+{
+   int da,dg; LONG alpha, A[2];
+   if( d==1 ) { alpha = p-f[0]; R[0] = alpha; return; }
+   alpha = rand64s(p); A[1] = 1; A[0] = alpha;
+   da = polpowmod64s( A, (p-1)/2, f, 1, d, W, W+d, p );
+   if( da==0 ) return polsplit64s(f,d,R,W,p);      // alpha is unlucky, try again
+   W[0] = add64s(W[0],1,p);                        // W = (x+alpha)^((p-1)/2) + 1 mod f
+   polcopy64s( f, d, W+d );
+   dg = polgcd64s( W, W+d, da, d, p );             // g = gcd( W, f ) in W
+   if( dg==0 ) return polsplit64s(f,d,R,W,p);      // g = 1 ==> alpha is unlucky, try again
+   poldiv64s(f,W,d,dg,p);                          // compute quotient q = f/g destroying f
+   polcopy64s(W,dg-1,f);                           // f = [ g mod x^dg followed by q ]
+   polsplit64s(f+dg,d-dg,R,W,p);
+   f[dg] = 1;
+   polsplit64s(f,dg,R+d-dg,W,p);
+   return;
+}
+
+int polroots64s( LONG * f, int d, LONG * R, LONG *W, LONG p )
+{
+   int i, da, dg; LONG A[2]; extern ULONG seed,mult;
+   //printf("roots: deg(f)=%d\n",d);
+    // printf("f := "); polprint64s(f,d);
+   for( i=0; i<d && f[i]==0; i++ );
+   if( i>0 ) { R[0]=0; return( 1 + polroots64s(f+i,d-i,R+1,W,p) ); }
+   if( f[d]!=1 ) monic64s(f,d,p);
+   A[1] = 1;
+   A[0] = 0;
+   da = polpowmod64s( A, p-1, f, 1, d, W, W+d, p );    // W = x^(p-1) mod f
+   //printf("da = %d, a := ",da); polprint64s(W,da);
+   if( da==0 && W[0]==1 ) dg = d; // f is all linear factors
+   else { W[0] = sub64s(W[0],1,p); dg = polgcd64s( f, W, d, da, p ); }   // f = gcd(f,W-1)
+   //printf("g := "); polprint64s(f,dg);
+   if( dg==0 ) return 0;
+   seed = 1;
+   mult = 6364136223846793003ll;
+   polsplit64s( f, dg, R, W, p );
+   return dg; // number of roots in R
+}
+
+/*
+ROOT FINDING WRAPPER FOR MAPLE  (Monagan's polroots64s).
+
+f is given by its d+1 coefficients in ASCENDING order, f[k] the coefficient of
+x^k, each already reduced into [0,p).  The roots in GF(p) are written to
+rootsOut in increasing order and their count to info[0].  The caller's f is NOT
+modified: polroots64s monics its input, writes the gcd back over it and
+recurses on f+i for the zero root, so the coefficients are copied to scratch
+first.
+
+WORKSPACE.  polsplit64s documents "a scratch array of size at least 3*d", and
+polroots64s's own polpowmod64s call needs C of size d plus R of size 2*db-1,
+which is the same 3*d.  The default below is 3*d+8.  wsize overrides it; pass
+0 for the default.
+
+Return value:  0  success
+              <0  bad arguments
+               1  outLen too small; info[0] holds the number of roots found
+*/
+
+extern "C" int cppPolRoots(int d,
+    const LONG *f,
+    const LONG p,
+    int wsize,
+    int outLen,
+    LONG *rootsOut,
+    int infoLen,
+    LONG *info)
+{
+
+// INITIAL CHECKS:
+
+if (!f || !rootsOut || !info) {
+    return -1;
+}
+if (infoLen < 1 || outLen < 0) {
+    return -2;
+}
+if (p < 3) {
+    return -3;                      // polsplit64s uses (p-1)/2
+}
+
+info[0] = 0;
 if (d < 1) {
     return 0;
 }
-if (F[d] != 1) {
-    LONG inv = modinv64b(F[d], p);
-    for (int i = 0; i < d; ++i) F[i] = mul64b(F[i], inv, p);
-    F[d] = 1;
+
+// SCRATCH COPY OF f, TRIMMED TO ITS TRUE DEGREE
+
+std::vector<LONG> F(f, f+d+1);
+int df = d;
+while (df > 0 && F[df] == 0) df--;
+if (df < 1) {
+    return 0;                       // f is a nonzero constant
 }
 
-// g = gcd(f, x^p - x) : the distinct roots of f lying in GF(p)
+// f = c*x^k has 0 as its only root.  polroots64s would deflate down to a
+// constant and then divide by it, so take that case here.
 
-std::vector<LONG> xp;
-int dxp = polPOWMOD64(0, p, F.data(), d, p, xp);
-std::vector<LONG> h(std::max(dxp+1, 2), 0);
-for (int i = 0; i <= dxp; ++i) h[i] = xp[i];
-h[1] = sub64b(h[1], 1, p);
-int dh = (int)h.size()-1;
-while (dh >= 0 && h[dh] == 0) dh--;
-
-std::vector<LONG> G;
-int dg;
-if (dh < 0) {                       // f divides x^p - x already
-    G = F;
-    dg = d;
-} else {
-    G.assign(d+1, 0);
-    dg = polGCD64s(F.data(), d, h.data(), dh, p, G.data());
-    if (dg < 1) {
-        return 0;                   // no roots in GF(p)
-    }
-    G.resize(dg+1);
+int lo = 0;
+while (lo < df && F[lo] == 0) lo++;
+if (lo == df) {
+    info[0] = 1;
+    if (outLen < 1) return 1;
+    rootsOut[0] = 0;
+    return 0;
 }
 
-// SPLIT INTO LINEAR FACTORS
+// WORKSPACE
 
-std::vector<LONG> R;
-LONG state = 88172645463325252LL ^ (LONG)d ^ (p<<1);
-polEDF64(G, dg, p, state, R);
-std::sort(R.begin(), R.end());
-R.erase(std::unique(R.begin(), R.end()), R.end());
+int need = 3*df + 8;
+if (wsize < need) wsize = need;
+std::vector<LONG> W((size_t)wsize, 0);
+std::vector<LONG> R((size_t)df+1, 0);
 
-if ((int)R.size() > outLen) {
-    info[0] = (LONG)R.size();
+int n = polroots64s(F.data(), df, R.data(), W.data(), p);
+if (n < 0 || n > df) {
+    return -4;
+}
+
+info[0] = n;
+if (n > outLen) {
     return 1;
 }
 
-// MULTIPLICITIES (all 1 when f is squarefree, which is the usual case)
-
-int nr = (int)R.size();
-bool squarefree = (nr == d);
-for (int i = 0; i < nr; ++i) {
+std::sort(R.begin(), R.begin()+n);   // match the ordering of Roots(f) mod p
+for (int i = 0; i < n; ++i) {
     rootsOut[i] = R[i];
-    multOut[i]  = squarefree ? 1 : polMULT64(F.data(), d, R[i], p);
 }
-info[0] = nr;
 
 return 0;
 }
