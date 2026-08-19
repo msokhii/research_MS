@@ -1172,7 +1172,7 @@ end proc:
 #  ---------------------------------------------------------------------------
 
 USE_POLROOTS64S := true:
-ROOTS_MODE      := 0:
+ROOTS_MODE      := 2:
 
 if USE_POLROOTS64S then
     cppPolRootsext := define_external("cppPolRoots",
@@ -1185,7 +1185,7 @@ if USE_POLROOTS64S then
         infoLen::integer[4],
         info::ARRAY(datatype=integer[8]),
         RETURN::integer[4],
-        LIB=POLMATH_LIB):
+        LIB=libObj):
     if not type(cppPolRootsext,procedure) then
         error "define_external did not bind cppPolRootsext; check that %1 "
               "exports cppPolRoots",POLMATH_LIB:
@@ -1222,7 +1222,8 @@ end proc:
 
 #  Single dispatch point for the three MRFI call sites.
 rootsMODp := proc(F::polynom,x::name,p::prime)
-    if ROOTS_MODE = 1 or not USE_POLROOTS64S then
+    if 
+    ROOTS_MODE = 1 or not USE_POLROOTS64S then
         return Roots(F) mod p:
     fi:
     if ROOTS_MODE = 2 or p >= MAPLE_FAST_BOUND then
