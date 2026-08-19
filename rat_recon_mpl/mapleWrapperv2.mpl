@@ -851,10 +851,12 @@ end proc:
 #                 = 2   Eval ... mod p
 #  ---------------------------------------------------------------------------
 
-#  Maple's modp1 / Modular kernels only cover primes below about 2^31.5, and
-#  below that bound they beat the external route.  Above it they fall back to
-#  generic Zp arithmetic and the C++ path wins.  Every dispatch in this file
-#  uses this one constant.
+#  Maple's modp1 fast univariate representation only covers primes below about
+#  2^31.5.  Below the bound Roots(F) mod p beats polroots64s (2.36 s vs the
+#  C++ path at n=11); above it the C++ path wins (6.2 s vs 14.5 s).  Only the
+#  roots dispatch uses this now -- the black box goes through the external
+#  block call at every prime size, since the batched path measured faster than
+#  Maple's Modular kernel even below the bound.
 MAPLE_FAST_BOUND := 2^31:
 
 CPPEVALMODE := 0:
@@ -982,18 +984,21 @@ end proc:
 cppEvalSolve := proc(E,point_::list,p::prime)
     local k,rc,nr,nv,A,T:
 
-    #  Below the bound Maple's own compiled path wins: measured at n=12 it is
-    #  2.2x faster per black box call than going out to C++.  Only use the
-    #  external route where Maple cannot follow.
-    if p < MAPLE_FAST_BOUND then
-        A := LinearAlgebra:-Modular:-Mod(p,E["L"],
-                 zip((par,pnt) -> par=pnt,E["params"],point_),integer):
-        T := traperror(LinearAlgebra:-Modular:-LinearSolve(p,A,1)):
-        if T = "Matrix is singular." then
-            return FAIL:
-        fi:
-        return convert(A[1..E["nr"],E["nc"]],list):
-    fi:
+    #  DISABLED: this dispatch was added off the n=12 comparison where the OLD
+    #  per-point external path lost to Maple's Modular kernel.  The batched
+    #  block path made that comparison obsolete (6.9 us/point measured at n=11,
+    #  faster than the 22 us Modular baseline), and routing through this branch
+    #  from the block loop measured 1075 us/point.  One code path now: external.
+    #
+    #if p < MAPLE_FAST_BOUND then
+    #    A := LinearAlgebra:-Modular:-Mod(p,E["L"],
+    #             zip((par,pnt) -> par=pnt,E["params"],point_),integer):
+    #    T := traperror(LinearAlgebra:-Modular:-LinearSolve(p,A,1)):
+    #    if T = "Matrix is singular." then
+    #        return FAIL:
+    #    fi:
+    #    return convert(A[1..E["nr"],E["nc"]],list):
+    #fi:
 
     nr := E["nr"]:
     nv := E["nv"]:
@@ -1107,22 +1112,27 @@ cppEvalSolveBlock := proc(E,pts::Array,npts::posint,p::prime)
     fi:
     X := E["X"]:
 
-    #  Below the bound cppEvalSolve takes Maple's compiled Modular path, which
-    #  is faster per solve than going out to C++.  Loop it, but still write the
-    #  answers transposed so the caller gets the same contiguous rows.
-    if p < MAPLE_FAST_BOUND then
-        for s from 1 to npts do
-            soln := cppEvalSolve(E,[seq(pts[(s-1)*nv+k],k=0..nv-1)],p):
-            if soln = FAIL then
-                E["info"][1] := s:
-                return FAIL:
-            fi:
-            for k from 1 to nr do
-                X[(k-1)*npts+s-1] := soln[k]:
-            od:
-        od:
-        return X:
-    fi:
+    #  DISABLED: the per-point Maple loop below was meant to keep the compiled
+    #  Modular path for small primes.  Measured at n=11, p=2147483629, it cost
+    #  1075 us per point against 22 us for the plain Modular baseline and 6.9 us
+    #  for the external block call -- the interpreted per-point loop (list
+    #  construction, type checks, table indirection, Mod+LinearSolve+convert per
+    #  point, 106 KB allocated per point) swamps whatever the kernel saves.
+    #  The external block call is the fastest path at EVERY prime size.
+    #
+    #if p < MAPLE_FAST_BOUND then
+    #    for s from 1 to npts do
+    #        soln := cppEvalSolve(E,[seq(pts[(s-1)*nv+k],k=0..nv-1)],p):
+    #        if soln = FAIL then
+    #            E["info"][1] := s:
+    #            return FAIL:
+    #        fi:
+    #        for k from 1 to nr do
+    #            X[(k-1)*npts+s-1] := soln[k]:
+    #        od:
+    #    od:
+    #    return X:
+    #fi:
 
     rc := cppEvalSolveBlockext(nr,E["nc"],nv,E["ent"],E["expo"],E["coef"],
                                pts,npts,p,E["dmax"],npts,X,2,E["info"]):
@@ -1175,7 +1185,7 @@ if USE_POLROOTS64S then
         infoLen::integer[4],
         info::ARRAY(datatype=integer[8]),
         RETURN::integer[4],
-        LIB=libObj):
+        LIB=POLMATH_LIB):
     if not type(cppPolRootsext,procedure) then
         error "define_external did not bind cppPolRootsext; check that %1 "
               "exports cppPolRoots",POLMATH_LIB:
