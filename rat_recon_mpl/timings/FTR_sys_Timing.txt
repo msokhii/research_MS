@@ -1,0 +1,149 @@
+============================================================
+  MRFI benchmark (fault-tolerant) -- system S1 : Symmetric Toeplitz
+  Univariate RR : HFTRFR (degrees + bad set) + DFTRFR
+  Prime p = 2147483629
+  Range   n = 4 .. 6
+  Fault injection FAULT_ON = false , error budget FAULT_E = 0
+============================================================
+
+  n = 4
+  System ID                        : S1
+  Parameter count                  : 4
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 76  (NDSA = 12, MRFI = 64)
+  BB calls in NDSA                 : 12
+  BB calls in MRFI                 : 64
+  Total NDSA time for BB calls (s) : 0.001000000
+  Total MRFI time for BB calls (s) : 0.001000000
+  Total BB calls time (NDSA+MRFI)  : 0.002000000
+  Total time (s)                   : 0.018000000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.002000000
+  Time -> HFTRFR (s)           : 0.000000000
+  Time -> FTREval Interp+RR+EV : 0.000000000
+  Time -> BMEA (s)             : 0.002000000
+  Time -> Vandermonde (s)      : 0.001000000
+  Time -> Roots (s)            : 0.000000000
+  Time -> Gen. Monomials (s)   : 0.001000000
+  Time -> Final Poly. (s)      : 0.000000000
+  Time -> Get point AFL (s)    : 0.001000000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.010000000
+  Time -> NDSA Proc. (s)       : 0.001000000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 0.839
+  Deg_num (per equation)   : [1, 1, 1, 1]
+  Deg_den (per equation)   : [2, 2, 2, 2]
+  Terms_num (per equation) : [2, 4, 4, 2]
+  Terms_den (per equation) : [7, [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  Recovered solution
+    x1 = (y1-y3)/(y1^2+y1*y2+y1*y4-y2^2-2*y2*y3+y2*y4-y3^2)
+    x2 = (y1-y2-y3+y4)/(y1^2+y1*y2+y1*y4-y2^2-2*y2*y3+y2*y4-y3^2)
+    x3 = (y1-y2-y3+y4)/(y1^2+y1*y2+y1*y4-y2^2-2*y2*y3+y2*y4-y3^2)
+    x4 = (y1-y3)/(y1^2+y1*y2+y1*y4-y2^2-2*y2*y3+y2*y4-y3^2)
+
+  FFGE status              : SKIPPED
+
+  n = 5
+  System ID                        : S1
+  Parameter count                  : 5
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 204  (NDSA = 12, MRFI = 192)
+  BB calls in NDSA                 : 12
+  BB calls in MRFI                 : 192
+  Total NDSA time for BB calls (s) : 0.001000000
+  Total MRFI time for BB calls (s) : 0.002000000
+  Total BB calls time (NDSA+MRFI)  : 0.003000000
+  Total time (s)                   : 0.020000000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.000000000
+  Time -> HFTRFR (s)           : 0.000000000
+  Time -> FTREval Interp+RR+EV : 0.004000000
+  Time -> BMEA (s)             : 0.001000000
+  Time -> Vandermonde (s)      : 0.000000000
+  Time -> Roots (s)            : 0.001000000
+  Time -> Gen. Monomials (s)   : 0.001000000
+  Time -> Final Poly. (s)      : 0.001000000
+  Time -> Get point AFL (s)    : 0.001000000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.011000000
+  Time -> NDSA Proc. (s)       : 0.000000000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 1.015
+  Deg_num (per equation)   : [2, 2, 2, 2, 2]
+  Deg_den (per equation)   : [3, 3, 3, 3, 3]
+  Terms_num (per equation) : [7, 8, 11, 8, 7]
+  Terms_den (per equation) : [12, [], [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  Recovered solution
+    x1 = (y1^2-y1*y2-y1*y4-y2^2+2*y2*y3+y2*y4-y3^2)/(y1^3+y1^2*y3+y1^2*y5-3*y1*y2^2-2*y1*y2*y4-2*y1*y3^2+y1*y3*y5-y1*y4^2+4*y2^2*y3-2*y2^2*y5+4*y2*y3*y4-2*y3^3)
+    x2 = (y1^2-2*y1*y2-y1*y4+y1*y5+3*y2*y3-y2*y5-2*y3^2+y3*y4)/(y1^3+y1^2*y3+y1^2*y5-3*y1*y2^2-2*y1*y2*y4-2*y1*y3^2+y1*y3*y5-y1*y4^2+4*y2^2*y3-2*y2^2*y5+4*y2*y3*y4-2*y3^3)
+    x3 = (y1^2-2*y1*y2-y1*y3+y1*y5+y2^2+2*y2*y3-2*y2*y5-2*y3^2+2*y3*y4+y3*y5-y4^2)/(y1^3+y1^2*y3+y1^2*y5-3*y1*y2^2-2*y1*y2*y4-2*y1*y3^2+y1*y3*y5-y1*y4^2+4*y2^2*y3-2*y2^2*y5+4*y2*y3*y4-2*y3^3)
+    x4 = (y1^2-2*y1*y2-y1*y4+y1*y5+3*y2*y3-y2*y5-2*y3^2+y3*y4)/(y1^3+y1^2*y3+y1^2*y5-3*y1*y2^2-2*y1*y2*y4-2*y1*y3^2+y1*y3*y5-y1*y4^2+4*y2^2*y3-2*y2^2*y5+4*y2*y3*y4-2*y3^3)
+    x5 = (y1^2-y1*y2-y1*y4-y2^2+2*y2*y3+y2*y4-y3^2)/(y1^3+y1^2*y3+y1^2*y5-3*y1*y2^2-2*y1*y2*y4-2*y1*y3^2+y1*y3*y5-y1*y4^2+4*y2^2*y3-2*y2^2*y5+4*y2*y3*y4-2*y3^3)
+
+  FFGE status              : SKIPPED
+
+  n = 6
+  System ID                        : S1
+  Parameter count                  : 6
+  MRFI Status                      : UNVERIFIED
+  Total BB calls                   : 780  (NDSA = 12, MRFI = 768)
+  BB calls in NDSA                 : 12
+  BB calls in MRFI                 : 768
+  Total NDSA time for BB calls (s) : 0.000000000
+  Total MRFI time for BB calls (s) : 0.002000000
+  Total BB calls time (NDSA+MRFI)  : 0.002000000
+  Total time (s)                   : 0.047000000
+  Time for MRFI Individual component -
+  Time -> cppNewtonInterp (s)  : 0.001000000
+  Time -> HFTRFR (s)           : 0.001000000
+  Time -> FTREval Interp+RR+EV : 0.008000000
+  Time -> BMEA (s)             : 0.004000000
+  Time -> Vandermonde (s)      : 0.000000000
+  Time -> Roots (s)            : 0.002000000
+  Time -> Gen. Monomials (s)   : 0.003000000
+  Time -> Final Poly. (s)      : 0.001000000
+  Time -> Get point AFL (s)    : 0.012000000
+  Time -> Eval+List (s)        : 0.000000000
+  Time -> Normalize Proc. (s)  : 0.000000000
+  Time -> MapRR (s)            : 0.000000000
+  Time -> Overhead & Other (s) : 0.013000000
+  Time -> NDSA Proc. (s)       : 0.002000000
+  GC -> collections            : 0
+  GC -> Mbytes allocated       : 1.792
+  Deg_num (per equation)   : [2, 2, 2, 2, 2, 2]
+  Deg_den (per equation)   : [3, 3, 3, 3, 3, 3]
+  Terms_num (per equation) : [7, 14, 15, 15, 14, 7]
+  Terms_den (per equation) : [32, [], [], [], [], []]
+
+  Fault tolerance
+  Error budget E               : 0
+  Fault injection active       : false
+  Extra BB pts / eqn (2E)      : 0
+
+  Recovered solution
+    x1 = (y1^2-y1*y3-y1*y5-y2^2+2*y2*y4+y3*y5-y4^2)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+    x2 = (y1^2-y1*y2-y1*y3-y1*y5+y1*y6-y2^2+2*y2*y3+2*y2*y4-y2*y5-y3*y4+y3*y5-y3*y6-y4^2+y4*y5)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+    x3 = (y1^2-y1*y2-2*y1*y3+y1*y6+2*y2*y3+y2*y4-y2*y5-y2*y6-y3*y4+2*y3*y5-y3*y6-y4^2+y4*y5+y4*y6-y5^2)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+    x4 = (y1^2-y1*y2-2*y1*y3+y1*y6+2*y2*y3+y2*y4-y2*y5-y2*y6-y3*y4+2*y3*y5-y3*y6-y4^2+y4*y5+y4*y6-y5^2)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+    x5 = (y1^2-y1*y2-y1*y3-y1*y5+y1*y6-y2^2+2*y2*y3+2*y2*y4-y2*y5-y3*y4+y3*y5-y3*y6-y4^2+y4*y5)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+    x6 = (y1^2-y1*y3-y1*y5-y2^2+2*y2*y4+y3*y5-y4^2)/(y1^3+y1^2*y2+y1^2*y4+y1^2*y6-2*y1*y2^2-2*y1*y2*y3+y1*y2*y4-2*y1*y2*y5+y1*y2*y6-2*y1*y3^2-2*y1*y3*y4-y1*y4^2+y1*y4*y6-y1*y5^2-y2^3+2*y2^2*y3+2*y2^2*y4-2*y2^2*y5-y2^2*y6+2*y2*y3^2+2*y2*y3*y4+2*y2*y3*y5-2*y2*y3*y6+2*y2*y4*y5+y2*y4*y6-y2*y5^2-y3^2*y4+2*y3^2*y5-y3^2*y6-2*y3*y4^2+2*y3*y4*y5-y4^3)
+
+  FFGE status              : SKIPPED
+

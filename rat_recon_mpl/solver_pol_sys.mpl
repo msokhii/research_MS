@@ -3,19 +3,41 @@ with(LinearAlgebra):
 with(IntegerRelations):
 
 read "./mapleWrapperv2.mpl":
-read "./mapleWrapperRREF.mpl":
 read "./pol_sys.mpl":
 
 ExpectedRawParams := ParametricSystems:-RawParams:
 ExpectedParamCount := ParametricSystems:-ParamCount:
 DB_system := ParametricSystems:-DBSystem:
 
-
+# =============================================================================
+# Procedure: get_eqn
+# What it does:
+#   Solves a symbolic system for the requested variables and memoizes repeated calls with option remember.
+# Inputs:
+#   - Sys: equations or expressions to solve.
+#   - vars: variables to solve for.
+# Outputs:
+#   - Returns Maple's solve(Sys,vars) result.
+# Example:
+#   sol := get_eqn(Sys,Vars):
+# =============================================================================
 get_eqn := proc(Sys,vars)
     option remember:
     return solve(Sys,vars):
 end proc:
 
+# =============================================================================
+# Procedure: reording
+# What it does:
+#   Reorders a list of solution components so entry i corresponds to variable/component i.
+# Inputs:
+#   - unordered_soln: list whose entries contain a component variable such as x1, x2, ... .
+#   - num_eqn: total number of components expected.
+# Outputs:
+#   - Returns a length-num_eqn list with each solution placed at the index extracted by get_component.
+# Example:
+#   ordered := reording(unordered_soln,3):
+# =============================================================================
 reording := proc(unordered_soln,num_eqn)
     local component1,ordered_soln,i:
     ordered_soln := [seq(0,i=1..num_eqn)]:
@@ -26,12 +48,37 @@ reording := proc(unordered_soln,num_eqn)
     return ordered_soln:
 end proc:
 
+# =============================================================================
+# Procedure: get_component
+# What it does:
+#   Extracts the numeric component index from a variable/expression name by converting it to a string and removing the first character.
+# Inputs:
+#   - expression: typically a name such as x12.
+# Outputs:
+#   - Returns the parsed integer suffix; for x12 the result is 12.
+# Example:
+#   k := get_component(x12):  # 12
+# =============================================================================
 get_component := proc(expression)
     local temp_var:
     temp_var := convert(expression,string):
     return parse(temp_var[2..length(temp_var)]):
 end proc:
 
+# =============================================================================
+# Procedure: get_u
+# What it does:
+#   Interpolates every selected column of a matrix as a polynomial in x using the shared alpha nodes.
+# Inputs:
+#   - M: matrix whose columns contain sampled values.
+#   - col: number of columns to process.
+#   - alpha: interpolation nodes.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns a list U where U[i] is the Newton interpolant of column i modulo p.
+# Example:
+#   U := get_u(M,3,alpha,p):
+# =============================================================================
 get_u := proc(M,col,alpha,p)
     local F,U,i;
     F := [seq(convert(M[..,i],list),i=1..col)]:
@@ -39,6 +86,20 @@ get_u := proc(M,col,alpha,p)
     return U:
 end proc:
 
+# =============================================================================
+# Procedure: det_get_u
+# What it does:
+#   Interpolates one selected matrix column using only the first numelems(alpha) entries.
+# Inputs:
+#   - M: sample matrix.
+#   - col: column index to interpolate.
+#   - alpha: interpolation nodes.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns one polynomial interpolant U.
+# Example:
+#   U := det_get_u(M,2,alpha,p):
+# =============================================================================
 det_get_u := proc(M,col,alpha,p)
     local F,U:
     F := convert(M[..,col][..numelems(alpha)],list):
@@ -48,10 +109,34 @@ end proc:
 
 (* Mike's FFGE code. *)
 
+# =============================================================================
+# Procedure: FFGE
+# What it does:
+#   Runs fraction-free Gaussian elimination followed by Lipson-style back substitution on a symbolic square system, while collecting expression-swell statistics.
+# Inputs:
+#   - A: square coefficient Matrix.
+#   - b: right-hand-side Vector with matching dimension.
+#   - Y: list of parameter names used for term/degree statistics.
+# Outputs:
+#   - Returns det,f,g, where det is the computed determinant and f[i]/g[i] represents the reduced rational solution component. It also stores detailed counters in global ffge_stats.
+# Example:
+#   det,f,g := FFGE(A,b,[y1,y2]):
+# =============================================================================
 FFGE := proc(A::Matrix, b::Vector, Y::list(name))
 local n, m, B, mu, i, j, k, det, x, y, num, r, numterms, f, g, h, mons,
       elim_num_max, elim_post_max, backsub_N_max, y_terms, f_terms, g_terms;
     global ffge_stats;
+    # =============================================================================
+    # Procedure: numterms
+    # What it does:
+    #   Counts additive terms in one symbolic expression for FFGE's expression-swell statistics.
+    # Inputs:
+    #   - f: symbolic expression.
+    # Outputs:
+    #   - Returns 0 for f=0, nops(f) for a sum, and 1 for any other nonzero expression.
+    # Example:
+    #   t := numterms(y1+y2+1):  # 3
+    # =============================================================================
     numterms := proc(f) if f=0 then 0 elif type(f,`+`) then nops(f) else 1 fi end;
     n,m := op(1,A);
     if n<>m then error "Matrix must be square" fi;
@@ -133,6 +218,19 @@ local n, m, B, mu, i, j, k, det, x, y, num, r, numterms, f, g, h, mons,
     return det,f,g;
 end:
 
+# =============================================================================
+# Procedure: Constuct_Sys_Blackbox
+# What it does:
+#   Builds the augmented symbolic matrix for a parametric linear system, encodes it once for C++, and creates both single-point and batched black-box solvers.
+# Inputs:
+#   - Sys: linear equations.
+#   - Vars: unknown variables.
+#   - params: ordered parameter list.
+# Outputs:
+#   - Returns/defines the single-point Lin_BB procedure as the final assignment and also sets global BB_BLOCK for batched evaluation.
+# Example:
+#   B := Constuct_Sys_Blackbox(Sys,Vars,params):
+# =============================================================================
 Constuct_Sys_Blackbox := proc(Sys,Vars,params)
     local Lin_BB,L,nr,nc,LE:
     global BB_BLOCK:
@@ -149,6 +247,19 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
     #  of points per call and the answers come back transposed: row i is the
     #  sequence of x_i over the points.  The call counters are kept in step
     #  with the point at a time path so the summary still adds up.
+    # =============================================================================
+    # Procedure: BB_BLOCK
+    # What it does:
+    #   Nested batched black-box created by Constuct_Sys_Blackbox. It solves the encoded system at npts parameter points and updates phase-specific timing/call counters.
+    # Inputs:
+    #   - pts: flat point-major Array of parameter values.
+    #   - npts: number of points.
+    #   - p: modulus.
+    # Outputs:
+    #   - Returns the transposed solution Array X; raises an error if any evaluated system is singular.
+    # Example:
+    #   X := BB_BLOCK(pts,T,p):
+    # =============================================================================
     BB_BLOCK := proc(pts,npts,p)
         local X,t0:
         global counter,bb_calls_mrfi,t_mrfi_total,bb_phase,t_ndsa_total,
@@ -169,6 +280,18 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
         fi:
         return X:
     end proc:
+    # =============================================================================
+    # Procedure: Lin_BB
+    # What it does:
+    #   Nested single-point black-box created by Constuct_Sys_Blackbox. It evaluates and solves the encoded system at one parameter point while recording timing/call statistics.
+    # Inputs:
+    #   - point_: list of integer parameter values.
+    #   - p: prime modulus.
+    # Outputs:
+    #   - Returns the solution list, or FAIL when the evaluated system is singular/inconsistent.
+    # Example:
+    #   xval := Lin_BB([3,7],101):
+    # =============================================================================
     Lin_BB := proc(point_::list(integer),p::prime)
         local soln,t0,t_avg;
         global counter,bb_calls_ndsa,bb_calls_mrfi,t_ndsa_total,t_mrfi_total,bb_phase;
@@ -214,6 +337,22 @@ end proc:
 #  large share of these multiplications allocate multi-precision temporaries.
 #  In C++ each one is a single 128-bit multiply.  Same name, same signature and
 #  same result as before, so the call sites are unchanged.
+# =============================================================================
+# Procedure: get_point_on_affine_line
+# What it does:
+#   Generates T points on the MRFI affine line through the C++ cppAffineLine routine and converts the flat result into a Maple list of points.
+# Inputs:
+#   - num_var: number of parameters.
+#   - alpha: first-coordinate values, length at least T.
+#   - beta_: direction parameters for coordinates 2..num_var.
+#   - sigma_: base/shift values.
+#   - p: prime modulus.
+#   - T: number of points.
+# Outputs:
+#   - Returns [[point_1],...,[point_T]] and increments global num_lines.
+# Example:
+#   Pts := get_point_on_affine_line(nv,alpha,beta,sigma,p,T):
+# =============================================================================
 get_point_on_affine_line := proc(num_var::posint,alpha::list,beta_::list,
                                  sigma_::list,p::prime,T::posint)
     local aArr,bArr,sArr,outArr,i,s:
@@ -240,6 +379,17 @@ end proc:
 #  filled, with no list of lists built on top.  That conversion is T*num_var
 #  interpreted element reads per line -- 2.36 million of them at n=12 -- and
 #  the batched black box wants the flat layout anyway.
+# =============================================================================
+# Procedure: get_point_block_on_affine_line
+# What it does:
+#   Generates the same affine-line points as get_point_on_affine_line but keeps the native flat integer[8] Array for the batched C++ black box.
+# Inputs:
+#   - num_var,alpha,beta_,sigma_,p,T: same affine-line data as the list-returning routine.
+# Outputs:
+#   - Returns a flat point-major Array of length T*num_var and increments global num_lines.
+# Example:
+#   PtsArr := get_point_block_on_affine_line(nv,alpha,beta,sigma,p,T):
+# =============================================================================
 get_point_block_on_affine_line := proc(num_var::posint,alpha::list,beta_::list,
                                        sigma_::list,p::prime,T::posint)
     local aArr,bArr,sArr,outArr,i:
@@ -262,6 +412,19 @@ get_point_block_on_affine_line := proc(num_var::posint,alpha::list,beta_::list,
     return outArr:
 end proc:
 
+# =============================================================================
+# Procedure: MQRFR
+# What it does:
+#   Runs the quotient-gap Euclidean reconstruction pass on r0,r1 while tracking cofactors t0,t1 and the row with the largest quotient degree.
+# Inputs:
+#   - r0,r1: initial Euclidean remainder polynomials.
+#   - t0,t1: initial cofactor polynomials.
+#   - p: modulus.
+# Outputs:
+#   - Returns normalized f,g,qmax,lcg, where qmax is the largest observed quotient degree and lcg is the original leading coefficient used to normalize g.
+# Example:
+#   f,g,qmax,lcg := MQRFR(M,U,0,1,p):
+# =============================================================================
 MQRFR := proc(r0,r1,t0,t1,p)
     local r,t,q,i,f,g,qmax,lcg;
     r[0] := r0:
@@ -291,6 +454,19 @@ end proc:
 
 # HFTRFR implementation
 
+# =============================================================================
+# Procedure: HFTRFR
+# What it does:
+#   Maple implementation of the heuristic/gap fault-tolerant rational reconstruction phase. It identifies a candidate row and separates its common bad factor.
+# Inputs:
+#   - r0,r1: initial Euclidean remainder polynomials.
+#   - t0,t1: initial cofactors.
+#   - p: modulus.
+# Outputs:
+#   - Returns fc,gc,deg(fc),deg(gc),qmax,badset,Lambda, with gc monic and badset equal to roots(Lambda) mod p.
+# Example:
+#   fc,gc,dN,dD,qmax,bad,L := HFTRFR(M,U,0,1,p):
+# =============================================================================
 HFTRFR := proc(r0, r1, t0, t1, p)
     local r, t, q, i, f, g, qmax, Lambda, fc, gc, ilc, rts, badset:
     r[0] := r0:  r[1] := r1:
@@ -323,6 +499,20 @@ end proc:
 
 # DFTRFR implementation
 
+# =============================================================================
+# Procedure: DFTRFR
+# What it does:
+#   Maple implementation of deterministic fault-tolerant rational reconstruction with numerator/denominator degree bounds and an error budget.
+# Inputs:
+#   - M,U: modulus and interpolating polynomials.
+#   - degN,degD: target degree bounds.
+#   - E: tolerated number of bad samples.
+#   - p: modulus.
+# Outputs:
+#   - Returns the normalized rational reconstruction, 0 when U=0, or FAIL when point-count/gcd/degree checks reject the candidate.
+# Example:
+#   r := DFTRFR(M,U,N,D,E,p):
+# =============================================================================
 DFTRFR := proc(M, U, degN, degD, E, p)
     local Rp, R, Tp, T, Q, d, num, den, ilc, cg:
     if degree(M, x) <= degN + degD + 2*E then
@@ -357,6 +547,19 @@ end proc:
 
 # Corrupt values
 
+# =============================================================================
+# Procedure: inject_faults
+# What it does:
+#   Randomly corrupts exactly E entries of a sample list by adding nonzero residues modulo p.
+# Inputs:
+#   - Y: original sample list.
+#   - E: number of positions to corrupt.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns Yc,chosen where Yc is the corrupted copy and chosen is the sorted list of modified 1-based indices.
+# Example:
+#   Ybad,pos := inject_faults(Y,2,101):
+# =============================================================================
 inject_faults := proc(Y::list, E::nonnegint, p::prime)
     local n, chosen, Yc, i, delta:
     n := numelems(Y):
@@ -371,6 +574,20 @@ inject_faults := proc(Y::list, E::nonnegint, p::prime)
     return Yc, sort([op(chosen)]):
 end proc:
 
+# =============================================================================
+# Procedure: get_u_faulty
+# What it does:
+#   Creates column interpolants like get_u, but first injects FAULT_E random errors into each active sample sequence.
+# Inputs:
+#   - M: sample matrix.
+#   - col: number of columns.
+#   - alpha: interpolation nodes determining the active prefix.
+#   - p: modulus.
+# Outputs:
+#   - Returns a list of interpolating polynomials constructed from fault-corrupted samples.
+# Example:
+#   Ubad := get_u_faulty(M,col,alpha,p):
+# =============================================================================
 get_u_faulty := proc(M,col,alpha,p)
     local F,U,i,Fi;
     global FAULT_E;
@@ -387,6 +604,18 @@ end proc:
 #  raw coefficient list; the degree test is nops(list)-1 and rootsMODp takes
 #  the list directly, so the pipeline never builds the symbolic polynomial.
 #  BMEA_poly / BMEA are kept for interactive use only.
+# =============================================================================
+# Procedure: BMEA_coeffs
+# What it does:
+#   Runs the C++ Berlekamp-Massey wrapper on a sequence and returns only its raw connection-polynomial coefficient list.
+# Inputs:
+#   - v: Vector or list sequence.
+#   - p: positive modulus.
+# Outputs:
+#   - Returns [] for an empty sequence; otherwise returns ascending coefficients from cppBMM.
+# Example:
+#   C := BMEA_coeffs(seq,p):
+# =============================================================================
 BMEA_coeffs := proc(v::{Vector,list}, p::posint)
     if numelems(v)=0 then
         return []:
@@ -394,6 +623,18 @@ BMEA_coeffs := proc(v::{Vector,list}, p::posint)
     return cppBMM(v,p):
 end proc:
 
+# =============================================================================
+# Procedure: BMEA_poly
+# What it does:
+#   Converts a Berlekamp-Massey coefficient list into a symbolic polynomial in Z.
+# Inputs:
+#   - L: ascending coefficient list.
+#   - Z: polynomial variable.
+# Outputs:
+#   - Returns 1 for an empty list, otherwise sum(L[i+1]*Z^i).
+# Example:
+#   F := BMEA_poly([1,3,1],Z):  # 1+3*Z+Z^2
+# =============================================================================
 BMEA_poly := proc(L::list, Z::name)
     local d,i:
     if L = [] then
@@ -404,10 +645,37 @@ BMEA_poly := proc(L::list, Z::name)
 end proc:
 
 #  Kept for callers that want the polynomial directly.
+# =============================================================================
+# Procedure: BMEA
+# What it does:
+#   Convenience procedure that runs Berlekamp-Massey and immediately converts the returned coefficients to a symbolic polynomial.
+# Inputs:
+#   - v: input sequence.
+#   - p: modulus.
+#   - Z: polynomial variable.
+# Outputs:
+#   - Returns the Berlekamp-Massey polynomial in Z.
+# Example:
+#   F := BMEA(seq,p,Z):
+# =============================================================================
 BMEA := proc(v::{Vector,list}, p::posint, Z::name)
     return BMEA_poly(BMEA_coeffs(v,p),Z):
 end proc:
 
+# =============================================================================
+# Procedure: generate_monomials
+# What it does:
+#   Decodes integer root encodings into multivariate monomials by factoring each root over the supplied prime-point basis.
+# Inputs:
+#   - roots_: encoded positive integers/residues to decode; zero causes FAIL.
+#   - num_var: expected variable-count context.
+#   - prime_points: prime basis corresponding to variables.
+#   - vars: variable list.
+# Outputs:
+#   - Returns a list of monomials whose exponents are the multiplicities of prime_points in each root; returns FAIL if a residue cannot be fully decoded.
+# Example:
+#   Mons := generate_monomials(roots,nv,Primes,vars):
+# =============================================================================
 generate_monomials := proc(roots_,num_var,prime_points,vars)
     local m,mm,i,j,counter_,M_,rem:
     M_ := Vector(numelems(roots_),0):
@@ -434,6 +702,20 @@ generate_monomials := proc(roots_,num_var,prime_points,vars)
     return convert(M_,list):
 end proc:
 
+# =============================================================================
+# Procedure: Zippel_Transpose_Vandermonde_solver
+# What it does:
+#   Recovers sparse coefficients with the C++ transposed Vandermonde solver used in the Zippel stage.
+# Inputs:
+#   - y: sampled values.
+#   - terms: number of active terms.
+#   - roots_: corresponding Vandermonde nodes.
+#   - p: modulus.
+# Outputs:
+#   - Returns [] when terms=0; otherwise returns the first terms solved coefficients using shift=1.
+# Example:
+#   c := Zippel_Transpose_Vandermonde_solver(y,t,roots,p):
+# =============================================================================
 Zippel_Transpose_Vandermonde_solver := proc(y::{Vector,list}, terms::integer,
                                             roots_::list, p::integer)
     if terms = 0 then 
@@ -442,11 +724,39 @@ Zippel_Transpose_Vandermonde_solver := proc(y::{Vector,list}, terms::integer,
     return cppVS(y[1..terms],roots_[1..terms],p,1):
 end proc:
 
+# =============================================================================
+# Procedure: construct_final_polynomial
+# What it does:
+#   Combines recovered coefficients and monomials into one symbolic polynomial.
+# Inputs:
+#   - coeff_: coefficient list.
+#   - Monomials: matching monomial list.
+# Outputs:
+#   - Returns sum(coeff_[i]*Monomials[i]) over all coefficients.
+# Example:
+#   f := construct_final_polynomial([2,3],[1,y1]):  # 2+3*y1
+# =============================================================================
 construct_final_polynomial := proc(coeff_,Monomials)
     local i,f:
     f := add(coeff_[i]*Monomials[i],i=1..numelems(coeff_)):
 end proc:
 
+# =============================================================================
+# Procedure: NDSA
+# What it does:
+#   Runs the degree-discovery stage used before MRFI. It samples the black box on random affine-line nodes, interpolates each solution component, and applies HFTRFR until a quotient gap greater than 1 is detected.
+# Inputs:
+#   - B: black-box procedure mapping parameter points to solution values.
+#   - sigma_,beta_: affine-line base and direction data.
+#   - num_var: parameter count.
+#   - p: modulus.
+#   - num_points: initial number of samples.
+#   - num_eqn: number of solution components.
+# Outputs:
+#   - Returns result,lin_sys. result contains HFTRFR data for each equation/component; lin_sys indicates whether multiple solution components were processed.
+# Example:
+#   degdata,isSystem := NDSA(B,sigma,beta,nv,p,T0,neq):
+# =============================================================================
 NDSA := proc(B,sigma_,beta_,num_var,p,num_points,num_eqn)
     local correct_degree,T,alpha,m,Psi_alpha,Y,u,dq,i,r,
           lin_sys,temp,result,count,M,row,col,DQ,MQRFR_done,
@@ -534,6 +844,21 @@ NDSA := proc(B,sigma_,beta_,num_var,p,num_points,num_eqn)
     od:
 end proc:
 
+# =============================================================================
+# Procedure: MRFI
+# What it does:
+#   Runs the full multivariate rational function interpolation pipeline: degree discovery, affine-line sampling, fault-tolerant univariate reconstruction, Berlekamp-Massey support recovery, monomial decoding, Vandermonde coefficient recovery, and final normalization.
+# Inputs:
+#   - B: parametric linear-system black box.
+#   - num_vars: number of parameters.
+#   - num_eqn: number of rational solution components.
+#   - vars: parameter variable names.
+#   - p: finite-field modulus.
+# Outputs:
+#   - Returns final_num,final_den as lists of recovered numerator and denominator polynomials. It also fills global mrfi_stats and timing accumulators.
+# Example:
+#   Numerators,Denominators := MRFI(B,nops(params),nops(Vars),params,p):
+# =============================================================================
 MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
     local i,j,k,s,Primes,direction,sigma_,num_eval,den_eval,u,mon,
           num_eval_n,den_eval_n,
@@ -929,7 +1254,29 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
     return final_num,final_den:
 end proc:
 
+# =============================================================================
+# Procedure: RandRational
+# What it does:
+#   Creates a zero-argument random rational-number generator with bounded numerator and positive denominator.
+# Inputs:
+#   - N: positive bound; numerators are drawn from -N..N and denominators from 1..N.
+# Outputs:
+#   - Returns a procedure. Each call returns 0 when the sampled numerator is zero, otherwise a/b.
+# Example:
+#   rr := RandRational(10): q := rr():
+# =============================================================================
 RandRational := proc(N::posint)
+    # =============================================================================
+    # Procedure: anonymous generator returned by RandRational
+    # What it does:
+    #   Draws one bounded random rational value each time the returned procedure is called.
+    # Inputs:
+    #   - No explicit arguments; it closes over N from the surrounding RandRational call.
+    # Outputs:
+    #   - Returns 0 or a rational a/b with a in -N..N and b in 1..N.
+    # Example:
+    #   rr := RandRational(10): sample := rr():
+    # =============================================================================
     return proc() 
     local a,b:
         a := rand(-N..N)():
@@ -942,6 +1289,18 @@ RandRational := proc(N::posint)
     end proc:
 end proc:
 
+# =============================================================================
+# Procedure: get_data
+# What it does:
+#   Constructs one of the built-in test systems or random test polynomials used by the benchmark driver.
+# Inputs:
+#   - test_case: selector such as "bspline", "small_sys_low_deg", "rand", "rat_rand", or "TP".
+#   - Additional positional arguments are used by random/Toeplitz cases for dimensions, term counts, or coefficient bounds.
+# Outputs:
+#   - Returns the data tuple expected by the selected case: generally Sys,Vars,params,num_params,num_eqns; random polynomial modes return their own documented tuple of Vars,ff,gg and counts.
+# Example:
+#   Sys,Vars,params,nv,neq := get_data("TP",4):
+# =============================================================================
 get_data := proc(test_case)
     local Sys,Vars,i,ii,jj,params,ff,gg,n:
     if nargs=1 then
@@ -1012,8 +1371,8 @@ if not type(SYSTEM_ID, string) then SYSTEM_ID := convert(SYSTEM_ID, string): fi:
 # Freeze the selected family for this benchmark run.
 RUN_SYSTEM_ID := SYSTEM_ID:
 
-test_prime := prevprime(2^63-1):
-#test_prime := prevprime(2^31-1):
+#test_prime := prevprime(2^63-1):
+test_prime := prevprime(2^31-1):
 
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
@@ -1455,3 +1814,4 @@ for entry in summary do
 od:
 fclose(fd):
 printf("Wrote %s\n", report_path):
+

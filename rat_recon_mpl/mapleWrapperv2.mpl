@@ -1,8 +1,20 @@
- libObj := "/cecm/home/mss59/Desktop/resMaple_MS/inuse_cpp_routines/cpp_routines/cppObj.so":
+libObj := "/cecm/home/mss59/Desktop/resMaple_MS/inuse_cpp_routines/cpp_routines/cppObj_mserver.so":
 #libObj := "/home/msokhi/Desktop/res_MS/inuse_cpp_routines/cpp_routines/cppObj.so":
 
-(* libObj := "/Users/msokhi/Desktop/researchFiles/newDir/routinesCPP/cppObj.so": *)
-
+# =============================================================================
+# External procedure: mRATRECON
+# What it does:
+#   Binds Maple directly to the C++ ratRECON_C rational-reconstruction entry point.
+# Inputs:
+#   - mLen,degM,M: modulus-polynomial length, degree, and integer[8] coefficients.
+#   - uLen,degU,U: interpolant length, degree, and coefficients.
+#   - N,DBound,p: degree bounds and modulus.
+#   - nOUT,dOUT plus lengths and degree references: caller-provided outputs.
+# Outputs:
+#   - Returns the C++ integer status code and writes numerator/denominator coefficients and degrees into the supplied outputs.
+# Example:
+#   rc := mRATRECON(mLen,degM,M,uLen,degU,U,N,D,p,nLen,nOut,dn,dLen,dOut,dd):
+# =============================================================================
 mRATRECON := define_external(
                             'ratRECON_C',
                             mLen::integer[4],
@@ -44,6 +56,20 @@ mRATRECON := subsop(1=(
                        degDOUT),
                        op(mRATRECON)):
 
+# =============================================================================
+# External procedure: mNEWTONINTERP
+# What it does:
+#   Binds Maple directly to the C++ cppInterp Newton interpolation wrapper.
+# Inputs:
+#   - xLen,xIn and yLen,yIn: integer[8] sample arrays.
+#   - p: modulus.
+#   - outLen,yOut: coefficient output buffer.
+#   - degOut: output degree reference.
+# Outputs:
+#   - Returns the C++ status code and fills yOut/degOut on success.
+# Example:
+#   rc := mNEWTONINTERP(n,xA,n,yA,p,n,cA,d):
+# =============================================================================
 mNEWTONINTERP := define_external(
                                 'cppInterp',
                                 xLen::integer[4],
@@ -71,6 +97,21 @@ mNEWTONINTERP := subsop(1=(
                            degOut),
                            op(mNEWTONINTERP)): 
 
+# =============================================================================
+# External procedure: mVSOLVE
+# What it does:
+#   Binds Maple directly to the C++ transposed Vandermonde solver.
+# Inputs:
+#   - mLen,mIn: node array.
+#   - yLen,yIn: right-hand side.
+#   - shiftInt: shift correction.
+#   - pp: modulus.
+#   - outLen,aOut: solution buffer.
+# Outputs:
+#   - Returns the C++ status code and writes the coefficient solution into aOut.
+# Example:
+#   rc := mVSOLVE(n,mA,n,yA,0,p,n,aA):
+# =============================================================================
 mVSOLVE := define_external('cppVSolve',
   mLen::integer[4],
   mIn::ARRAY(0..mLen-1,datatype=integer[8]),
@@ -95,6 +136,20 @@ mVSOLVE := subsop(1=(
                     outLen,
                     aOut),op(mVSOLVE)): 
 
+# =============================================================================
+# External procedure: mBM
+# What it does:
+#   Binds Maple directly to the C++ Berlekamp-Massey wrapper.
+# Inputs:
+#   - aLen,aIn: input sequence.
+#   - p: modulus.
+#   - outLen,lOut: connection-polynomial buffer.
+#   - degOut: output degree reference.
+# Outputs:
+#   - Returns the C++ status code and fills lOut/degOut.
+# Example:
+#   rc := mBM(N,aA,p,n+1,L,d):
+# =============================================================================
 mBM := define_external('cppBM',
   aLen::integer[4],
   aIn::ARRAY(0..aLen-1, datatype=integer[8]),
@@ -115,6 +170,18 @@ mBM := subsop(1=(
 
 (* Maple wrapper for Berlekamp Massey *)
 
+# =============================================================================
+# Procedure: cppBMM
+# What it does:
+#   Wraps the C++ Berlekamp-Massey routine and converts its output coefficient array into a Maple list.
+# Inputs:
+#   - a: nonempty sequence supplied as a Vector or list.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns the connection-polynomial coefficients [L[0],...,L[d]] in ascending degree order; returns [] when the C++ routine produces no polynomial.
+# Example:
+#   LambdaCoeffs := cppBMM([1,2,4,8],101):
+# =============================================================================
 cppBMM := proc(a::{Vector,list},p::prime) option inline:
 local N,n,i,aArr,L,deg,rc:
 
@@ -153,6 +220,20 @@ end proc:
 
 (* Maple wrapper for Vandermonde Solve. *)
 
+# =============================================================================
+# Procedure: cppVS
+# What it does:
+#   Wraps the C++ transposed Vandermonde solver used by sparse interpolation.
+# Inputs:
+#   - v: right-hand-side/sample values.
+#   - m: Vandermonde nodes; must have the same length as v.
+#   - p: prime modulus.
+#   - shift: optional integer shift correction, default 0.
+# Outputs:
+#   - Returns the solved coefficient list of the same length as v.
+# Example:
+#   a := cppVS([3,5],[2,7],101):
+# =============================================================================
 cppVS := proc(v::{Vector,list},m::{Vector,list},p::prime,shift::integer:=0) option inline:
 local t,i,a,R,y,rc:
 
@@ -178,6 +259,19 @@ local t,i,a,R,y,rc:
    return [seq(a[i],i=0..t-1)];
 end proc:
 
+# =============================================================================
+# External procedure: mINTERPDFTRFR
+# What it does:
+#   Binds Maple to the combined C++ interpolation plus deterministic fault-tolerant reconstruction routine.
+# Inputs:
+#   - nPts,alpha,Yin: sample count, nodes, and values.
+#   - N,DBound,E,p: degree/error bounds and modulus.
+#   - nOUT,dOUT with lengths: output coefficient arrays.
+# Outputs:
+#   - Returns 0 on successful reconstruction, 1 on reconstruction failure, or a negative C++ error code.
+# Example:
+#   rc := mINTERPDFTRFR(n,alphaA,yA,N,D,E,p,N+1,nA,D+1,dA):
+# =============================================================================
 mINTERPDFTRFR := define_external(
                           'cppInterpDFTRFR',
                           nPts::integer[4],
@@ -203,6 +297,21 @@ mINTERPDFTRFR := subsop(1=(
                     op(mINTERPDFTRFR)):
 
 
+# =============================================================================
+# Procedure: cppInterpDFTRFR
+# What it does:
+#   Performs univariate Newton interpolation followed immediately by deterministic fault-tolerant rational reconstruction through the C++ combined wrapper.
+# Inputs:
+#   - xVals,yVals: equally sized sample-node and sample-value lists.
+#   - var: Maple name used to build the returned rational function.
+#   - N,DBound: numerator and denominator degree bounds.
+#   - E: error budget.
+#   - p: modulus.
+# Outputs:
+#   - Returns the reconstructed rational expression in var, or FAIL when reconstruction does not validate.
+# Example:
+#   f := cppInterpDFTRFR([1,2,3],[4,7,12],x,1,1,0,101):
+# =============================================================================
 cppInterpDFTRFR := proc(xVals, yVals, var, N, DBound, E, p)
     global lastOP:
     local n,xArr,yArr,nOLEN,dOLEN,nOUT,dOUT,cppRet,degN,degD,i,nn,dd:
@@ -249,6 +358,18 @@ cppInterpDFTRFR := proc(xVals, yVals, var, N, DBound, E, p)
 end proc:
 
 (* Check if deg(A[i])=0 *)
+# =============================================================================
+# Procedure: checkZeroPY
+# What it does:
+#   Finds the highest nonzero coefficient index in a raw coefficient Array.
+# Inputs:
+#   - A: coefficient Array indexed from 0.
+#   - len: number of slots to inspect.
+# Outputs:
+#   - Returns the largest i in 0..len-1 with A[i]<>0, or -1 for the zero polynomial.
+# Example:
+#   d := checkZeroPY(A,numelems(A)):
+# =============================================================================
 checkZeroPY := proc(A,len) option inline:
     local i:
 
@@ -263,6 +384,20 @@ end proc:
 lastOP := 0:
 
 (* Converts a polynomial in Maple rep. to an array of coeffs. *)
+# =============================================================================
+# Procedure: convertPY2ARR
+# What it does:
+#   Copies the coefficients of a Maple polynomial into an integer[8] Array ordered from constant term to leading term.
+# Inputs:
+#   - poly: polynomial expression.
+#   - var: polynomial variable.
+#   - deg: degree to copy.
+#   - p: modulus argument kept for interface consistency; this procedure does not reduce coefficients itself.
+# Outputs:
+#   - Returns Array(0..deg) with A[i]=coeff(poly,var,i).
+# Example:
+#   A := convertPY2ARR(3+2*x+x^2,x,2,101):
+# =============================================================================
 convertPY2ARR := proc(poly,var,deg,p) option inline:
     local A,i;
     
@@ -275,6 +410,19 @@ end proc:
 
 (* Converts an array of coeffs. to a polynomial in Maple rep. 
    Array coeffs. are from low deg to high. *)
+# =============================================================================
+# Procedure: convertARR2PY
+# What it does:
+#   Reconstructs a Maple polynomial from an ascending coefficient Array.
+# Inputs:
+#   - A: coefficient Array indexed from 0.
+#   - deg: degree to include.
+#   - var: polynomial variable.
+# Outputs:
+#   - Returns add(A[i]*var^i,i=0..deg).
+# Example:
+#   f := convertARR2PY(Array(0..2,[3,2,1]),2,x):
+# =============================================================================
 convertARR2PY := proc(A,deg,var) option inline:
     local i:
     
@@ -282,6 +430,18 @@ convertARR2PY := proc(A,deg,var) option inline:
 end proc:
 
 (* Check if deg(A[i])=0 *)
+# =============================================================================
+# Procedure: checkZeroPY
+# What it does:
+#   Finds the highest nonzero coefficient index in a raw coefficient Array; this later definition also prints a diagnostic for the zero polynomial.
+# Inputs:
+#   - A: coefficient Array indexed from 0.
+#   - len: number of slots to inspect.
+# Outputs:
+#   - Returns the largest nonzero index, or -1 after printing "ZERO POLYNOMIAL." when all entries vanish.
+# Example:
+#   d := checkZeroPY(A,numelems(A)):
+# =============================================================================
 checkZeroPY := proc(A,len) option inline:
     local i:
 
@@ -297,6 +457,20 @@ end proc:
 lastOP := 0:
 
 (* Maple wrapper for mRATRECON. We call this maple function. *)
+# =============================================================================
+# Procedure: cppRR
+# What it does:
+#   Maple-facing rational-reconstruction wrapper around mRATRECON. It converts U and M to coefficient arrays, calls C++, and converts the normalized result back to Maple form.
+# Inputs:
+#   - Uin,Min: univariate polynomials satisfying the reconstruction congruence.
+#   - var: polynomial variable.
+#   - N,DBound: numerator and denominator degree bounds.
+#   - p: modulus.
+# Outputs:
+#   - Returns the reconstructed rational function, or FAIL when the C++ reconstruction returns a nonzero status.
+# Example:
+#   r := cppRR(U,M,x,degN,degD,101):
+# =============================================================================
 cppRR := proc(Uin,
               Min, 
               var,
@@ -377,6 +551,19 @@ end proc:
 (* 
 This version takes in a list instead of an array. 
 *)
+# =============================================================================
+# Procedure: cppNewtonInterp
+# What it does:
+#   Interpolates a univariate polynomial from sample points using the C++ Newton interpolation kernel.
+# Inputs:
+#   - xVals,yVals: equally sized nonempty lists of nodes and values.
+#   - var: variable for the returned polynomial.
+#   - p: modulus.
+# Outputs:
+#   - Returns the interpolating polynomial modulo p, or FAIL if the C++ call fails.
+# Example:
+#   f := cppNewtonInterp([0,1,2],[1,2,5],x,101):  # 1+x^2
+# =============================================================================
 cppNewtonInterp := proc(xVals,yVals,var,p) option inline:
     global lastOP:
     local n,xArr,yArr,outLen,yOut,degOut,cppRet,poly,i:
@@ -429,6 +616,19 @@ end proc:
 (* Paste ftrfr_cpp_insert.cpp into main.cpp and rebuild cppObj.so first.       *)
 (* ========================================================================= *)
 
+# =============================================================================
+# External procedure: mDFTRFR
+# What it does:
+#   Binds Maple directly to the C++ deterministic fault-tolerant rational reconstruction wrapper.
+# Inputs:
+#   - M/U lengths, degrees, and coefficient Arrays.
+#   - N,DBound,E,p: reconstruction bounds and modulus.
+#   - nOUT,dOUT: output buffers with lengths.
+# Outputs:
+#   - Returns the C++ status code and writes numerator/denominator coefficients into the output Arrays.
+# Example:
+#   rc := mDFTRFR(mLen,dM,M,uLen,dU,U,N,D,E,p,N+1,nA,D+1,dA):
+# =============================================================================
 mDFTRFR := define_external(
                           'cppDFTRFR',
                           mLen::integer[4],
@@ -458,6 +658,19 @@ mDFTRFR := subsop(1=(
                     dOLEN,dOUT),
                     op(mDFTRFR)):
 
+# =============================================================================
+# External procedure: mHFTRFR
+# What it does:
+#   Binds Maple directly to the C++ heuristic/gap fault-tolerant reconstruction wrapper.
+# Inputs:
+#   - M/U arrays with lengths/degrees and p.
+#   - fOUT,gOUT,lamOUT: candidate and bad-factor output Arrays.
+#   - infoOUT: metadata output, with infoOUT[0]=qmax.
+# Outputs:
+#   - Returns the C++ status code and fills all supplied output Arrays.
+# Example:
+#   rc := mHFTRFR(mLen,dM,M,uLen,dU,U,p,fLen,fA,gLen,gA,lLen,lA,1,info):
+# =============================================================================
 mHFTRFR := define_external(
                           'cppHFTRFR',
                           mLen::integer[4],
@@ -491,6 +704,21 @@ mHFTRFR := subsop(1=(
                     op(mHFTRFR)):
 
 
+# =============================================================================
+# Procedure: cppDFTRFR
+# What it does:
+#   Maple wrapper for deterministic fault-tolerant rational reconstruction from U modulo M.
+# Inputs:
+#   - Uin,Min: univariate polynomials.
+#   - var: polynomial variable.
+#   - N,DBound: numerator/denominator degree bounds.
+#   - E: error budget.
+#   - p: modulus.
+# Outputs:
+#   - Returns the normalized reconstructed rational function; returns FAIL when the deterministic degree/gcd checks fail.
+# Example:
+#   r := cppDFTRFR(U,M,x,N,D,E,101):
+# =============================================================================
 cppDFTRFR := proc(Uin, Min, var, N, DBound, E, p)
     global lastOP:
     local Upoly,Mpoly,degU,degM,uLen,mLen,UArr,MArr,
@@ -551,6 +779,19 @@ cppDFTRFR := proc(Uin, Min, var, N, DBound, E, p)
         return (nn/dd):
 end proc:
 
+# =============================================================================
+# Procedure: cppHFTRFR
+# What it does:
+#   Maple wrapper for the heuristic/gap phase of fault-tolerant rational reconstruction and bad-point detection.
+# Inputs:
+#   - Min,Uin: nonzero univariate polynomials.
+#   - var: polynomial variable.
+#   - p: modulus.
+# Outputs:
+#   - Returns fc,gc,degF,degG,qmax,badset,Lambda, where Lambda is the common bad factor and badset contains its roots modulo p.
+# Example:
+#   fc,gc,dF,dG,qmax,bad,L := cppHFTRFR(M,U,x,101):
+# =============================================================================
 cppHFTRFR := proc(Min, Uin, var, p)
     global lastOP:
     local Mpoly,Upoly,degM,degU,mLen,uLen,MArr,UArr,
@@ -610,6 +851,19 @@ cppHFTRFR := proc(Min, Uin, var, p)
         return fc,gc,degFOUT,degGOUT,qmax,badset,Lambda:
 end proc:
 
+# =============================================================================
+# External procedure: mFTREVAL
+# What it does:
+#   Binds Maple to the C++ routine that interpolates, reconstructs, and evaluates numerator/denominator values at sigma.
+# Inputs:
+#   - nPts,alpha,Yin: active sample data.
+#   - sigma,N,DBound,E,p: evaluation/reconstruction parameters.
+#   - outLen,out: output Array.
+# Outputs:
+#   - Returns the C++ status code; on success out[0] and out[1] hold numerator(sigma) and denominator(sigma).
+# Example:
+#   rc := mFTREVAL(n,n,alphaA,n,yA,sigma,N,D,E,p,2,outA):
+# =============================================================================
 mFTREVAL := define_external(
                           'cppFTREval',
                           nPts::integer[4],
@@ -633,6 +887,21 @@ mFTREVAL := subsop(1=(nPts,alphaLen,alpha,yLen,Yin,sigma,
                       N,DBound,E,p,outLen,out),
                    op(mFTREVAL)):
 
+# =============================================================================
+# Procedure: cppFTREval
+# What it does:
+#   Calls the combined C++ interpolation/reconstruction/evaluation kernel for one sample sequence.
+# Inputs:
+#   - nPts: number of active points.
+#   - alphaArr,Yarr: node and value Arrays.
+#   - sigma: point where the reconstructed numerator/denominator are evaluated.
+#   - N,DBound,E,p: reconstruction bounds and modulus.
+#   - outArr: output Array supplied by the caller.
+# Outputs:
+#   - Returns 0 on success or FAIL on reconstruction failure; the C++ call writes numerator(sigma) and denominator(sigma) into outArr.
+# Example:
+#   status := cppFTREval(n,alphaArr,Yarr,sigma,N,D,E,p,outArr):
+# =============================================================================
 cppFTREval := proc(nPts, alphaArr, Yarr, sigma, N, DBound, E, p, outArr)
     local cppRet:
         cppRet := mFTREVAL(nPts,
@@ -649,6 +918,20 @@ cppFTREval := proc(nPts, alphaArr, Yarr, sigma, N, DBound, E, p, outArr)
         return 0:
 end proc:
 
+# =============================================================================
+# External procedure: mAFFINELINE
+# What it does:
+#   Binds Maple to the C++ affine-line point generator.
+# Inputs:
+#   - T,numVar: point and parameter counts.
+#   - alpha,beta,sigma Arrays with lengths.
+#   - p: modulus.
+#   - outLen,out: flat point-major output buffer.
+# Outputs:
+#   - Returns the C++ status code and fills out with T*numVar residues.
+# Example:
+#   rc := mAFFINELINE(T,nv,T,aA,nv-1,bA,nv,sA,p,T*nv,outA):
+# =============================================================================
 mAFFINELINE := define_external(
                           'cppAffineLine',
                           T::integer[4],
@@ -671,6 +954,21 @@ mAFFINELINE := subsop(1=(T,numVar,alphaLen,alpha,betaLen,beta,
                          sigmaLen,sigma,p,outLen,out),
                       op(mAFFINELINE)):
 
+# =============================================================================
+# Procedure: cppAffineLine
+# What it does:
+#   Calls the C++ affine-line generator and fills a preallocated flat point-major Array.
+# Inputs:
+#   - T: number of points.
+#   - numVar: number of parameters.
+#   - alphaArr,betaArr,sigmaArr: line-definition Arrays.
+#   - p: modulus.
+#   - outArr: output Array of length at least T*numVar.
+# Outputs:
+#   - Returns 0 on success; outArr receives all generated parameter points.
+# Example:
+#   cppAffineLine(T,nv,alphaA,betaA,sigmaA,p,ptsA):
+# =============================================================================
 cppAffineLine := proc(T, numVar, alphaArr, betaArr, sigmaArr, p, outArr)
     global lastOP:
     local cppRet:
@@ -687,6 +985,19 @@ cppAffineLine := proc(T, numVar, alphaArr, betaArr, sigmaArr, p, outArr)
         return 0:
 end proc:
 
+# =============================================================================
+# External procedure: cppRREFext
+# What it does:
+#   Raw external binding to the C++ in-place RREF routine.
+# Inputs:
+#   - n,m: matrix dimensions.
+#   - B: C_order integer[8] Matrix.
+#   - p: modulus.
+# Outputs:
+#   - Returns rank(B) or a negative error code; B is overwritten with its RREF.
+# Example:
+#   r := cppRREFext(n,m,B,p):
+# =============================================================================
 cppRREFext := define_external("cppRREF",
     n::integer[4],
     m::integer[4],
@@ -695,6 +1006,27 @@ cppRREFext := define_external("cppRREF",
     RETURN::integer[4],
     LIB=libObj):
 
+cppRREFext := subsop(1=(
+                       n,
+                       m,
+                       B,
+                       p),
+                       op(cppRREFext)):
+
+# =============================================================================
+# External procedure: cppEvalSolveext
+# What it does:
+#   Raw external binding that evaluates one encoded parametric augmented matrix and solves it.
+# Inputs:
+#   - Dimensions and sparse encoding Arrays entStart/expo/coef.
+#   - pnt: parameter point.
+#   - p,dmax: modulus and maximum exponent.
+#   - xOut and info: solution and rank outputs.
+# Outputs:
+#   - Returns 0 for a unique solution, 1 for singular/inconsistent input, or a negative error code.
+# Example:
+#   rc := cppEvalSolveext(nr,nc,nv,ent,expo,coef,pnt,p,dmax,nr,x,2,info):
+# =============================================================================
 cppEvalSolveext := define_external("cppEvalSolve",
     nr::integer[4],
     nc::integer[4],
@@ -712,6 +1044,36 @@ cppEvalSolveext := define_external("cppEvalSolve",
     RETURN::integer[4],
     LIB=libObj):
 
+cppEvalSolveext := subsop(1=(
+                       nr,
+                       nc,
+                       nv,
+                       entStart,
+                       expo,
+                       coef,
+                       pnt,
+                       p,
+                       dmax,
+                       outLen,
+                       xOut,
+                       infoLen,
+                       info),
+                       op(cppEvalSolveext)):
+
+# =============================================================================
+# External procedure: cppEvalSolveBlockext
+# What it does:
+#   Raw external binding for batched encoded-matrix evaluation and solving.
+# Inputs:
+#   - Dimensions and sparse encoding Arrays.
+#   - pts,npts: flat block of parameter points.
+#   - p,dmax,ldx: arithmetic and output-stride settings.
+#   - xOut,info: transposed solutions and status metadata.
+# Outputs:
+#   - Returns 0 if all points solve, 1 if any point fails, or a negative error code.
+# Example:
+#   rc := cppEvalSolveBlockext(nr,nc,nv,ent,expo,coef,pts,T,p,dmax,T,X,2,info):
+# =============================================================================
 cppEvalSolveBlockext := define_external("cppEvalSolveBlock",
     nr::integer[4],
     nc::integer[4],
@@ -730,6 +1092,23 @@ cppEvalSolveBlockext := define_external("cppEvalSolveBlock",
     RETURN::integer[4],
     LIB=libObj):
 
+cppEvalSolveBlockext := subsop(1=(
+                       nr,
+                       nc,
+                       nv,
+                       entStart,
+                       expo,
+                       coef,
+                       pts,
+                       npts,
+                       p,
+                       dmax,
+                       ldx,
+                       xOut,
+                       infoLen,
+                       info),
+                       op(cppEvalSolveBlockext)):
+
 #  Fail here, at read time, rather than 500 black box calls later with
 #  "cannot determine if this expression is true or false".
 if not type(cppRREFext,procedure) then
@@ -746,6 +1125,18 @@ if not type(cppEvalSolveBlockext,procedure) then
 fi:
 #  cppMat64 : build the hardware matrix the external call needs.  Entries are
 #  reduced into [0,p) here so that every one of them fits in a machine word.
+# =============================================================================
+# Procedure: cppMat64
+# What it does:
+#   Converts a general Maple Matrix into a C-order integer[8] Matrix with every entry reduced modulo p.
+# Inputs:
+#   - A: source Matrix.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns a new Matrix suitable for the C++ RREF/linear-solve wrappers; A is unchanged.
+# Example:
+#   B := cppMat64(A,101):
+# =============================================================================
 cppMat64 := proc(A::Matrix,p::prime)
     local n,m,i,j:
     n,m := op(1,A):
@@ -755,6 +1146,18 @@ end proc:
 
 #  cppRREFip(B,p) puts B in reduced row echelon form IN PLACE and returns the
 #  rank.  B must be an integer[8] C_order Matrix.
+# =============================================================================
+# Procedure: cppRREFip
+# What it does:
+#   Runs the C++ reduced-row-echelon-form routine directly on a C-order integer[8] Matrix.
+# Inputs:
+#   - B: Matrix(datatype=integer[8]) in C_order; modified in place.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns rank(B); B is replaced by its RREF modulo p.
+# Example:
+#   r := cppRREFip(B,101):
+# =============================================================================
 cppRREFip := proc(B::Matrix(datatype=integer[8]),p::prime)
     local n,m,r:
     n,m := op(1,B):
@@ -776,6 +1179,18 @@ cppRREFip := proc(B::Matrix(datatype=integer[8]),p::prime)
 end proc:
 
 #  cppRREF(A,p) returns rref(A) mod p and rank(A).  A itself is left alone.
+# =============================================================================
+# Procedure: cppRREF
+# What it does:
+#   Convenience wrapper that copies/converts a general Matrix and computes its modular RREF without changing the caller's matrix.
+# Inputs:
+#   - A: source Matrix.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns B,r where B is rref(A) mod p and r is its rank.
+# Example:
+#   B,r := cppRREF(A,101):
+# =============================================================================
 cppRREF := proc(A::Matrix,p::prime)
     local B,r:
     B := cppMat64(A,p):
@@ -792,6 +1207,18 @@ end proc:
 #  After rref the system has a unique solution exactly when the rank is n and
 #  the pivots sit in columns 1..n, i.e. A[i,i]=1 for i=1..n.  A pivot in the
 #  last column means the system is inconsistent.
+# =============================================================================
+# Procedure: cppLSip
+# What it does:
+#   Solves an n by n+1 augmented linear system modulo p using in-place C++ RREF.
+# Inputs:
+#   - A: integer[8], C_order augmented Matrix; it is destroyed by the solve.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns the unique solution as a list, or FAIL when the matrix is rank deficient or inconsistent.
+# Example:
+#   x := cppLSip(A,101):
+# =============================================================================
 cppLSip := proc(A::Matrix(datatype=integer[8]),p::prime)
     local n,m,r,i:
     n,m := op(1,A):
@@ -812,6 +1239,18 @@ end proc:
 
 #  cppLS(A,p) is the same thing for a general Matrix.  It copies first, so the
 #  caller's matrix survives the call.
+# =============================================================================
+# Procedure: cppLS
+# What it does:
+#   Non-destructive modular linear-system wrapper for a general augmented Matrix.
+# Inputs:
+#   - A: n by n+1 augmented Matrix.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns the solution list or FAIL; A is preserved because a machine-integer copy is solved.
+# Example:
+#   x := cppLS(A,101):
+# =============================================================================
 cppLS := proc(A::Matrix,p::prime)
     return cppLSip(cppMat64(A,p),p):
 end proc:
@@ -836,6 +1275,18 @@ MAPLE_FAST_BOUND := 2^31:
 #    expo[t*nv+k]           exponent of params[k+1] in term t
 #  ---------------------------------------------------------------------------
 
+# =============================================================================
+# Procedure: cppEncodeMatrix
+# What it does:
+#   Encodes a parametric augmented Matrix once as flat sparse monomial data so repeated black-box evaluation can run entirely in C++.
+# Inputs:
+#   - L: Matrix whose entries are polynomials with rational coefficients in params.
+#   - params: ordered list of parameter names.
+# Outputs:
+#   - Returns table E containing dimensions, sparse term offsets/exponents/raw coefficients, cached reduced coefficients, and reusable work Arrays.
+# Example:
+#   E := cppEncodeMatrix(<y1*x1+1 | 2>,[y1]):
+# =============================================================================
 cppEncodeMatrix := proc(L::Matrix,params::list)
     local nr,nc,nv,i,j,k,t,e,cf,mm,T,nT,dmax,d,degs,idx,ent,expoA,coefL,E:
     nr,nc := op(1,L):
@@ -914,6 +1365,19 @@ end proc:
 #  the system mod p.  Returns the solution as a list, or FAIL when the
 #  evaluated matrix is singular or the system is inconsistent.
 #  The coefficients are reduced mod p only when p changes.
+# =============================================================================
+# Procedure: cppEvalSolve
+# What it does:
+#   Evaluates an encoded parametric augmented matrix at one parameter point and solves the resulting system modulo p.
+# Inputs:
+#   - E: encoding returned by cppEncodeMatrix.
+#   - point_: list of at least E["nv"] parameter values.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns the solution list for a unique system, or FAIL if the evaluated matrix is singular/inconsistent.
+# Example:
+#   x := cppEvalSolve(E,[7,11],101):
+# =============================================================================
 cppEvalSolve := proc(E,point_::list,p::prime)
     local k,rc,nr,nv:
 
@@ -968,6 +1432,20 @@ end proc:
 #  point s, or FAIL when some point gave a singular system.
 #  ---------------------------------------------------------------------------
 
+# =============================================================================
+# Procedure: cppEvalSolveBlock
+# What it does:
+#   Evaluates and solves an encoded system at a whole block of points in one external call, with output stored transposed by equation.
+# Inputs:
+#   - E: matrix encoding.
+#   - pts: flat point-major Array containing npts parameter points.
+#   - npts: number of points.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns a flat Array X whose row i contains x_i across all points, or FAIL if any point is singular/inconsistent.
+# Example:
+#   X := cppEvalSolveBlock(E,pts,T,101):
+# =============================================================================
 cppEvalSolveBlock := proc(E,pts::Array,npts::posint,p::prime)
     local k,rc,nr,nv,X:
     nr := E["nr"]:
@@ -1004,6 +1482,20 @@ end proc:
 #  The result shares storage with X, so writing into it (the fault injection
 #  path does) writes into X -- that is harmless here because row i is finished
 #  with before the next equation is touched, but it is worth knowing.
+# =============================================================================
+# Procedure: cppBlockRow
+# What it does:
+#   Creates a zero-copy ArrayTools alias for one equation row of the transposed block-solve output.
+# Inputs:
+#   - X: flat block output Array.
+#   - i: 1-based equation index.
+#   - npts: physical row stride in X.
+#   - m: number of leading entries to expose.
+# Outputs:
+#   - Returns an Array alias indexed 0..m-1 that shares storage with X.
+# Example:
+#   Yarr := cppBlockRow(X,2,T,m):
+# =============================================================================
 cppBlockRow := proc(X::Array,i::posint,npts::posint,m::posint)
     #  0..m-1 on purpose: cppFTREval and the fault path index Yarr[s-1].
     return ArrayTools:-Alias(X,(i-1)*npts,[0..m-1]):
@@ -1026,6 +1518,21 @@ USE_POLROOTS64S := true:
 ROOTS_MODE      := 2:
 
 if USE_POLROOTS64S then
+    # =============================================================================
+    # External procedure: cppPolRootsext
+    # What it does:
+    #   Raw external binding to the C++ finite-field polynomial root finder.
+    # Inputs:
+    #   - d,f: degree and ascending coefficient Array.
+    #   - p: prime modulus.
+    #   - wsize: scratch-size override.
+    #   - outLen,rootsOut: root buffer.
+    #   - infoLen,info: metadata buffer.
+    # Outputs:
+    #   - Returns the C++ status code; info[0] receives the number of roots and rootsOut receives the roots.
+    # Example:
+    #   rc := cppPolRootsext(d,fA,p,0,d,rts,1,info):
+    # =============================================================================
     cppPolRootsext := define_external("cppPolRoots",
         d::integer[4],
         f::ARRAY(datatype=integer[8]),
@@ -1037,6 +1544,17 @@ if USE_POLROOTS64S then
         info::ARRAY(datatype=integer[8]),
         RETURN::integer[4],
         LIB=libObj):
+
+    cppPolRootsext := subsop(1=(
+                       d,
+                       f,
+                       p,
+                       wsize,
+                       outLen,
+                       rootsOut,
+                       infoLen,
+                       info),
+                       op(cppPolRootsext)):
     if not type(cppPolRootsext,procedure) then
         error "define_external did not bind cppPolRootsext; check that %1 "
               "exports cppPolRoots",libObj:
@@ -1052,6 +1570,19 @@ fi:
 #  the coefficients into [0,p) itself.  polroots64s returns DISTINCT roots, so
 #  every multiplicity is 1; the shape matches Roots(F) mod p, sorted by root,
 #  so R[1][1] = 0 still detects the zero root.
+# =============================================================================
+# Procedure: cppPolRootsOfC
+# What it does:
+#   Passes an ascending coefficient list directly to the C++ finite-field root finder, avoiding construction and re-scanning of a symbolic polynomial.
+# Inputs:
+#   - C: coefficient list [c0,c1,...,cd].
+#   - p: prime modulus.
+#   - wsize: optional C++ scratch size; 0 requests the default.
+# Outputs:
+#   - Returns a sorted Maple-style root list [[root,1],...] containing distinct roots modulo p.
+# Example:
+#   R := cppPolRootsOfC([100,0,1],101):  # roots of x^2-1 mod 101
+# =============================================================================
 cppPolRootsOfC := proc(C::list,p::prime,wsize::integer := 0)
     local d,fA,rts,info,rc,n,k:
     d := nops(C)-1:
@@ -1085,6 +1616,19 @@ end proc:
 #  against a far slower Maple generic path.  Worth re-running ROOTS_MODE=2 at
 #  32 bits after this change: the 8.90 included the O(d^2) conversion that no
 #  longer exists.
+# =============================================================================
+# Procedure: rootsMODp
+# What it does:
+#   Dispatches finite-field root finding between Maple Roots and the C++ polroots64s wrapper according to ROOTS_MODE and prime size.
+# Inputs:
+#   - C: ascending coefficient list.
+#   - Z: variable name used only by the Maple symbolic branch.
+#   - p: prime modulus.
+# Outputs:
+#   - Returns the Maple Roots-style list [[root,multiplicity],...].
+# Example:
+#   R := rootsMODp([100,0,1],Z,101):
+# =============================================================================
 rootsMODp := proc(C::list,Z::name,p::prime)
     local i:
     if nops(C) < 2 then

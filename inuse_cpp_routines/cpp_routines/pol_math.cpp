@@ -34,6 +34,17 @@ INTEGER MATH ROUTINES:
 We are not using MUL64ASM1 and ASM2 routines. 
 */
 
+/*
+Function: rand64s
+What it does:
+  Generates one deterministic pseudo-random residue modulo p using the file's global 64-bit linear-congruential state.
+Inputs:
+  - p: modulus; the returned value is reduced modulo p.
+Outputs:
+  - Returns a residue in the range 0..p-1 and advances the global seed.
+Example:
+  LONG r = rand64s(101);  // one pseudo-random element of GF(101)
+*/
 LONG rand64s(LONG p){
     LONG x,y;
     extern ULNG seed,mult;
@@ -46,30 +57,90 @@ LONG rand64s(LONG p){
     return(x);
 }
 
+/*
+Function: add64b
+What it does:
+  Adds two finite-field residues and reduces the result modulo p without using division.
+Inputs:
+  - a, b: residues, normally assumed to satisfy 0 <= a,b < p.
+  - p: modulus.
+Outputs:
+  - Returns (a+b) mod p.
+Example:
+  LONG c = add64b(70, 50, 101);  // c = 19
+*/
 inline LONG add64b(LONG a,LONG b,LONG p){
     LONG r=(a+b)-p;
     r+=(r>>63)&p;
     return r;
 }
 
+/*
+Function: sub64b
+What it does:
+  Subtracts two finite-field residues and reduces the result modulo p.
+Inputs:
+  - a, b: residues, normally assumed to satisfy 0 <= a,b < p.
+  - p: modulus.
+Outputs:
+  - Returns (a-b) mod p in the standard nonnegative residue range.
+Example:
+  LONG c = sub64b(3, 5, 101);  // c = 99
+*/
 inline LONG sub64b(LONG a,LONG b,LONG p){
     LONG r=(a-b);
     r+=(r>>63)&p;
     return r;
 }
 
+/*
+Function: mul64b
+What it does:
+  Multiplies two residues with a 128-bit intermediate so the full product can be reduced safely modulo p.
+Inputs:
+  - a, b: residues to multiply.
+  - p: modulus.
+Outputs:
+  - Returns (a*b) mod p.
+Example:
+  LONG c = mul64b(25, 9, 101);  // c = 23
+*/
 inline LONG mul64b(LONG a,LONG b, LONG p){
     ULNG128 res=(ULNG128)a*b;
     ULNG r=(ULNG)(res%p);
     return r;
 }
 
+/*
+Function: neg64s
+What it does:
+  Computes the additive inverse of a residue modulo p.
+Inputs:
+  - a: residue in 0..p-1.
+  - p: modulus.
+Outputs:
+  - Returns 0 when a=0; otherwise returns p-a.
+Example:
+  LONG b = neg64s(7, 101);  // b = 94
+*/
 inline LONG neg64s(LONG a,LONG p){ 
     return (a==0)?0:p-a; 
 };
 
 // We are assuming 0<=a,b<p for the following routines. 
 
+/*
+Function: mul64bASM
+What it does:
+  Computes modular multiplication using x86-64 mulq/divq instructions for the product and remainder.
+Inputs:
+  - a, b: residues to multiply.
+  - p: modulus; inputs are assumed compatible with the assembly routine.
+Outputs:
+  - Returns (a*b) mod p.
+Example:
+  LONG c = mul64bASM(25, 9, 101);  // c = 23
+*/
 inline LONG mul64bASM(LONG a,LONG b,LONG p){
     LONG q, r;
     __asm__ __volatile__(           \
@@ -79,6 +150,18 @@ inline LONG mul64bASM(LONG a,LONG b,LONG p){
     return r;
 }
 
+/*
+Function: mul64bASM2
+What it does:
+  Alternative x86-64 assembly implementation of modular multiplication using an explicit scratch register for p.
+Inputs:
+  - a, b: residues to multiply.
+  - p: modulus.
+Outputs:
+  - Returns (a*b) mod p.
+Example:
+  LONG c = mul64bASM2(25, 9, 101);  // c = 23
+*/
 inline LONG mul64bASM2(LONG a,LONG b,LONG p){
     LONG q;
     LONG r;
@@ -94,6 +177,19 @@ inline LONG mul64bASM2(LONG a,LONG b,LONG p){
     return r;
 }
 
+/*
+Function: powmod64s
+What it does:
+  Evaluates a^n modulo p using the modular multiplication routines and the exponentiation loop implemented here.
+Inputs:
+  - a: base; a negative representative is shifted into the field range.
+  - n: nonnegative exponent.
+  - p: modulus.
+Outputs:
+  - Returns the residue produced for a^n mod p; n=0 returns 1.
+Example:
+  LONG r = powmod64s(3, 5, 101);
+*/
 inline LONG powmod64s(LONG a,LONG n,LONG p){   
     LONG r,s;
     a+=(a>>63)&p;
@@ -108,6 +204,18 @@ inline LONG powmod64s(LONG a,LONG n,LONG p){
     return r;
 };
 
+/*
+Function: modinv64b
+What it does:
+  Computes the multiplicative inverse of c modulo p with the extended Euclidean algorithm.
+Inputs:
+  - c: value whose inverse is requested.
+  - p: modulus.
+Outputs:
+  - Returns c^(-1) mod p when gcd(c,p)=1; returns 0 when no inverse exists.
+Example:
+  LONG inv = modinv64b(3, 101);  // inv = 34
+*/
 inline LONG modinv64b(LONG c,LONG p){   
     LONG d,r,q,r1,c1,d1;
     d=p;
@@ -139,6 +247,17 @@ struct RatReconFastWS{
     vector<LONG> q;
     vector<LONG> tmpT;
 
+    /*
+    Function: RatReconFastWS
+    What it does:
+      Constructs and sizes the reusable workspace used by fast rational reconstruction, avoiding repeated allocations inside the Euclidean loop.
+    Inputs:
+      - degM: maximum degree used to size all remainder, cofactor, quotient, and temporary arrays.
+    Outputs:
+      - Creates a RatReconFastWS object whose vectors have degM+1 slots; t1, t2, q, and tmpT are zero-initialized.
+    Example:
+      RatReconFastWS W(20);  // workspace for arrays with up to 21 coefficients
+    */
     RatReconFastWS(int degM){
         int n=degM+1;
         r1.resize(n);
@@ -201,6 +320,18 @@ struct GCDEXHIST{
     "       xorq    %0, %0  \n\t" \
             : "=a"(z[1]), "=d"(z[0]) : "a"(z[0]), "d"(z[1] < p ? z[1] : z[1] % p), "r"(p))
 
+/*
+Function: genVEC64
+What it does:
+  Builds a random polynomial coefficient vector over GF(p) with coefficients generated by rand64s.
+Inputs:
+  - deg: requested polynomial degree; -1 represents the zero polynomial.
+  - p: modulus used for each random coefficient.
+Outputs:
+  - Returns an empty vector for deg=-1, otherwise a vector of deg+1 residues.
+Example:
+  auto a = genVEC64(3, 101);  // four coefficients a[0]..a[3]
+*/
 vector<LONG> genVEC64(const int deg,const LONG p){
 vector<LONG> v;
 /*
@@ -216,24 +347,74 @@ for(int i=0;i<=deg;i++){
 return v;
 };
 
+/*
+Function: vecCOPY64
+What it does:
+  Creates an independent copy of a coefficient vector.
+Inputs:
+  - v: source vector.
+Outputs:
+  - Returns a new vector containing the same elements as v.
+Example:
+  auto b = vecCOPY64(a);
+*/
 vector<LONG> vecCOPY64(const vector<LONG> &v){
 vector<LONG> temp; 
 temp=v;
 return temp;
 };
 
+/*
+Function: vecfill64s
+What it does:
+  Fills a raw array with one constant value.
+Inputs:
+  - x: value to write.
+  - A: destination array with at least n elements.
+  - n: number of entries to fill.
+Outputs:
+  - Returns nothing; overwrites A[0]..A[n-1] with x.
+Example:
+  LONG A[4]; vecfill64s(0, A, 4);
+*/
 void vecfill64s( LONG x, LONG *A, int n )
 {   int i;
     for( i=0; i<n; i++ ) A[i] = x;
     return;
 }
 
+/*
+Function: polcopy64s
+What it does:
+  Copies the coefficients of a polynomial represented in ascending degree order.
+Inputs:
+  - A: source coefficients A[0]..A[d].
+  - d: degree of the source polynomial.
+  - B: destination array with at least d+1 slots.
+Outputs:
+  - Returns nothing; writes a copy of A into B.
+Example:
+  LONG A[3]={1,2,3}, B[3]; polcopy64s(A,2,B);
+*/
 void polcopy64s( LONG *A, int d, LONG *B )
 {   int i;
     for( i=0; i<=d; i++) B[i]=A[i];
     return;
 }
 
+/*
+Function: monic64s
+What it does:
+  Normalizes a nonzero polynomial over GF(p) so its leading coefficient becomes 1.
+Inputs:
+  - A: coefficient array, modified in place.
+  - d: degree of A; negative means the zero polynomial.
+  - p: modulus.
+Outputs:
+  - Returns nothing; when d>=0, A is scaled by the inverse of A[d] unless already monic.
+Example:
+  LONG A[3]={2,4,3}; monic64s(A,2,101);
+*/
 void monic64s(LONG *A,int d,LONG p) {
     int i; LONG inv;
     if(d<0 || A[d]==1) return;
@@ -243,6 +424,17 @@ void monic64s(LONG *A,int d,LONG p) {
     return;
 }
 
+/*
+Function: dispVEC64
+What it does:
+  Prints a coefficient vector as a human-readable polynomial in x, using ascending coefficient storage.
+Inputs:
+  - v: polynomial coefficient vector.
+Outputs:
+  - Returns nothing; writes the formatted polynomial to standard output.
+Example:
+  dispVEC64(vector<LONG>{1,2,3});  // prints 1*x^0 + 2*x^1 + 3*x^2
+*/
 void dispVEC64(const vector<LONG> &v){
 if(v.size()==0) cout<<"O"<<"\n";
 cout<<"[ ";
@@ -259,6 +451,19 @@ for(int i=0;i<v.size();i++){
 // Returns a pair containing the new vector c=(a+b) mod p
 // and the degree of c. 
 
+/*
+Function: pADDNEW64
+What it does:
+  Adds two polynomials over GF(p) and stores the sum in a newly allocated vector.
+Inputs:
+  - a, b: input coefficient vectors.
+  - degA, degB: their degrees; -1 denotes the zero polynomial.
+  - p: modulus.
+Outputs:
+  - Returns {c,degC}, where c=(a+b) mod p is trimmed to its true degree.
+Example:
+  auto [c,dc] = pADDNEW64(a,b,da,db,101);
+*/
 pair<vector<LONG>,int> pADDNEW64(const vector<LONG> &a,const vector<LONG> &b,const int degA,const int degB,const LONG p){
 	vector<LONG> c;
 	int degC=-1;
@@ -289,6 +494,21 @@ pair<vector<LONG>,int> pADDNEW64(const vector<LONG> &a,const vector<LONG> &b,con
 
 // In place addition. Overwrites a and returns the new degree.
 
+/*
+Function: pADDIP64
+What it does:
+  Adds polynomial b to polynomial a modulo p, modifying a rather than allocating a separate result.
+Inputs:
+  - a: first polynomial and destination.
+  - b: second polynomial.
+  - degA: degree of a, passed by reference and updated.
+  - degB: degree of b.
+  - p: modulus.
+Outputs:
+  - Returns the new degree of a and updates both a and degA.
+Example:
+  int dc = pADDIP64(a,b,da,db,101);
+*/
 int pADDIP64(vector<LONG> &a,const vector<LONG> &b,int &degA,const int degB,const LONG p){
 	if(degA==-1&&degB==-1) return -1;
 	if(degB==-1) return degA;
@@ -318,6 +538,19 @@ int pADDIP64(vector<LONG> &a,const vector<LONG> &b,int &degA,const int degB,cons
 // Returns a pair containing the new vector c=(a-b) mod p
 // and the degree of c. 
 
+/*
+Function: pSUBNEW64
+What it does:
+  Computes a-b over GF(p) and stores the result in a new vector.
+Inputs:
+  - a, b: input coefficient vectors.
+  - degA, degB: their degrees; -1 denotes zero.
+  - p: modulus.
+Outputs:
+  - Returns {c,degC}, where c=(a-b) mod p is trimmed to its true degree.
+Example:
+  auto [c,dc] = pSUBNEW64(a,b,da,db,101);
+*/
 pair<vector<LONG>,int> pSUBNEW64(const vector<LONG> &a,const vector<LONG> &b,
                                 const int degA,const int degB,const LONG p){
     vector<LONG> c;
@@ -350,6 +583,20 @@ pair<vector<LONG>,int> pSUBNEW64(const vector<LONG> &a,const vector<LONG> &b,
 
 // In place subtraction. Overwrites a and returns the new degree.
 
+/*
+Function: pSUBIP64
+What it does:
+  Subtracts polynomial b from the raw coefficient array a in place.
+Inputs:
+  - a: destination array with enough storage for the larger degree.
+  - b: polynomial to subtract.
+  - degA, degB: input degrees.
+  - p: modulus.
+Outputs:
+  - Returns the degree of the updated a; -1 means the result is zero.
+Example:
+  int dc = pSUBIP64(a,b,da,db,101);
+*/
 int pSUBIP64(LONG *a,
              const LONG *b,
              int degA,
@@ -375,6 +622,20 @@ int pSUBIP64(LONG *a,
 	return maxDeg;
 }
 
+/*
+Function: polsub64s
+What it does:
+  Computes the polynomial difference A-B over GF(p) into a separate output array C.
+Inputs:
+  - a, b: source coefficient arrays.
+  - c: destination array.
+  - da, db: source degrees.
+  - p: modulus.
+Outputs:
+  - Returns degree(C) after trimming leading zeros.
+Example:
+  int dc = polsub64s(A,B,C,da,db,101);
+*/
 int polsub64s(LONG *a, LONG *b, LONG *c, int da, int db, LONG p) {
        int i,m;
        m = min(da,db);
@@ -387,6 +648,19 @@ int polsub64s(LONG *a, LONG *b, LONG *c, int da, int db, LONG p) {
 // Returns a pair containing the new vector c=(a*b) mod p
 // and the degree of c. 
 
+/*
+Function: pMULNEW64
+What it does:
+  Multiplies two polynomials over GF(p) by coefficient convolution and allocates a new result vector.
+Inputs:
+  - a, b: input coefficient vectors.
+  - degA, degB: their degrees.
+  - p: modulus.
+Outputs:
+  - Returns {c,degC}; a zero input gives an empty vector with degree -1.
+Example:
+  auto [c,dc] = pMULNEW64(a,b,da,db,101);
+*/
 pair<vector<LONG>,int> pMULNEW64(const vector<LONG> &a,const vector<LONG> &b,int degA,int degB,const LONG p){
 	vector<LONG> c;
 	if(degA<0 || degB<0) return {c,-1};
@@ -408,6 +682,20 @@ pair<vector<LONG>,int> pMULNEW64(const vector<LONG> &a,const vector<LONG> &b,int
 
 // In place multiplication. Overwrites a and returns the new degree.
 
+/*
+Function: pMULIP64
+What it does:
+  Multiplies a by b over GF(p), writing the product back into a and using fast accumulator paths selected by the size of p.
+Inputs:
+  - a: first factor and destination; caller must provide degA+degB+1 slots.
+  - b: second factor.
+  - degA, degB: input degrees.
+  - p: modulus.
+Outputs:
+  - Returns the true degree of the product stored in a.
+Example:
+  int dc = pMULIP64(A,B,da,db,101);
+*/
 int pMULIP64(LONG *a,
              const LONG* b,
              int degA,
@@ -467,6 +755,20 @@ int pMULIP64(LONG *a,
 	return degC;
 }
 
+/*
+Function: polMUL64P
+What it does:
+  Reference in-place polynomial multiplication routine that computes a <- a*b modulo p with straightforward modular products.
+Inputs:
+  - a: first factor and destination with enough storage.
+  - b: second factor.
+  - degA, degB: degrees.
+  - p: modulus.
+Outputs:
+  - Returns the degree of the product, or -1 for a zero factor.
+Example:
+  int dc = polMUL64P(A,B,da,db,101);
+*/
 int polMUL64P(LONG *a,
               LONG *b,
               int degA,
@@ -494,6 +796,20 @@ int polMUL64P(LONG *a,
     return degC;
 }
 
+/*
+Function: polmul64s
+What it does:
+  Multiplies two raw polynomial arrays over GF(p) into a separate array, using 64-bit or 128-bit accumulation depending on p.
+Inputs:
+  - A, B: source coefficient arrays.
+  - C: destination with da+db+1 slots.
+  - da, db: source degrees.
+  - p: modulus.
+Outputs:
+  - Returns the degree of C, or -1 if either input is zero.
+Example:
+  int dc = polmul64s(A,B,C,da,db,101);
+*/
 int polmul64s( LONG * A, LONG * B, LONG * C, int da, int db, LONG p)
 {
     int i,k,m;
@@ -534,6 +850,20 @@ if( p<2147483648ll ) { LONG t, p2;
     return( dc );
 }
 
+/*
+Function: polfms64s
+What it does:
+  Performs a fused polynomial multiply-subtract C <- C - A*B modulo p.
+Inputs:
+  - A, B: multiplicand coefficient arrays.
+  - C: polynomial updated in place.
+  - da, db, dc: current degrees of A, B, and C.
+  - p: modulus.
+Outputs:
+  - Returns the new degree of C after the subtraction.
+Example:
+  dc = polfms64s(A,B,C,da,db,dc,101);
+*/
 int polfms64s(LONG *A, LONG *B, LONG *C, int da, int db, int dc, LONG p)
 {   // polynomial fused multiply subtract: C -= A*B
     int i,k,m; ULNG z[2];
@@ -564,6 +894,20 @@ int polfms64s(LONG *A, LONG *B, LONG *C, int da, int db, int dc, LONG p)
     return dc;
 }
 
+/*
+Function: pMULIP64VANDER
+What it does:
+  Multiplies two vector-backed polynomials for the Vandermonde code, placing a*b into b while normalizing coefficients modulo p.
+Inputs:
+  - a: left factor.
+  - b: right factor and destination.
+  - degA, degB: input degrees.
+  - p: modulus.
+Outputs:
+  - Returns degree(b) after multiplication; b is replaced by the product.
+Example:
+  int dc = pMULIP64VANDER(a,b,da,db,101);
+*/
 int pMULIP64VANDER(vector<LONG> &a, vector<LONG> &b, int degA, int degB, const LONG p) {
     // Computes: b <- a * b   (in-place on b)
     // a is treated as the left factor (degree degA)
@@ -577,6 +921,17 @@ int pMULIP64VANDER(vector<LONG> &a, vector<LONG> &b, int degA, int degB, const L
     if ((int)a.size() < degA + 1) a.resize(degA + 1, 0);
     if ((int)b.size() < degB + 1) b.resize(degB + 1, 0);
 
+    /*
+    Function: normp (local lambda)
+    What it does:
+      Normalizes one signed coefficient into the standard residue range 0..p-1 for pMULIP64VANDER.
+    Inputs:
+      - x: coefficient to normalize. The surrounding lambda captures p by value.
+    Outputs:
+      - Returns x mod p as a nonnegative residue.
+    Example:
+      LONG r = normp(-1);  // r = p-1
+    */
     auto normp = [p](LONG x) -> LONG {
         x %= p;
         if (x < 0) x += p;
@@ -618,6 +973,20 @@ int pMULIP64VANDER(vector<LONG> &a, vector<LONG> &b, int degA, int degB, const L
 // Computes scalar polynomial multiplication i.e.
 // A=c*A(x) where c is some scalar and returns a new vector.
 
+/*
+Function: polSCMULNEW64
+What it does:
+  Multiplies a polynomial by a scalar modulo p and returns a new coefficient vector.
+Inputs:
+  - a: source polynomial.
+  - x: scalar multiplier; the special values 1 and -1 are handled directly.
+  - degA: polynomial degree.
+  - p: modulus.
+Outputs:
+  - Returns the scaled polynomial without changing a.
+Example:
+  auto b = polSCMULNEW64(a,5,da,101);
+*/
 vector<LONG> polSCMULNEW64(vector<LONG> &a,LONG x,int degA,const LONG p){
 	vector<LONG> temp;
 	if(x==1){return a;}
@@ -639,6 +1008,20 @@ vector<LONG> polSCMULNEW64(vector<LONG> &a,LONG x,int degA,const LONG p){
 // Computes scalar polynomial multiplication in place i.e.
 // A=c*A(x) where c is some scalar. 
 
+/*
+Function: polSCMULIP64
+What it does:
+  Scales a polynomial by a scalar modulo p in place.
+Inputs:
+  - a: polynomial modified in place.
+  - x: scalar multiplier.
+  - degA: polynomial degree.
+  - p: modulus.
+Outputs:
+  - Returns nothing; a becomes x*a mod p.
+Example:
+  polSCMULIP64(a,5,da,101);
+*/
 void polSCMULIP64(vector<LONG> &a,LONG x,int degA,const LONG p){
 	// Since scalar value is 1 no difference.
 	if(x==1){return;}
@@ -657,6 +1040,21 @@ void polSCMULIP64(vector<LONG> &a,LONG x,int degA,const LONG p){
 
 // Computes A=A-(ax+b)*B efficiently using accumalators.
 
+/*
+Function: polSUBMUL64
+What it does:
+  Efficiently performs A <- A - (aVal*x+bVal)B over GF(p), a common degree-one Euclidean-algorithm step.
+Inputs:
+  - a: polynomial A, modified in place and with storage through index degB+1.
+  - b: polynomial B.
+  - aVal, bVal: coefficients of the linear quotient aVal*x+bVal.
+  - degA, degB: current degrees.
+  - p: modulus.
+Outputs:
+  - Returns the new degree of A.
+Example:
+  degA = polSUBMUL64(A,B,q1,q0,degA,degB,101);
+*/
 int polSUBMUL64(LONG *a,
                 const LONG *b,
                 LONG aVal,
@@ -712,6 +1110,21 @@ int polSUBMUL64(LONG *a,
 	return degA;
 }
 
+/*
+Function: polSUBMUL64P
+What it does:
+  Straightforward modular-product version of A <- A - (aVal*x+bVal)B, used as a comparison/reference path.
+Inputs:
+  - a: polynomial A modified in place.
+  - b: polynomial B.
+  - aVal, bVal: linear quotient coefficients.
+  - degA, degB: degrees.
+  - p: modulus.
+Outputs:
+  - Returns the new degree of A; the routine prints FAIL if the degree unexpectedly does not drop.
+Example:
+  degA = polSUBMUL64P(A,B,q1,q0,degA,degB,101);
+*/
 int polSUBMUL64P(LONG *a,
                  const LONG *b,
                  LONG aVal,
@@ -751,6 +1164,19 @@ int polSUBMUL64P(LONG *a,
 
 // Evaluates a polynomial using Horners rule.
 
+/*
+Function: evalHORN64
+What it does:
+  Evaluates a vector-backed polynomial at alpha modulo p using Horner's rule.
+Inputs:
+  - a: coefficients in ascending degree order.
+  - alpha: evaluation point.
+  - p: modulus.
+Outputs:
+  - Returns a(alpha) mod p.
+Example:
+  LONG y = evalHORN64(a,7,101);
+*/
 LONG evalHORN64(vector<LONG>& a,LONG alpha,LONG p){
     LONG r = 0LL;
 	for (int k=a.size();k-->0;){
@@ -759,6 +1185,20 @@ LONG evalHORN64(vector<LONG>& a,LONG alpha,LONG p){
     return r;
 }
 
+/*
+Function: pEVAL64
+What it does:
+  Evaluates a raw-array polynomial at x modulo p using Horner's rule.
+Inputs:
+  - a: coefficient array.
+  - d: degree; -1 represents zero.
+  - x: evaluation point.
+  - p: modulus.
+Outputs:
+  - Returns a(x) mod p, or 0 when d=-1.
+Example:
+  LONG y = pEVAL64(A,da,7,101);
+*/
 LONG pEVAL64(LONG *a,int d,LONG x,const LONG p){
 	int i;
 	LONG r;
@@ -773,6 +1213,20 @@ LONG pEVAL64(LONG *a,int d,LONG x,const LONG p){
 // I am also returning the degree of both the quotient 
 // and remainder.
 
+/*
+Function: pDIVDEG
+What it does:
+  Divides polynomial a by b over GF(p) in place, storing the remainder in the low coefficients and the quotient in the high portion of a.
+Inputs:
+  - a: dividend and combined remainder/quotient workspace.
+  - b: divisor.
+  - degA, degB: input degrees.
+  - p: modulus.
+Outputs:
+  - Returns {degQ,degR}. The contents of a are overwritten by the division layout.
+Example:
+  auto [dq,dr] = pDIVDEG(a,b,da,db,101);
+*/
 pair<int,int> pDIVDEG(vector<LONG> &a,const vector<LONG> &b,int degA,int degB,const LONG p){
 	/* 
 	Changes A in place.
@@ -819,6 +1273,20 @@ pair<int,int> pDIVDEG(vector<LONG> &a,const vector<LONG> &b,int degA,int degB,co
 // half of a so a[0...deg(b)-1] and quotient in the top half 
 // so a[degb...dega] and return the degree of the remainder.
 
+/*
+Function: polDIVIP64
+What it does:
+  Fast raw-array polynomial division over GF(p). The dividend array is reused to store remainder and quotient.
+Inputs:
+  - a: dividend/workspace; after the call a[0..degB-1] contains the remainder and a[degB..degA] contains the quotient.
+  - b: nonzero divisor.
+  - degA, degB: degrees.
+  - p: modulus.
+Outputs:
+  - Returns the degree of the remainder; -1 means exact division.
+Example:
+  int dr = polDIVIP64(A,B,da,db,101);
+*/
 int polDIVIP64(LONG *a,
                const LONG *b,
                int degA,
@@ -935,6 +1403,20 @@ int polDIVIP64(LONG *a,
     return dr;
 }
 
+/*
+Function: polDIVP
+What it does:
+  Reference polynomial-division implementation that overwrites a with the same remainder/quotient layout as polDIVIP64.
+Inputs:
+  - a: dividend/workspace.
+  - b: divisor.
+  - degA, degB: degrees.
+  - p: modulus.
+Outputs:
+  - Returns degree of the remainder, or -1 for exact division.
+Example:
+  int dr = polDIVP(A,B,da,db,101);
+*/
 int polDIVP(LONG *a,
             LONG *b,
             int degA,
@@ -983,6 +1465,18 @@ int polDIVP(LONG *a,
 // Makes a polynomial monic. We can do this as we are working 
 // in Zp[x] and this is a field so inverses exist.
 
+/*
+Function: polMAKEMONIC64
+What it does:
+  Normalizes a vector-backed polynomial over GF(p) by scaling all coefficients so the leading coefficient is 1.
+Inputs:
+  - a: polynomial modified in place.
+  - p: modulus.
+Outputs:
+  - Returns nothing; a is unchanged if it is zero or already monic.
+Example:
+  polMAKEMONIC64(a,101);
+*/
 void polMAKEMONIC64(vector<LONG> &a,const LONG p){
 	int degA=a.size()-1;
 	if(degA<0 || a[degA]==1) return;
@@ -997,6 +1491,19 @@ void polMAKEMONIC64(vector<LONG> &a,const LONG p){
 // My version of computing the gcd(a(x),b(x)). This returns 
 // the updated vector a with the GCD and its degree.
 
+/*
+Function: polGCDNEW64
+What it does:
+  Computes the monic polynomial gcd of a and b over GF(p) with the Euclidean algorithm.
+Inputs:
+  - a, b: polynomial vectors; they are used as mutable Euclidean workspaces.
+  - degA, degB: degrees.
+  - p: modulus.
+Outputs:
+  - Returns {g,degG}, where g is the monic gcd.
+Example:
+  auto [g,dg] = polGCDNEW64(a,b,da,db,101);
+*/
 pair<vector<LONG>,int> polGCDNEW64(vector<LONG> &a,vector<LONG> &b,int degA,int degB,const LONG p){
 	// Division dominates. 
 	// Space is O((degA+1)+(degB+1)).
@@ -1023,6 +1530,22 @@ pair<vector<LONG>,int> polGCDNEW64(vector<LONG> &a,vector<LONG> &b,int degA,int 
 	return {a,degA};
 }
 
+/*
+Function: ratReconNormal
+What it does:
+  Runs the extended-Euclidean rational-reconstruction kernel on M and U, stopping at the requested numerator degree and normalizing the denominator to be monic.
+Inputs:
+  - m, u: coefficient vectors for M and U.
+  - degM, degU: their degrees.
+  - N, D: requested numerator/denominator degree bounds used by the reconstruction interface.
+  - p: modulus.
+  - W: reusable RatReconFastWS workspace.
+  - rOut/tOut and degROut/degTOut: output buffers and returned degrees.
+Outputs:
+  - Returns 0 on reconstruction success; negative codes indicate that the target row was not found or normalization failed. On success rOut/tOut contain numerator/denominator coefficients.
+Example:
+  int rc = ratReconNormal(M,U,degM,degU,N,D,p,W,num,&dn,den,&dd);
+*/
 int ratReconNormal(const vector<LONG> &m,
     const vector<LONG> &u,
     int degM,
@@ -1163,6 +1686,20 @@ return -20;
 
 /* HFTRFR and DFTRFR */
 
+/*
+Function: polGCDvec
+What it does:
+  Internal vector-based monic gcd helper used by the fault-tolerant rational reconstruction routines.
+Inputs:
+  - a, b: polynomial copies passed by value.
+  - degA, degB: degrees.
+  - p: modulus.
+  - g: output vector.
+Outputs:
+  - Returns degree(g) and writes the monic gcd into g.
+Example:
+  int dg = polGCDvec(A,da,B,db,101,g);
+*/
 static int polGCDvec(std::vector<LONG> a,int degA,std::vector<LONG> b,int degB,LONG p,std::vector<LONG>&g){
     if(degA<0 && degB<0){ g.assign(1,1); return 0; }             // gcd(0,0) := 1
     if(degB<0){ g=a; g.resize(degA+1); monic64s(g.data(),degA,p); return degA; }
@@ -1192,6 +1729,20 @@ static int polGCDvec(std::vector<LONG> a,int degA,std::vector<LONG> b,int degB,L
     }
 }
 
+/*
+Function: polExactQuo
+What it does:
+  Computes the quotient A/B in the case where B is expected to divide A exactly.
+Inputs:
+  - A, B: input polynomial vectors.
+  - degA, degB: degrees.
+  - p: modulus.
+  - Q: output quotient vector.
+Outputs:
+  - Returns degree(Q) and writes the quotient to Q.
+Example:
+  int dq = polExactQuo(A,da,B,db,101,Q);
+*/
 static int polExactQuo(const std::vector<LONG>&A,int degA,const std::vector<LONG>&B,int degB,LONG p,std::vector<LONG>&Q){
     std::vector<LONG> a=A; a.resize(degA+1);
     polDIVIP64(a.data(),B.data(),degA,degB,p);
@@ -1202,6 +1753,20 @@ static int polExactQuo(const std::vector<LONG>&A,int degA,const std::vector<LONG
     return degQ;
 }
 
+/*
+Function: eeaStep
+What it does:
+  Performs one extended-Euclidean step on consecutive remainder/cofactor pairs, using the optimized linear-quotient path when possible.
+Inputs:
+  - Rp,R and degRp,degR: previous/current remainders.
+  - Tp,T and degTp,degT: matching cofactors.
+  - p: modulus.
+  - rem,drem,nT,dnT: output remainder and next cofactor with their degrees.
+Outputs:
+  - Returns nothing; writes the next Euclidean remainder and cofactor through the output references.
+Example:
+  eeaStep(Rp,dRp,R,dR,Tp,dTp,T,dT,101,rem,drem,nT,dnT);
+*/
 static void eeaStep(const std::vector<LONG>&Rp,int degRp,const std::vector<LONG>&R,int degR,
                     const std::vector<LONG>&Tp,int degTp,const std::vector<LONG>&T,int degT,LONG p,
                     std::vector<LONG>&rem,int &drem,std::vector<LONG>&nT,int &dnT){
@@ -1228,6 +1793,21 @@ static void eeaStep(const std::vector<LONG>&Rp,int degRp,const std::vector<LONG>
 }
 
 
+/*
+Function: dftrfr
+What it does:
+  Implements deterministic fault-tolerant rational function reconstruction from the modular congruence U mod M with numerator, denominator, and error bounds.
+Inputs:
+  - M,U and degM,degU: reconstruction polynomials.
+  - N,D: numerator and denominator degree bounds.
+  - E: allowed error count.
+  - p: modulus.
+  - numOut/denOut and degNum/degDen: output buffers and degrees.
+Outputs:
+  - Returns 1 on successful validated reconstruction and 0 when the data/bounds do not admit one.
+Example:
+  int ok = dftrfr(M,U,degM,degU,N,D,E,101,num,dn,den,dd);
+*/
 static int dftrfr(const std::vector<LONG>&M,const std::vector<LONG>&U,int degM,int degU,
                   int N,int D,int E,LONG p,
                   LONG *numOut,int &degNum,LONG *denOut,int &degDen){
@@ -1256,6 +1836,20 @@ static int dftrfr(const std::vector<LONG>&M,const std::vector<LONG>&U,int degM,i
     return 1;
 }
 
+/*
+Function: hftrfr
+What it does:
+  Runs the heuristic/gap phase of fault-tolerant rational reconstruction, extracting the candidate numerator/denominator row, its common bad factor Lambda, and the largest quotient-degree gap.
+Inputs:
+  - M,U and degM,degU: input polynomials.
+  - p: modulus.
+  - fOut,gOut,lamOut: output coefficient arrays.
+  - degF,degG,degLam,qmax: output degrees and maximum quotient degree.
+Outputs:
+  - Returns 0 after filling the candidate data; gOut is normalized to be monic and Lambda is monic.
+Example:
+  hftrfr(M,U,degM,degU,101,f,dF,g,dG,lam,dL,qmax);
+*/
 static int hftrfr(const std::vector<LONG>&M,const std::vector<LONG>&U,int degM,int degU,LONG p,
                   LONG *fOut,int &degF,LONG *gOut,int &degG,LONG *lamOut,int &degLam,int &qmax){
     std::vector<LONG> rp=M,rc=U,tp(1,0),tc(1,1);
@@ -1283,6 +1877,20 @@ static int hftrfr(const std::vector<LONG>&M,const std::vector<LONG>&U,int degM,i
 }
 
 /* CPP DFTRFR */
+/*
+Function: cppDFTRFR
+What it does:
+  C-compatible wrapper around dftrfr for Maple's external-function interface, including argument checks and output initialization.
+Inputs:
+  - M/U arrays with lengths and degrees.
+  - N,D,E: reconstruction bounds.
+  - p: modulus.
+  - nOut,dOut: output buffers with their allocated lengths.
+Outputs:
+  - Returns 0 on success, 1 when reconstruction fails, and a negative value for invalid arguments.
+Example:
+  int rc = cppDFTRFR(3,2,M,2,1,U,1,1,0,101,2,num,2,den);
+*/
 extern "C" int cppDFTRFR(int mLen,int degM,const LONG *M,
                          int uLen,int degU,const LONG *U,
                          int N,int D,int E,const LONG p,
@@ -1303,6 +1911,20 @@ extern "C" int cppDFTRFR(int mLen,int degM,const LONG *M,
 }
 
 /* CPP HFTRFR */
+/*
+Function: cppHFTRFR
+What it does:
+  C-compatible wrapper around hftrfr that exposes the candidate factors and qmax to Maple.
+Inputs:
+  - M/U arrays with lengths and degrees.
+  - p: modulus.
+  - fOut,gOut,lamOut: output buffers and lengths.
+  - info: output metadata array; info[0] receives qmax.
+Outputs:
+  - Returns 0 on success and a negative value for invalid arguments.
+Example:
+  int rc = cppHFTRFR(mLen,dM,M,uLen,dU,U,p,fLen,f,gLen,g,lLen,lam,1,info);
+*/
 extern "C" int cppHFTRFR(int mLen,int degM,const LONG *M,
                          int uLen,int degU,const LONG *U,
                          const LONG p,
@@ -1326,6 +1948,23 @@ extern "C" int cppHFTRFR(int mLen,int degM,const LONG *M,
 
 /* VANDERMONDE SOLVER ROUTINES: */
 
+/*
+Function: VandermondeSolve64s
+What it does:
+  Solves the transposed Vandermonde system used by sparse interpolation, constructing the master polynomial product_i(x-m[i]) as workspace.
+Inputs:
+  - m: distinct interpolation nodes, modified as workspace-compatible input.
+  - y: right-hand-side values.
+  - n: system size.
+  - a: output coefficients.
+  - M: workspace with n+1 slots.
+  - shift: optional monomial shift correction.
+  - p: modulus.
+Outputs:
+  - Returns nothing; writes the solved coefficient vector to a[0..n-1].
+Example:
+  VandermondeSolve64s(nodes,values,n,coeffs,workspace,0,101);
+*/
 void VandermondeSolve64s(LONG *m,LONG *y,int n,LONG *a,LONG *M,int shift,LONG p)
 {  
     int i,j;
@@ -1359,6 +1998,20 @@ void VandermondeSolve64s(LONG *m,LONG *y,int n,LONG *a,LONG *M,int shift,LONG p)
     return;
 }
 
+/*
+Function: cppVSolve
+What it does:
+  C-compatible wrapper for VandermondeSolve64s that protects Maple inputs by copying the node/value arrays before the destructive kernel runs.
+Inputs:
+  - mIn,yIn: node and value arrays with lengths mLen,yLen.
+  - shift: shift correction.
+  - p: modulus.
+  - aOut/outLen: output buffer and capacity.
+Outputs:
+  - Returns 0 on success or a negative argument-validation code; writes n coefficients to aOut.
+Example:
+  int rc = cppVSolve(n,m,n,y,0,101,n,a);
+*/
 extern "C" int cppVSolve(int mLen,
     const LONG *mIn,
     int yLen,
@@ -1409,6 +2062,21 @@ return 0;
 BERLEKAMP MASSEY ROUTINES:
 */
 
+/*
+Function: BerlekampMassey64s
+What it does:
+  Computes a Berlekamp-Massey connection polynomial for a finite-field sequence using a half extended-Euclidean algorithm.
+Inputs:
+  - a: sequence of N residues.
+  - N: sequence length.
+  - L: output coefficient array.
+  - W: scratch workspace.
+  - p: modulus.
+Outputs:
+  - Returns degree(L); returns -1 when no nontrivial connection polynomial is produced. L is made monic.
+Example:
+  int d = BerlekampMassey64s(seq,N,L,W,101);
+*/
 int BerlekampMassey64s(LONG *a,int N,LONG *L,LONG *W,LONG p)
 {
     // Input sequence a = [a1,a2,a3,...,aN]
@@ -1459,6 +2127,20 @@ int BerlekampMassey64s(LONG *a,int N,LONG *L,LONG *W,LONG p)
     return dv1;
 }
 
+/*
+Function: cppBM
+What it does:
+  C-compatible wrapper for BerlekampMassey64s used by Maple.
+Inputs:
+  - aIn/aLen: input sequence.
+  - p: modulus.
+  - lOut/outLen: output buffer.
+  - degOut: output degree pointer.
+Outputs:
+  - Returns 0 on a valid call; negative codes report bad arguments or insufficient output space. degOut=-1 denotes no connection polynomial.
+Example:
+  int rc = cppBM(N,seq,101,N/2+1,L,&d);
+*/
 extern "C" int cppBM(int aLen,
     const LONG *aIn,
     const LONG p,
@@ -1512,6 +2194,20 @@ std::copy_n(Lbuf.data(), d + 1, lOut);
 return 0;
 }
 
+/*
+Function: newtonInterpMulRec
+What it does:
+  Interpolates the unique polynomial through n finite-field points using Newton divided differences, then converts the result to the monomial basis using mul64b.
+Inputs:
+  - x: n interpolation nodes.
+  - y: n values; overwritten first by Newton coefficients and finally by monomial coefficients.
+  - n: number of points.
+  - p: modulus.
+Outputs:
+  - Returns the degree of the interpolating polynomial, or -1 when n<1 or a repeated node causes a zero denominator.
+Example:
+  int d = newtonInterpMulRec(x,y,n,101);  // y now stores coefficients
+*/
 int newtonInterpMulRec(LONG* x,
     LONG* y,
     const int n,
@@ -1551,6 +2247,20 @@ int newtonInterpMulRec(LONG* x,
     return d;
 }
 
+/*
+Function: newtonInterpMulNormal
+What it does:
+  Newton interpolation kernel using the assembly modular multiplier on hot multiplication steps, then converting to monomial coefficients in place.
+Inputs:
+  - x: interpolation nodes.
+  - y: values and output coefficient array.
+  - n: number of points.
+  - p: modulus.
+Outputs:
+  - Returns polynomial degree, or -1 on empty/repeated-node input; y is overwritten with monomial coefficients.
+Example:
+  int d = newtonInterpMulNormal(x,y,n,101);
+*/
 int newtonInterpMulNormal(LONG* x,
     LONG* y,
     const int n,
@@ -1590,6 +2300,19 @@ int newtonInterpMulNormal(LONG* x,
     return d;
 }
 
+/*
+Function: mkM
+What it does:
+  Builds the monic node polynomial M(x)=product_i (x-xs[i]) over GF(p) by repeated in-place multiplication.
+Inputs:
+  - m: destination/workspace vector; initialize m[0]=1 and allocate enough slots.
+  - xs: interpolation nodes.
+  - p: modulus.
+Outputs:
+  - Returns degree(M), with coefficients written into m.
+Example:
+  vector<LONG> M(xs.size()+1,0); M[0]=1; int d=mkM(M,xs,101);
+*/
 int mkM(vector<LONG>&m,const vector<LONG> &xs,const LONG p){    
     int degM=0;
     std::vector<LONG>linF(2,0);
@@ -1606,6 +2329,21 @@ int mkM(vector<LONG>&m,const vector<LONG> &xs,const LONG p){
 NEWTON INTERPOLATION WRAPPER FOR MAPLE.
 */
 
+/*
+Function: cppInterp
+What it does:
+  C-compatible Maple wrapper for Newton interpolation.
+Inputs:
+  - xIn/xLen: interpolation nodes.
+  - yIn/yLen: values.
+  - p: modulus.
+  - yOut/outLen: coefficient output buffer.
+  - degOut: returned degree.
+Outputs:
+  - Returns 0 on success; negative codes report invalid dimensions, repeated-node failure, or insufficient space. yOut stores ascending monomial coefficients.
+Example:
+  int rc = cppInterp(n,x,n,y,101,n,coeff,&d);
+*/
 extern "C" int cppInterp(int xLen,
     const LONG *xIn,
     int yLen,
@@ -1663,12 +2401,39 @@ std::copy_n(y.data(), d + 1, yOut);
 return 0;
 }
 
+/*
+Function: ftr_buildM
+What it does:
+  Internal helper that constructs M(x)=product_i (x-alpha[i]) for fault-tolerant reconstruction.
+Inputs:
+  - alpha: array of n nodes.
+  - n: number of nodes.
+  - p: modulus.
+Outputs:
+  - Returns a vector of n+1 coefficients for the monic degree-n product polynomial.
+Example:
+  auto M = ftr_buildM(alpha,n,101);
+*/
 static std::vector<LONG> ftr_buildM(const LONG *alpha,int n,LONG p){
     std::vector<LONG> M(n+1,0); M[0]=1; int degM=0; LONG lin[2]; lin[1]=1;
     for(int i=0;i<n;i++){ lin[0]=(alpha[i]==0?0:p-alpha[i]); degM=pMULIP64(M.data(),lin,degM,1,p); }
     return M;                                  // degree n
 }
 
+/*
+Function: cppInterpDFTRFR
+What it does:
+  Combines Newton interpolation and deterministic fault-tolerant rational reconstruction in one C entry point.
+Inputs:
+  - alpha,Yin: nPts sample nodes and values.
+  - N,D,E: reconstruction bounds.
+  - p: modulus.
+  - nOut,dOut: numerator and denominator output buffers.
+Outputs:
+  - Returns 0 on successful reconstruction, 1 when reconstruction fails, and a negative code for invalid input/interpolation failure.
+Example:
+  int rc = cppInterpDFTRFR(n,alpha,Y,N,D,E,101,N+1,num,D+1,den);
+*/
 extern "C" int cppInterpDFTRFR(int nPts,const LONG *alpha,const LONG *Yin,
                                int N,int D,int E,const LONG p,
                                int nOutLen,LONG *nOut,
@@ -1691,6 +2456,20 @@ extern "C" int cppInterpDFTRFR(int nPts,const LONG *alpha,const LONG *Yin,
     return (st==0)?1:0;
 }
 
+/*
+Function: cppAffineLine
+What it does:
+  Generates T parameter points on the affine line used by MRFI, using alpha as the first coordinate and beta/sigma for the remaining coordinates.
+Inputs:
+  - T,numVar: number of points and parameters.
+  - alpha,beta,sigma: line-defining arrays with supplied lengths.
+  - p: modulus.
+  - out/outLen: flat point-major destination array.
+Outputs:
+  - Returns 0 on success or -1 for invalid arguments; writes T*numVar residues to out.
+Example:
+  int rc = cppAffineLine(T,nv,T,alpha,nv-1,beta,nv,sigma,101,T*nv,out);
+*/
 extern "C" int cppAffineLine(int T,int numVar,
                              int alphaLen,const LONG *alpha,
                              int betaLen,const LONG *beta,
@@ -1717,6 +2496,22 @@ extern "C" int cppAffineLine(int T,int numVar,
     return 0;
 }
 
+/*
+Function: cppFTREval
+What it does:
+  Interpolates sample values, performs deterministic fault-tolerant rational reconstruction, and evaluates the recovered numerator and denominator at sigma.
+Inputs:
+  - alpha,Yin: sample nodes/values and their capacities.
+  - nPts: number of active samples.
+  - sigma: evaluation point.
+  - N,D,E: reconstruction bounds.
+  - p: modulus.
+  - out: at least two slots.
+Outputs:
+  - Returns 0 on success, 1 if reconstruction fails, or a negative code on invalid/repeated-node input; out[0]=num(sigma), out[1]=den(sigma).
+Example:
+  LONG out[2]; int rc=cppFTREval(n,n,alpha,n,Y,sigma,N,D,E,101,2,out);
+*/
 extern "C" int cppFTREval(int nPts,
                           int alphaLen,const LONG *alpha,
                           int yLen,const LONG *Yin,
@@ -1746,6 +2541,21 @@ extern "C" int cppFTREval(int nPts,
     return 0;
 }
 
+/*
+Function: ratRECON_C
+What it does:
+  C-compatible rational-reconstruction wrapper around ratReconNormal, used by the Maple mRATRECON binding.
+Inputs:
+  - M/U arrays with lengths/degrees.
+  - N,D: requested degree bounds.
+  - p: modulus.
+  - nOut,dOut: coefficient buffers.
+  - degNOUT,degDOUT: returned degrees.
+Outputs:
+  - Returns 0 on success or a negative error code; writes normalized numerator and denominator coefficients and their degrees.
+Example:
+  int rc = ratRECON_C(mLen,dM,M,uLen,dU,U,N,D,101,nLen,num,&dn,dLen,den,&dd);
+*/
 extern "C" int ratRECON_C(int mLen,
     int degM,
     const LONG *M,
@@ -1820,6 +2630,19 @@ return 0;
 Mike's linear Algebra routines for fast computation.
 */
 
+/*
+Function: rref
+What it does:
+  Reduces an n-by-m row-major matrix to reduced row echelon form over GF(p).
+Inputs:
+  - B: flat matrix array, overwritten in place; entries are assumed in 0..p-1.
+  - n,m: row and column counts.
+  - p: modulus.
+Outputs:
+  - Returns rank(B); B contains its RREF on return.
+Example:
+  LONG rank = rref(B,n,m,101);
+*/
 LONG rref( LONG *B, int n, int m, LONG p ) {
 // Put B in reduced row Echelon form and return rank(B)
 // The code assumes 0 <= B[i,j] < p
@@ -1862,6 +2685,19 @@ on bad arguments.  Entries are reduced into [0,p) first, since rref assumes
 0 <= B[i,j] < p.
 */
 
+/*
+Function: cppRREF
+What it does:
+  C-compatible wrapper for rref that validates dimensions and first normalizes all matrix entries into 0..p-1.
+Inputs:
+  - n,m: matrix dimensions.
+  - B: row-major matrix overwritten in place.
+  - p: modulus.
+Outputs:
+  - Returns the rank on success or a negative argument error code.
+Example:
+  int rank = cppRREF(n,m,B,101);
+*/
 extern "C" int cppRREF(int n,
     int m,
     LONG *B,
@@ -1928,6 +2764,22 @@ allocate them once for the whole block.
   rank is written to *rankOut.
 */
 
+/*
+Function: evalSolveOne
+What it does:
+  Internal black-box kernel that evaluates a sparsely encoded parametric augmented matrix at one parameter point and solves it by RREF.
+Inputs:
+  - nr,nc,nv: row, augmented-column, and parameter counts.
+  - entStart,expo,coef: sparse monomial encoding.
+  - pnt: parameter values.
+  - p,dmax: modulus and maximum exponent.
+  - x,rankOut: solution and rank outputs.
+  - pw,B: caller-supplied power-table and matrix workspaces.
+Outputs:
+  - Returns 0 for a unique solution and 1 for a singular/inconsistent system; writes x and rankOut.
+Example:
+  int st = evalSolveOne(nr,nr+1,nv,ent,expo,coef,pnt,p,dmax,x,&rank,pw,B);
+*/
 static int evalSolveOne(int nr,int nc,int nv,
     const int *entStart,const int *expo,const LONG *coef,
     const LONG *pnt,const LONG p,int dmax,
@@ -1982,6 +2834,21 @@ for (int i = 0; i < nr; ++i) {
 return 0;
 }
 
+/*
+Function: cppEvalSolve
+What it does:
+  C-compatible single-point parametric black-box wrapper around evalSolveOne with reusable static workspaces.
+Inputs:
+  - nr,nc,nv and sparse encoding arrays.
+  - pnt: one parameter point.
+  - p,dmax: modulus and maximum exponent.
+  - xOut/outLen: solution buffer.
+  - info/infoLen: metadata buffer.
+Outputs:
+  - Returns 0 for a unique solution, 1 for singular/inconsistent input, or a negative validation code; info[0] receives the rank.
+Example:
+  int rc = cppEvalSolve(nr,nr+1,nv,ent,expo,coef,pnt,p,dmax,nr,x,1,info);
+*/
 extern "C" int cppEvalSolve(int nr,
     int nc,
     int nv,
@@ -2069,6 +2936,21 @@ info[0] = number of points solved, info[1] = 1-based index of the first
 singular point, or 0 when there was none.
 */
 
+/*
+Function: cppEvalSolveBlock
+What it does:
+  Evaluates and solves the same encoded augmented system at a block of points, storing solutions already transposed by equation.
+Inputs:
+  - nr,nc,nv and sparse encoding arrays.
+  - pts/npts: flat point-major parameter block.
+  - p,dmax: modulus and maximum exponent.
+  - ldx,xOut: row stride and transposed output buffer.
+  - info: solved-count and first-failure metadata.
+Outputs:
+  - Returns 0 if every point solves, 1 if any point is singular/inconsistent, or a negative validation code. info[0]=solved count, info[1]=first bad 1-based point.
+Example:
+  int rc = cppEvalSolveBlock(nr,nr+1,nv,ent,expo,coef,pts,npts,p,dmax,npts,X,2,info);
+*/
 extern "C" int cppEvalSolveBlock(int nr,
     int nc,
     int nv,
@@ -2176,18 +3058,105 @@ finding path.
 
 using ULONG = ULNG;
 
+/*
+Function: max32s
+What it does:
+  Returns the larger of two int values; retained as a compatibility helper for the root-finding code.
+Inputs:
+  - a,b: integer values.
+Outputs:
+  - Returns max(a,b).
+Example:
+  int m = max32s(3,7);  // m = 7
+*/
 inline int max32s(int a,int b){ return a>b ? a : b; }
 
+/*
+Function: add64s
+What it does:
+  Compatibility alias that forwards modular addition to add64b.
+Inputs:
+  - a,b: residues.
+  - p: modulus.
+Outputs:
+  - Returns (a+b) mod p.
+Example:
+  LONG c = add64s(70,50,101);
+*/
 inline LONG add64s(LONG a,LONG b,LONG p){ return add64b(a,b,p); }
+/*
+Function: sub64s
+What it does:
+  Compatibility alias that forwards modular subtraction to sub64b.
+Inputs:
+  - a,b: residues.
+  - p: modulus.
+Outputs:
+  - Returns (a-b) mod p.
+Example:
+  LONG c = sub64s(3,5,101);
+*/
 inline LONG sub64s(LONG a,LONG b,LONG p){ return sub64b(a,b,p); }
+/*
+Function: mul64s
+What it does:
+  Compatibility alias that forwards modular multiplication to mul64b.
+Inputs:
+  - a,b: residues.
+  - p: modulus.
+Outputs:
+  - Returns (a*b) mod p.
+Example:
+  LONG c = mul64s(25,9,101);
+*/
 inline LONG mul64s(LONG a,LONG b,LONG p){ return mul64b(a,b,p); }
+/*
+Function: modinv64s
+What it does:
+  Compatibility alias that forwards modular inversion to modinv64b.
+Inputs:
+  - c: value to invert.
+  - p: modulus.
+Outputs:
+  - Returns c^(-1) mod p or 0 when no inverse exists.
+Example:
+  LONG inv = modinv64s(3,101);
+*/
 inline LONG modinv64s(LONG c,LONG p){ return modinv64b(c,p); }
 
+/*
+Function: poldiv64s
+What it does:
+  Compatibility alias for polDIVIP64 used by the root-finding routines.
+Inputs:
+  - a: dividend/workspace.
+  - b: divisor.
+  - da,db: degrees.
+  - p: modulus.
+Outputs:
+  - Returns the remainder degree while leaving remainder/quotient in a's standard in-place division layout.
+Example:
+  int dr = poldiv64s(A,B,da,db,101);
+*/
 inline int poldiv64s(LONG *a,const LONG *b,int da,int db,LONG p){
     return polDIVIP64(a,b,da,db,p);
 }
 
 // A := c*A
+/*
+Function: polscamul64s
+What it does:
+  Scales a raw polynomial A by the field element c in place.
+Inputs:
+  - c: scalar.
+  - A: coefficient array.
+  - d: degree of A.
+  - p: modulus.
+Outputs:
+  - Returns nothing; overwrites A with c*A mod p.
+Example:
+  polscamul64s(5,A,d,101);
+*/
 void polscamul64s(LONG c,LONG *A,int d,LONG p){
     int i;
     if( c==1 ) return;
@@ -2197,10 +3166,36 @@ void polscamul64s(LONG c,LONG *A,int d,LONG p){
 
 // C := A^2.  polmul64s reads A twice and writes a separate C, so aliasing the
 // two inputs is safe.  C must hold 2*da+1 coefficients.
+/*
+Function: polsqr64s
+What it does:
+  Squares a polynomial by calling polmul64s with the same source as both factors.
+Inputs:
+  - A: input coefficient array.
+  - C: separate destination with at least 2*da+1 slots.
+  - da: degree of A.
+  - p: modulus.
+Outputs:
+  - Returns degree(C), where C=A^2 mod p.
+Example:
+  int dc = polsqr64s(A,C,da,101);
+*/
 int polsqr64s(LONG *A,LONG *C,int da,LONG p){
     return polmul64s(A,A,C,da,da,p);
 }
 
+/*
+Function: polprint64s
+What it does:
+  Prints a raw coefficient-array polynomial for debugging.
+Inputs:
+  - A: coefficient array.
+  - d: degree; negative prints 0.
+Outputs:
+  - Returns nothing; writes the polynomial to standard output.
+Example:
+  polprint64s(A,d);
+*/
 void polprint64s(LONG *A,int d){
     int i;
     if( d<0 ) { printf("0\n"); return; }
@@ -2222,6 +3217,19 @@ A, which is what polsplit64s and polroots64s assume:
     dg = polgcd64s( f, W, d, da, p );     // g = gcd(f,W-1) lands in f
 
 Returns deg(gcd), so 0 means the gcd is the constant 1.
+*/
+/*
+Function: polgcd64s
+What it does:
+  Computes the monic gcd of two raw polynomials over GF(p) for the root-finding path; both inputs may be destroyed.
+Inputs:
+  - A,B: mutable polynomial arrays.
+  - da,db: degrees.
+  - p: modulus.
+Outputs:
+  - Returns degree(gcd) and guarantees the monic gcd is stored in A.
+Example:
+  int dg = polgcd64s(A,B,da,db,101);
 */
 int polgcd64s(LONG *A,LONG *B,int da,int db,LONG p){
     LONG *r1,*r2,*t;
@@ -2248,6 +3256,22 @@ int polgcd64s(LONG *A,LONG *B,int da,int db,LONG p){
     return d1;
 }
 
+/*
+Function: polgcdext64s
+What it does:
+  Computes an extended polynomial gcd over GF(p), producing G,S,T such that S*A + T*B = G with G monic.
+Inputs:
+  - A,B and da,db: nonzero inputs used destructively as remainder storage.
+  - G: gcd output.
+  - S,T: optional Bezout-coefficient outputs; pass null to omit either.
+  - dG,dS,dT: returned degrees.
+  - W: scratch workspace.
+  - p: modulus.
+Outputs:
+  - Returns nothing; fills G and requested Bezout coefficients/degrees.
+Example:
+  polgcdext64s(A,B,da,db,G,S,T,&dG,&dS,&dT,W,101);
+*/
 void polgcdext64s( LONG *A, LONG *B, int da, int db,
     LONG *G, LONG *S, LONG *T, int *dG, int *dS, int *dT,
     //LONG *s1, *s2, *t1, *t2, int *ds1, int *ds2, int *dt1, int *dt2,
@@ -2314,6 +3338,21 @@ if(T) { t = t1; t1 = t2; t2 = t; dt1 = dt2; dt2 = dt; }
 }
 
 // S = 1/A mod B
+/*
+Function: polmodinv64s
+What it does:
+  Computes the polynomial inverse S = 1/A mod M when A is invertible modulo M, using the extended gcd.
+Inputs:
+  - A,M: input polynomials.
+  - da,dm: degrees with da<dm.
+  - G,S: gcd and inverse/cofactor outputs.
+  - W: scratch storage for copied inputs and EEA work.
+  - p: modulus.
+Outputs:
+  - Returns degree(S) when gcd(A,M)=1; returns -deg(G) when the gcd has positive degree.
+Example:
+  int ds = polmodinv64s(A,M,da,dm,G,S,W,101);
+*/
 int polmodinv64s( LONG *A, LONG *M, int da, int dm,
     LONG *G, LONG *S, LONG *W, LONG p )
 {   int dG, dS, dT;
@@ -2333,6 +3372,23 @@ if( dG>0 ) return -dG; else return dS;
 
 /* C(x) := A(x)^n mod B(x) mod p;  0<=deg(A)<deg(B) and R must be of size 2*db-1 */
 /* If A(x) is not reduced mod B(x) then we first compute C(x) := A(x) mod B(x)   */
+/*
+Function: polpowmod64s
+What it does:
+  Computes C(x)=A(x)^n mod B(x) over GF(p) by repeated squaring and modular polynomial reduction.
+Inputs:
+  - A: base polynomial, possibly reduced in place if degree >= db.
+  - n: nonnegative exponent.
+  - B: modulus polynomial.
+  - da,db: degrees.
+  - C: output array.
+  - R: scratch array large enough for intermediate products.
+  - p: modulus.
+Outputs:
+  - Returns degree(C) and writes the reduced power into C.
+Example:
+  int dc = polpowmod64s(A,10,B,da,db,C,R,101);
+*/
 int polpowmod64s( LONG * A, LONG n, LONG * B, int da, int db, LONG *C, LONG *R, LONG p )
 {
     int dc,k,b[63];
@@ -2362,6 +3418,21 @@ int polpowmod64s( LONG * A, LONG n, LONG * B, int da, int db, LONG *C, LONG *R, 
 // Output roots of f in R.
 // The input array f is destroyed.
 // W is a scratch array of size at least 3*d
+/*
+Function: polsplit64s
+What it does:
+  Recursively splits a polynomial known to be a product of distinct linear factors over GF(p), using randomized gcd separation.
+Inputs:
+  - f: degree-d polynomial, destroyed during splitting.
+  - d: positive degree.
+  - R: output array for d roots.
+  - W: scratch array of at least 3*d elements.
+  - p: modulus.
+Outputs:
+  - Returns nothing; writes the d roots into R.
+Example:
+  polsplit64s(f,d,roots,W,101);
+*/
 void polsplit64s( LONG *f, int d, LONG *R, LONG *W, LONG p )
 {
    int da,dg; LONG alpha, A[2];
@@ -2381,6 +3452,21 @@ void polsplit64s( LONG *f, int d, LONG *R, LONG *W, LONG p )
    return;
 }
 
+/*
+Function: polroots64s
+What it does:
+  Finds the distinct roots in GF(p) of a polynomial by extracting zero roots, intersecting with x^(p-1)-1, and recursively splitting the linear-factor part.
+Inputs:
+  - f: degree-d coefficient array, modified in place.
+  - d: degree.
+  - R: root output array.
+  - W: scratch workspace.
+  - p: modulus.
+Outputs:
+  - Returns the number of roots written to R.
+Example:
+  int nroots = polroots64s(f,d,roots,W,101);
+*/
 int polroots64s( LONG * f, int d, LONG * R, LONG *W, LONG p )
 {
    int i, da, dg; LONG A[2]; extern ULONG seed,mult;
@@ -2424,6 +3510,21 @@ Return value:  0  success
                1  outLen too small; info[0] holds the number of roots found
 */
 
+/*
+Function: cppPolRoots
+What it does:
+  C-compatible wrapper around polroots64s that preserves the caller's polynomial, normalizes coefficients, sizes workspace, and sorts the roots for Maple.
+Inputs:
+  - d,f: advertised degree and coefficient array.
+  - p: prime modulus.
+  - wsize: requested scratch size, or 0 for the default.
+  - rootsOut/outLen: root output buffer.
+  - info/infoLen: metadata; info[0] receives root count.
+Outputs:
+  - Returns 0 on success, 1 if rootsOut is too small, or a negative argument/internal error code.
+Example:
+  LONG info[1]; int rc=cppPolRoots(d,f,101,0,d,roots,d?1:1,info);
+*/
 extern "C" int cppPolRoots(int d,
     const LONG *f,
     const LONG p,
