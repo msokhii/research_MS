@@ -235,7 +235,7 @@ Constuct_Sys_Blackbox := proc(Sys,Vars,params)
     local Lin_BB,L,nr,nc,LE:
     global BB_BLOCK:
     L := GenerateMatrix(Sys,Vars,augmented=true):
-    print(L);
+    #print(L);
     nr,nc := op(1,L):
 
     #  Encode L as a flat sparse monomial table ONCE.  After this the black box
@@ -762,7 +762,7 @@ NDSA := proc(B,sigma_,beta_,num_var,p,num_points,num_eqn)
           lin_sys,temp,result,count,M,row,col,DQ,MQRFR_done,
           t_helper:
     global t_cppNewton_total,t_mqrfr_total,t_NDSA_comp:
-    print("In NDSA"):
+    #print("In NDSA"):
     MQRFR_done := [seq(false,i=1..num_eqn)]:
     correct_degree := false:
     lin_sys := false:
@@ -778,12 +778,12 @@ NDSA := proc(B,sigma_,beta_,num_var,p,num_points,num_eqn)
         alpha := [seq(r(),i=1..T)]:
         m := Expand(product(x-alpha[j],j=1..T)) mod p:
         Psi_alpha := get_point_on_affine_line(num_var,alpha,beta_,sigma_,p,T):
-        print(Psi_alpha):
+        #print(Psi_alpha):
         t_NDSA_comp := t_NDSA_comp+(time()-t_helper):
         Y := [seq(B(Psi_alpha[i],p),i=1..T)]:
         M := Matrix(Y):
-        print(Y):
-        print(M):
+        #print(Y):
+        #print(M):
         row,col := Dimension(M):
         if row = 1 then
             lin_sys := false:
@@ -922,8 +922,8 @@ MRFI := proc(B,num_vars::integer,num_eqn::integer,vars::list,p::integer)
     bb_phase := "NDSA":
     mqrfr_results,lin_sys := NDSA(B,init_sigma,direction,
                                     num_vars,p,Tcur,num_eqn):
-    print(mqrfr_results):
-    print(lin_sys):
+    #print(mqrfr_results):
+    #print(lin_sys):
     bb_phase := "MRFI":
 
     Numerators := [seq(mqrfr_results[i][1],i=1..nops(mqrfr_results))]:
@@ -1371,13 +1371,13 @@ if not type(SYSTEM_ID, string) then SYSTEM_ID := convert(SYSTEM_ID, string): fi:
 # Freeze the selected family for this benchmark run.
 RUN_SYSTEM_ID := SYSTEM_ID:
 
-test_prime := prevprime(2^63-1):
-#test_prime := prevprime(2^31-1):
+#test_prime := prevprime(2^63-1):
+test_prime := prevprime(2^31-1):
 
 # n is the scalable input knob used by the selected family.
 # For q-by-q grid systems q=n; for P40 n is the number of QBD levels.
 n_min := 4:
-n_max := 12:
+n_max := 14:
 do_verify := false:
 do_ffge := false:
 summary := []:
@@ -1402,28 +1402,29 @@ kernelopts(gcfreq = 32*10^6):
 for n_test from n_min to n_max do
     Sys,Vars,params,num_vars,num_eqn := DB_system(RUN_SYSTEM_ID,n_test):
 
-    
-
     # Validate every catalog system before any black-box calls are made.
     expected_num_vars := ExpectedParamCount(RUN_SYSTEM_ID,n_test):
     if num_vars <> expected_num_vars then
         error "%1 parameter mismatch at n=%2: expected %3, got %4",
               RUN_SYSTEM_ID, n_test, expected_num_vars, num_vars:
     fi:
+    (*
     printf("Parameter validation: PASS  (expected=%d, actual=%d)\n",
            expected_num_vars, num_vars):
-
-    printf("\n==== SYSTEM %s : %s   (n = %d, params = %d) ====\n",
+    *)
+    printf("\nSYSTEM %s : %s (n = %d)\n",
            RUN_SYSTEM_ID,
            ParametricSystems:-Name(RUN_SYSTEM_ID),
-           n_test, num_vars):
+           n_test):
 
+    (*
     print(Sys);
     print(Vars);
     print(params);
     print(num_vars);
     print(num_eqn);
-
+    *)
+    
     counter := 0:
     num_lines := 0:
     bb_phase := "MRFI":
@@ -1560,7 +1561,9 @@ for n_test from n_min to n_max do
                     fi:
                 od:
                 if all_match then
+                    
                     printf("PASS  n=%2d\n", n_test):
+                    
                     summary := [op(summary),
                                 [n_test, "PASS",mrfi_calls,
                                  bb_calls_ndsa,bb_calls_mrfi,
@@ -1581,8 +1584,10 @@ for n_test from n_min to n_max do
                                  t_normalize_total,t_NDSA_comp,
                                  stats_gc_count,stats_gc_Mbytes,
                                  solution_list,RUN_SYSTEM_ID,num_vars]]:
+                    
                 else
                     printf("FAIL  n=%2d (mismatch)\n",n_test):
+                    
                     summary := [op(summary),
                                 [n_test,"FAIL-mismatch",mrfi_calls,
                                  bb_calls_ndsa,bb_calls_mrfi,
@@ -1603,12 +1608,14 @@ for n_test from n_min to n_max do
                                  t_normalize_total,t_NDSA_comp,
                                  stats_gc_count,stats_gc_Mbytes,
                                  solution_list,RUN_SYSTEM_ID,num_vars]]:
+                
                 fi:
             catch:
                 printf("PARTIAL  n=%2d  (ref solve threw)\n",n_test):
-                for i from 1 to num_eqn do
+                (* for i from 1 to num_eqn do
                     printf("  x%d = %a\n", i, Final_rat_poly[i]):
                 od:
+                *)
                 summary := [op(summary),
                             [n_test,"NO-VERIFY",mrfi_calls,
                              bb_calls_ndsa,bb_calls_mrfi,
@@ -1629,13 +1636,17 @@ for n_test from n_min to n_max do
                                  t_normalize_total,t_NDSA_comp,
                                  stats_gc_count,stats_gc_Mbytes,
                                  solution_list,RUN_SYSTEM_ID,num_vars]]:
+            
             end try:
         else
+            
             printf("RECOVERED (unverified) n=%2d   BB-calls=%d\n",
                    n_test, mrfi_calls):
+            (*
             for i from 1 to num_eqn do
                 printf("  x%d = %a\n", i, Final_rat_poly[i]):
             od:
+            *)  
             summary := [op(summary),
                         [n_test,"UNVERIFIED",mrfi_calls,
                          bb_calls_ndsa,bb_calls_mrfi,
@@ -1656,6 +1667,7 @@ for n_test from n_min to n_max do
                                  t_normalize_total,t_NDSA_comp,
                                  stats_gc_count,stats_gc_Mbytes,
                                  solution_list,RUN_SYSTEM_ID,num_vars]]:
+        
         fi:
     else
         solution_list := []:
@@ -1680,6 +1692,7 @@ for n_test from n_min to n_max do
                                  t_normalize_total,t_NDSA_comp,
                                  stats_gc_count,stats_gc_Mbytes,
                                  solution_list,RUN_SYSTEM_ID,num_vars]]:
+    
     fi:
 od:
 
@@ -1727,13 +1740,13 @@ fi:
 
 fd := fopen(report_path, WRITE):
 fprintf(fd, "============================================================\n"):
-fprintf(fd, "  MRFI benchmark (fault-tolerant) -- system %s : %s\n",
+fprintf(fd, "Benchmark:\nSystem %s: %s\n",
         REPORT_SYSTEM_ID,
         ParametricSystems:-Name(REPORT_SYSTEM_ID)):
-fprintf(fd, "  Univariate RR : HFTRFR (degrees + bad set) + DFTRFR\n"):
-fprintf(fd, "  Prime p = %d\n", test_prime):
-fprintf(fd, "  Range   n = %d .. %d\n", n_min, n_max):
-fprintf(fd, "  Fault injection FAULT_ON = %a , error budget FAULT_E = %d\n",
+#fprintf(fd, "  Univariate RR : HFTRFR (degrees + bad set) + DFTRFR\n"):
+fprintf(fd, "Prime: %d\n", test_prime):
+fprintf(fd, "Range: %d .. %d\n", n_min, n_max):
+fprintf(fd, "FAULT_ON = %a and FAULT_E = %d\n",
         FAULT_ON, FAULT_E):
 fprintf(fd, "============================================================\n\n"):
 
@@ -1744,74 +1757,76 @@ for entry in summary do
               +entry[35]:
     t_over  := t_wall - t_comp:
 
-    fprintf(fd, "  n = %d\n", entry[1]):
-    fprintf(fd, "  System ID                        : %s\n", entry[39]):
-    fprintf(fd, "  Parameter count                  : %d\n", entry[40]):
-    fprintf(fd, "  MRFI Status                      : %s\n", entry[2]):
-    fprintf(fd, "  Total BB calls                   : %d  (NDSA = %d, MRFI = %d)\n",
+    fprintf(fd, "n = %d\n", entry[1]):
+    fprintf(fd, "System ID                        : %s\n", entry[39]):
+    fprintf(fd, "Parameter count                  : %d\n", entry[40]):
+    fprintf(fd, "MRFI Status                      : %s\n", entry[2]):
+    fprintf(fd, "Total BB calls                   : %d  (NDSA = %d, MRFI = %d)\n",
             entry[3], entry[4], entry[5]):
-    fprintf(fd, "  BB calls in NDSA                 : %d\n", entry[4]):
-    fprintf(fd, "  BB calls in MRFI                 : %d\n", entry[5]):
-    fprintf(fd, "  Total NDSA time for BB calls (s) : %.9f\n", entry[20]):
-    fprintf(fd, "  Total MRFI time for BB calls (s) : %.9f\n", entry[21]):
-    fprintf(fd, "  Total BB calls time (NDSA+MRFI)  : %.9f\n", entry[20]+entry[21]):
-    fprintf(fd, "  Total time (s)                   : %.9f\n", t_wall):
-    fprintf(fd, "  Time for MRFI Individual component -\n"):
-    fprintf(fd, "  Time -> cppNewtonInterp (s)  : %.9f\n", entry[23]):
-    fprintf(fd, "  Time -> HFTRFR (s)           : %.9f\n", entry[24]):
-    fprintf(fd, "  Time -> FTREval Interp+RR+EV : %.9f\n", entry[25]):
-    fprintf(fd, "  Time -> BMEA (s)             : %.9f\n", entry[26]):
-    fprintf(fd, "  Time -> Vandermonde (s)      : %.9f\n", entry[27]):
-    fprintf(fd, "  Time -> Roots (s)            : %.9f\n", entry[29]):
-    fprintf(fd, "  Time -> Gen. Monomials (s)   : %.9f\n", entry[30]):
-    fprintf(fd, "  Time -> Final Poly. (s)      : %.9f\n", entry[31]):
-    fprintf(fd, "  Time -> Get point AFL (s)    : %.9f\n", entry[32]):
-    fprintf(fd, "  Time -> Eval+List (s)        : %.9f\n", entry[33]):
-    fprintf(fd, "  Time -> Normalize Proc. (s)  : %.9f\n", entry[34]):
-    fprintf(fd, "  Time -> MapRR (s)            : %.9f\n", entry[28]):
-    fprintf(fd, "  Time -> Overhead & Other (s) : %.9f\n", t_over):
-    fprintf(fd, "  Time -> NDSA Proc. (s)       : %.9f\n", entry[35]):
-    fprintf(fd, "  GC -> collections            : %d\n", entry[36]):
-    fprintf(fd, "  GC -> Mbytes allocated       : %.3f\n", entry[37]):
-    fprintf(fd, "  Deg_num (per equation)   : %a\n", entry[8]):
-    fprintf(fd, "  Deg_den (per equation)   : %a\n", entry[9]):
-    fprintf(fd, "  Terms_num (per equation) : %a\n", entry[6]):
-    fprintf(fd, "  Terms_den (per equation) : %a\n", entry[7]):
+    fprintf(fd, "BB calls in NDSA                 : %d\n", entry[4]):
+    fprintf(fd, "BB calls in MRFI                 : %d\n", entry[5]):
+    fprintf(fd, "Total NDSA time for BB calls (s) : %.9f\n", entry[20]):
+    fprintf(fd, "Total MRFI time for BB calls (s) : %.9f\n", entry[21]):
+    fprintf(fd, "Total BB calls time (NDSA+MRFI)  : %.9f\n", entry[20]+entry[21]):
+    fprintf(fd, "Total time (s)                   : %.9f\n", t_wall):
+    fprintf(fd, "Time for MRFI Individual components -\n"):
+    fprintf(fd, "Time -> cppNewtonInterp (s)  : %.9f\n", entry[23]):
+    fprintf(fd, "Time -> HFTRFR (s)           : %.9f\n", entry[24]):
+    fprintf(fd, "Time -> FTREval Interp+RR+EV : %.9f\n", entry[25]):
+    fprintf(fd, "Time -> BMEA (s)             : %.9f\n", entry[26]):
+    fprintf(fd, "Time -> Vandermonde (s)      : %.9f\n", entry[27]):
+    fprintf(fd, "Time -> Roots (s)            : %.9f\n", entry[29]):
+    fprintf(fd, "Time -> Gen. Monomials (s)   : %.9f\n", entry[30]):
+    fprintf(fd, "Time -> Final Poly. (s)      : %.9f\n", entry[31]):
+    fprintf(fd, "Time -> Get point AFL (s)    : %.9f\n", entry[32]):
+    fprintf(fd, "Time -> Eval+List (s)        : %.9f\n", entry[33]):
+    fprintf(fd, "Time -> Normalize Proc. (s)  : %.9f\n", entry[34]):
+    fprintf(fd, "Time -> MapRR (s)            : %.9f\n", entry[28]):
+    fprintf(fd, "Time -> Overhead & Other (s) : %.9f\n", t_over):
+    fprintf(fd, "Time -> NDSA Proc. (s)       : %.9f\n", entry[35]):
+    #fprintf(fd, "  GC -> collections            : %d\n", entry[36]):
+    #fprintf(fd, "  GC -> Mbytes allocated       : %.3f\n", entry[37]):
+    fprintf(fd, "Deg_num (per equation)   : %a\n", entry[8]):
+    fprintf(fd, "Deg_den (per equation)   : %a\n", entry[9]):
+    fprintf(fd, "Terms_num (per equation) : %a\n", entry[6]):
+    fprintf(fd, "Terms_den (per equation) : %a\n", entry[7]):
     fprintf(fd, "\n"):
 
     #  Fault tolerance overhead (per equation, 2E extra black-box points)
     
-    fprintf(fd, "  Fault tolerance\n"):
-    fprintf(fd, "  Error budget E               : %d\n", FAULT_E):
-    fprintf(fd, "  Fault injection active       : %a\n", FAULT_ON):
-    fprintf(fd, "  Extra BB pts / eqn (2E)      : %d\n", 2*FAULT_E):
+    fprintf(fd, "Fault tolerance\n"):
+    fprintf(fd, "Error budget E               : %d\n", FAULT_E):
+    fprintf(fd, "Fault injection active       : %a\n", FAULT_ON):
+    fprintf(fd, "Extra BB pts / eqn (2E)      : %d\n", 2*FAULT_E):
     fprintf(fd, "\n"):
+    (*
     if nops(entry[38]) > 0 then
         fprintf(fd, "  Recovered solution\n"):
         for i from 1 to nops(entry[38]) do
             fprintf(fd, "    x%d = %a\n", i, entry[38][i]):
         od:
     fi:
+    *)
     fprintf(fd, "\n"):
-    fprintf(fd, "  FFGE status              : %s\n", entry[12]):
+    fprintf(fd, "FFGE status              : %s\n", entry[12]):
     if entry[12] <> "SKIPPED" then
-        fprintf(fd, "  FFGE total time (s)      : %.9f\n", entry[13]):
-        fprintf(fd, "  FFGE f[i] terms          : %a\n", entry[14]):
-        fprintf(fd, "  FFGE g[i] terms          : %a\n", entry[15]):
-        fprintf(fd, "  FFGE y[i] terms (Pre GCD): %a\n", entry[16]):
-        fprintf(fd, "  FFGE det(A) terms        : %a\n", entry[17]):
-        fprintf(fd, "  FFGE Max Elim. step swell: %a  (numterms(num) before exact div)\n",
+        fprintf(fd, "FFGE total time (s)      : %.9f\n", entry[13]):
+        fprintf(fd, "FFGE f[i] terms          : %a\n", entry[14]):
+        fprintf(fd, "FFGE g[i] terms          : %a\n", entry[15]):
+        fprintf(fd, "FFGE y[i] terms (Pre GCD): %a\n", entry[16]):
+        fprintf(fd, "FFGE det(A) terms        : %a\n", entry[17]):
+        fprintf(fd, "FFGE Max Elim. step swell: %a  (numterms(num) before exact div)\n",
                 entry[18]):
-        fprintf(fd, "  FFGE max Back sub swell  : %a  (numterms(N[i]) before exact div)\n",
+        fprintf(fd, "FFGE max Back sub swell  : %a  (numterms(N[i]) before exact div)\n",
                 entry[19]):
-        fprintf(fd, "  Term count comparison (MRFI vs FFGE)\n"):
-        fprintf(fd, "  Numerator terms MRFI     : %a\n", entry[6]):
-        fprintf(fd, "  Numerator terms FFGE     : %a\n", entry[14]):
-        fprintf(fd, "  Denominator terms MRFI   : %a\n", entry[7]):
-        fprintf(fd, "  Denominator terms FFGE   : %a\n", entry[15]):
+        fprintf(fd, "Term count comparison (MRFI vs FFGE)\n"):
+        fprintf(fd, "Numerator terms MRFI     : %a\n", entry[6]):
+        fprintf(fd, "Numerator terms FFGE     : %a\n", entry[14]):
+        fprintf(fd, "Denominator terms MRFI   : %a\n", entry[7]):
+        fprintf(fd, "Denominator terms FFGE   : %a\n", entry[15]):
     fi:
     fprintf(fd, "\n"):
 od:
 fclose(fd):
-printf("Wrote %s\n", report_path):
+printf("Succesfully wrote to -> %s :D\n", report_path):
 
